@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment / secrets
+.env
+.env.local
+*.key
+
+# Model artifacts (large files)
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.tflite
+saved_models/
+
+# Dataset (large, should not be in git)
+dataset/
+datasets/
+data/raw/
+data/processed/
+data/synthetic/
+data/real/
+data/masks/
+
+# Imagens analisadas em runtime (referenciadas por analise.caminho_imagem)
+data/uploads/
+
+# Material de referência da empresa parceira (proprietário — não versionar).
+# Usado apenas como apoio para a especificação, não faz parte do pipeline.
+.context/reference/
+!.context/reference/**/.gitkeep
+
+# Logs
+*.log
+logs/
+runs/
+wandb/
+mlruns/
+
+# Skills especializadas de terceiros (ver .context/rules/ai_development_rules.md, seção 3.1)
+.agents/skills/
