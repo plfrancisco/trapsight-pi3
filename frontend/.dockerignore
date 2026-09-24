@@ -1,0 +1,11 @@
+.env
+.env.*
+**/.env
+**/.env.*
+.venv
+**/.venv
+.git
+**/.git
+node_modules
+**/node_modules
+dist
