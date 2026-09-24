@@ -42,6 +42,12 @@ desktop.ini
 *.tflite
 saved_models/
 
+# Keep only directory markers for data and model artifacts
+data/*
+models/*
+!data/.gitkeep
+!models/.gitkeep
+
 # Dataset (large, should not be in git)
 dataset/
 datasets/
