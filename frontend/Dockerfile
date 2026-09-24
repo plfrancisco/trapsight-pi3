@@ -5,7 +5,7 @@ RUN chown node:node /app
 
 USER node
 
-# FE01 fornecerá package.json e package-lock.json para npm ci.
+# O npm ci exige package.json e package-lock.json para instalar de forma reprodutível.
 COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci
 

@@ -17,5 +17,5 @@ COPY --chown=app:app . .
 USER app
 EXPOSE 8000
 
-# API01 fornecerá src.main:app e as dependências de aplicação.
+# Ponto de entrada ASGI da aplicação (módulo src.main, objeto app).
 CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
