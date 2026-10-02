@@ -4,9 +4,11 @@ from datetime import date
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.entities import Refil
+from src.repositories.exceptions import RefilAtivoExistente
 
 
 class RefilRepository:
@@ -36,6 +38,9 @@ class RefilRepository:
 
         Returns:
             O refil persistido dentro da transação atual.
+
+        Raises:
+            RefilAtivoExistente: se a armadilha já tiver um ciclo aberto.
         """
         refil = Refil(
             armadilha_id=armadilha_id,
@@ -43,8 +48,25 @@ class RefilRepository:
             data_troca=data_troca,
         )
         self._session.add(refil)
-        self._session.flush()
+        if data_troca is None:
+            self._flush_or_raise_active_duplicate()
+        else:
+            self._session.flush()
         return refil
+
+    def _flush_or_raise_active_duplicate(self) -> None:
+        """Converte apenas a violação do índice de refil ativo em erro de domínio."""
+        try:
+            self._session.flush()
+        except IntegrityError as error:
+            diagnostic = getattr(error.orig, "diag", None)
+            if getattr(diagnostic, "constraint_name", None) == (
+                "uq_refil_ativo_por_armadilha"
+            ):
+                raise RefilAtivoExistente(
+                    "Esta armadilha já possui um refil ativo."
+                ) from None
+            raise
 
     def get_by_id(self, refil_id: UUID) -> Refil | None:
         """Busca um refil pela chave primária.

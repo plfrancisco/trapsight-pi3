@@ -7,6 +7,7 @@ from uuid import UUID
 import pytest
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,6 +16,7 @@ from src.repositories import (
     AnaliseRepository,
     ArmadilhaRepository,
     IdentificadorDuplicado,
+    RefilAtivoExistente,
     RefilRepository,
 )
 
@@ -103,6 +105,7 @@ def test_analise_queries_order_and_limit(session: Session) -> None:
         armadilha_id=armadilha.id,
         data_instalacao=date(2026, 1, 1),
     )
+    refil_repo.close(first_refil.id, date(2026, 1, 31))
     second_refil = refil_repo.create(
         armadilha_id=armadilha.id,
         data_instalacao=date(2026, 2, 1),
@@ -201,3 +204,104 @@ def test_entity_metadata_matches_migrated_schema(session: Session) -> None:
     }
     assert "delete" not in Armadilha.refis.property.cascade
     assert "delete" not in Refil.analises.property.cascade
+
+
+def test_only_one_active_refil_per_armadilha(session: Session) -> None:
+    """Rejeita um segundo ciclo aberto para a mesma armadilha."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-UNICO")
+    repository = RefilRepository(session)
+    repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+
+    with pytest.raises(RefilAtivoExistente) as captured:
+        repository.create(
+            armadilha_id=armadilha.id,
+            data_instalacao=date(2026, 2, 1),
+        )
+
+    assert "constraint" not in str(captured.value).lower()
+    assert "sqlalchemy" not in str(captured.value).lower()
+
+
+def test_active_refils_can_coexist_for_different_armadilhas(session: Session) -> None:
+    """Permite um ciclo aberto independente em cada armadilha."""
+    armadilha_a = ArmadilhaRepository(session).create(identificador="ARM-A")
+    armadilha_b = ArmadilhaRepository(session).create(identificador="ARM-B")
+    repository = RefilRepository(session)
+
+    refil_a = repository.create(
+        armadilha_id=armadilha_a.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+    refil_b = repository.create(
+        armadilha_id=armadilha_b.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+
+    assert repository.get_active_for_armadilha(armadilha_a.id) is refil_a
+    assert repository.get_active_for_armadilha(armadilha_b.id) is refil_b
+
+
+def test_closing_active_refil_allows_replacement_in_same_transaction(
+    session: Session,
+) -> None:
+    """Permite trocar o ciclo após gravar o encerramento na mesma transação."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-TROCA")
+    repository = RefilRepository(session)
+    anterior = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+
+    assert repository.close(anterior.id, date(2026, 2, 1)) is anterior
+    novo = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 1),
+    )
+
+    assert repository.get_active_for_armadilha(armadilha.id) is novo
+    assert repository.list_closed_for_armadilha(armadilha.id) == [anterior]
+
+
+def test_multiple_closed_refils_are_allowed(session: Session) -> None:
+    """Mantém o histórico completo de ciclos encerrados da armadilha."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-HIST")
+    repository = RefilRepository(session)
+
+    first = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+        data_troca=date(2026, 2, 1),
+    )
+    second = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 1),
+        data_troca=date(2026, 3, 1),
+    )
+
+    assert repository.list_closed_for_armadilha(armadilha.id) == [first, second]
+
+
+def test_database_rejects_duplicate_active_refil_without_repository(
+    session: Session,
+) -> None:
+    """Confirma que o índice também bloqueia inserções SQL diretas."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-SQL")
+    RefilRepository(session).create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+
+    with pytest.raises(IntegrityError):
+        session.execute(
+            text(
+                "INSERT INTO refil (armadilha_id, data_instalacao) "
+                "VALUES (:armadilha_id, :data_instalacao)"
+            ),
+            {
+                "armadilha_id": armadilha.id,
+                "data_instalacao": date(2026, 2, 1),
+            },
+        )

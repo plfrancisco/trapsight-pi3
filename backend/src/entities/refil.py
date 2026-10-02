@@ -6,7 +6,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Uuid
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.entities.base import Base, UUIDTimestampMixin
@@ -26,6 +26,12 @@ class Refil(UUIDTimestampMixin, Base):
             name="ck_refil_datas",
         ),
         Index("ix_refil_armadilha_id", "armadilha_id"),
+        Index(
+            "uq_refil_ativo_por_armadilha",
+            "armadilha_id",
+            unique=True,
+            postgresql_where=text("data_troca IS NULL"),
+        ),
     )
 
     armadilha_id: Mapped[UUID] = mapped_column(
