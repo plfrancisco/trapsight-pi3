@@ -1,4 +1,4 @@
-"""Execute migrations using only the connection configured in the environment."""
+"""Executa as migrations usando somente a conexão definida no ambiente."""
 
 import os
 
@@ -8,7 +8,9 @@ from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
-target_metadata = None
+from src.entities import Base
+
+target_metadata = Base.metadata
 
 
 def database_url():
