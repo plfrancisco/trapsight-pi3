@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import api_router
+from src.api.erros import registrar_handlers
 from src.config.settings import Settings
 
 
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",
     )
     application.state.settings = settings
+    registrar_handlers(application)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origens,
