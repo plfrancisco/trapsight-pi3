@@ -118,13 +118,14 @@ class RefilRepository:
         return list(self._session.scalars(statement))
 
     def list_closed_for_armadilha(self, armadilha_id: UUID) -> list[Refil]:
-        """Lista ciclos encerrados pela data de troca e UUID.
+        """Lista ciclos encerrados em ordem cronológica determinística.
 
         Args:
             armadilha_id: UUID da armadilha proprietária.
 
         Returns:
-            Refis encerrados em ordem cronológica.
+            Refis encerrados por troca, instalação, criação e UUID como último
+            desempate estável.
         """
         statement = (
             select(Refil)
@@ -132,7 +133,12 @@ class RefilRepository:
                 Refil.armadilha_id == armadilha_id,
                 Refil.data_troca.is_not(None),
             )
-            .order_by(Refil.data_troca.asc(), Refil.id.asc())
+            .order_by(
+                Refil.data_troca.asc(),
+                Refil.data_instalacao.asc(),
+                Refil.criado_em.asc(),
+                Refil.id.asc(),
+            )
         )
         return list(self._session.scalars(statement))
 

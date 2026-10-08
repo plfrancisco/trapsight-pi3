@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Protocol
 
-from src.entities import Refil, StatusAnalise
+from src.entities import StatusAnalise
 from src.services.saturacao import (
     PontoMedicao,
     calcular_dias_ate_saturar,
@@ -34,18 +34,16 @@ class ResumoPainel:
 
 
 def montar_resumo(
-    refil_ativo: Refil | None,
-    pontos: Sequence[PontoPainel],
     data_instalacao_refil: date | None,
+    pontos: Sequence[PontoPainel],
     limiar_trocar: Decimal,
     agora: datetime,
 ) -> ResumoPainel:
     """Deriva estado, projeção e alerta sem consultar banco ou serviços HTTP.
 
     Args:
-        refil_ativo: ciclo atual da armadilha, se houver.
+        data_instalacao_refil: início do ciclo ativo, se houver.
         pontos: leituras projetadas do refil ativo em ordem cronológica.
-        data_instalacao_refil: data usada como origem da regressão.
         limiar_trocar: percentual configurado para prever a troca.
         agora: instante UTC de referência para a projeção.
 
@@ -53,12 +51,10 @@ def montar_resumo(
         Resumo com a última medição persistida e os valores derivados.
 
     Raises:
-        ValueError: se faltar a data do refil ativo ou algum instante não tiver fuso.
+        ValueError: se uma medição ou o instante de referência não tiver fuso.
     """
-    if refil_ativo is None or not pontos:
+    if data_instalacao_refil is None or not pontos:
         return ResumoPainel(None, None, None, None, None)
-    if data_instalacao_refil is None:
-        raise ValueError("A data de instalação do refil ativo é obrigatória.")
 
     ordenados = sorted(
         pontos,

@@ -405,6 +405,31 @@ def test_refil_date_check_remains_enforced_by_postgres(session: Session) -> None
         session.flush()
 
 
+def test_closed_refils_with_same_exchange_date_use_installation_order(
+    session: Session,
+) -> None:
+    """Ordena pela instalação antes do UUID quando a troca ocorreu no mesmo dia."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-ORDEM-EMPATE")
+    mais_antigo = Refil(
+        id=UUID(int=2),
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 1),
+        data_troca=date(2026, 3, 1),
+    )
+    mais_novo = Refil(
+        id=UUID(int=1),
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 15),
+        data_troca=date(2026, 3, 1),
+    )
+    session.add_all([mais_novo, mais_antigo])
+    session.flush()
+
+    encerrados = RefilRepository(session).list_closed_for_armadilha(armadilha.id)
+
+    assert encerrados == [mais_antigo, mais_novo]
+
+
 def test_domain_exceptions_share_a_common_base() -> None:
     """Permite que chamadores capturem as falhas de domínio em conjunto."""
     assert issubclass(IdentificadorDuplicado, ErroDeDominio)

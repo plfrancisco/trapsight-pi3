@@ -49,6 +49,13 @@ class ArmadilhaCriar(BaseModel):
             raise ValueError("A data de instalação é obrigatória para o refil inicial.")
         return self
 
+    @property
+    def data_instalacao_refil_inicial(self) -> date:
+        """Retorna a data tipada que o ciclo inicial exige após a validação."""
+        if not self.criar_refil_inicial or self.data_instalacao is None:
+            raise ValueError("A data de instalação é obrigatória para o refil inicial.")
+        return self.data_instalacao
+
 
 class ArmadilhaAtualizar(BaseModel):
     """Valida uma atualização parcial sem permitir mudar datas históricas."""

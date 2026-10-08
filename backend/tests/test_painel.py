@@ -3,9 +3,8 @@
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from types import SimpleNamespace
-from uuid import uuid4
 
-from src.entities import Refil, StatusAnalise
+from src.entities import StatusAnalise
 from src.services.painel import montar_resumo
 
 _AGORA = datetime(2026, 1, 11, tzinfo=timezone.utc)
@@ -21,7 +20,7 @@ def _ponto(dia: int, percentual: str, status: StatusAnalise) -> SimpleNamespace:
 
 
 def test_montar_resumo_sem_refil_ativo_devolve_campos_nulos() -> None:
-    resumo = montar_resumo(None, [], None, Decimal("70"), _AGORA)
+    resumo = montar_resumo(None, [], Decimal("70"), _AGORA)
 
     assert resumo.percentual_atual is None
     assert resumo.status is None
@@ -31,12 +30,9 @@ def test_montar_resumo_sem_refil_ativo_devolve_campos_nulos() -> None:
 
 
 def test_montar_resumo_sem_analises_devolve_campos_derivados_nulos() -> None:
-    refil = Refil(armadilha_id=uuid4(), data_instalacao=date(2026, 1, 1))
-
     resumo = montar_resumo(
-        refil,
-        [],
         date(2026, 1, 1),
+        [],
         Decimal("70"),
         _AGORA,
     )
@@ -49,16 +45,14 @@ def test_montar_resumo_sem_analises_devolve_campos_derivados_nulos() -> None:
 
 
 def test_montar_resumo_preserva_ultima_medicao_e_status_persistido() -> None:
-    refil = Refil(armadilha_id=uuid4(), data_instalacao=date(2026, 1, 1))
     pontos = [
         _ponto(10, "60.00", StatusAnalise.ATENCAO),
         _ponto(0, "20.00", StatusAnalise.OK),
     ]
 
     resumo = montar_resumo(
-        refil,
-        pontos,
         date(2026, 1, 1),
+        pontos,
         Decimal("70"),
         _AGORA,
     )
@@ -71,7 +65,6 @@ def test_montar_resumo_preserva_ultima_medicao_e_status_persistido() -> None:
 
 
 def test_montar_resumo_retorna_primeiro_cruzamento_enquanto_alerta_esta_ativo() -> None:
-    refil = Refil(armadilha_id=uuid4(), data_instalacao=date(2026, 1, 1))
     pontos = [
         _ponto(0, "40.00", StatusAnalise.OK),
         _ponto(5, "72.00", StatusAnalise.TROCAR),
@@ -79,9 +72,8 @@ def test_montar_resumo_retorna_primeiro_cruzamento_enquanto_alerta_esta_ativo() 
     ]
 
     resumo = montar_resumo(
-        refil,
-        pontos,
         date(2026, 1, 1),
+        pontos,
         Decimal("70"),
         _AGORA,
     )

@@ -76,6 +76,20 @@ class ArmadilhaRepository:
         """
         return self._session.get(Armadilha, armadilha_id)
 
+    def get_by_id_for_update(self, armadilha_id: UUID) -> Armadilha | None:
+        """Busca e bloqueia a linha da armadilha até o fim da transação.
+
+        Args:
+            armadilha_id: UUID da armadilha.
+
+        Returns:
+            A armadilha bloqueada ou None se não existir.
+        """
+        statement = (
+            select(Armadilha).where(Armadilha.id == armadilha_id).with_for_update()
+        )
+        return self._session.scalars(statement).one_or_none()
+
     def get_by_identificador(self, identificador: str) -> Armadilha | None:
         """Busca uma armadilha pelo código único usado em campo.
 
