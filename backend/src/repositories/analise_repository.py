@@ -41,6 +41,7 @@ class AnaliseRepository:
         status: StatusAnalise,
         caminho_imagem: str,
         modelo_versao: str,
+        analise_id: UUID | None = None,
     ) -> Analise:
         """Cria uma análise com o resultado já calculado pela camada de aplicação.
 
@@ -51,11 +52,16 @@ class AnaliseRepository:
             status: classificação persistida no momento da análise.
             caminho_imagem: caminho relativo do arquivo armazenado.
             modelo_versao: versão do modelo que produziu o resultado.
+            analise_id: UUID definido antes do armazenamento, se fornecido.
 
         Returns:
             A análise persistida dentro da transação atual.
         """
+        campos_id: dict[str, UUID] = {}
+        if analise_id is not None:
+            campos_id["id"] = analise_id
         analise = Analise(
+            **campos_id,
             refil_id=refil_id,
             analisado_em=analisado_em,
             percentual_coberto=percentual_coberto,

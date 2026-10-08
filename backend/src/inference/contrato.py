@@ -7,6 +7,9 @@ from typing import Protocol, runtime_checkable
 
 from src.entities.status import StatusAnalise
 
+# Teto compartilhado entre validação do upload e inferidores.
+LIMITE_PIXELS_IMAGEM = 20_000_000
+
 _DUAS_CASAS = Decimal("0.01")
 _IDENTIFICADOR_PRE_RELEASE = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 _FORMATO_SEMVER = re.compile(

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import api_router
 from src.api.erros import registrar_handlers
+from src.api.limite_corpo import LimiteCorpoMiddleware
 from src.config.database import create_database_engine, create_session_factory
 from src.config.settings import Settings
 from src.inference.fabrica import criar_inferidor
@@ -42,6 +43,8 @@ def create_app() -> FastAPI:
     application.state.inferidor = inferidor
     # A captura fica antes do CORS para que erros inesperados recebam seus cabeçalhos.
     registrar_handlers(application)
+    # O CORS envolve o limite para que a rejeição antecipada preserve seus cabeçalhos.
+    application.add_middleware(LimiteCorpoMiddleware)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origens,

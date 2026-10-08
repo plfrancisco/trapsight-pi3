@@ -18,7 +18,8 @@ from src.inference import (
     criar_inferidor,
     derivar_status,
 )
-from src.inference.stub import LIMITE_PIXELS_IMAGEM, InferidorStub
+from src.inference.contrato import LIMITE_PIXELS_IMAGEM
+from src.inference.stub import InferidorStub
 
 
 def criar_png(

@@ -6,14 +6,13 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 
 from src.inference.contrato import (
+    LIMITE_PIXELS_IMAGEM,
     FalhaInferencia,
     ResultadoInferencia,
     validar_versao_semver,
 )
 from src.inference.status import derivar_status
 
-# Vinte milhões de pixels limita a expansão em memória sem excluir fotos comuns.
-LIMITE_PIXELS_IMAGEM = 20_000_000
 _PERCENTUAL_STUB = Decimal("55.00")
 _HASH_STUB = "00000000"
 _MENSAGEM_IMAGEM_INVALIDA = "A imagem não pôde ser processada."
