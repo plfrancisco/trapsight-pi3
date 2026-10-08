@@ -1,6 +1,7 @@
 FROM node:24-slim
 
 WORKDIR /app
+# O npm ci precisa gravar `node_modules` sem privilégios de root.
 RUN chown node:node /app
 
 USER node
