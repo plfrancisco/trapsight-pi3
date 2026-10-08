@@ -104,6 +104,19 @@ class RefilRepository:
         )
         return self._session.scalars(statement).one_or_none()
 
+    def list_active(self) -> list[Refil]:
+        """Lista todos os refis em uso numa única consulta ordenada.
+
+        Returns:
+            Refis sem data de troca, ordenados por armadilha e UUID.
+        """
+        statement = (
+            select(Refil)
+            .where(Refil.data_troca.is_(None))
+            .order_by(Refil.armadilha_id.asc(), Refil.id.asc())
+        )
+        return list(self._session.scalars(statement))
+
     def list_closed_for_armadilha(self, armadilha_id: UUID) -> list[Refil]:
         """Lista ciclos encerrados pela data de troca e UUID.
 

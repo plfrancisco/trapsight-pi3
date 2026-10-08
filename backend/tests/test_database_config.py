@@ -23,6 +23,19 @@ def test_engine_uses_psycopg_driver_from_environment(
         engine.dispose()
 
 
+def test_engine_accepts_url_validada_sem_ler_ambiente(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cria o engine com URL recebida sem abrir conexão nem consultar o ambiente."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    engine = create_database_engine("postgresql://db:5432/armadilhas")
+    try:
+        assert engine.url.drivername == "postgresql+psycopg"
+        assert engine.pool.checkedout() == 0
+    finally:
+        engine.dispose()
+
+
 def test_database_url_helper_returns_psycopg_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

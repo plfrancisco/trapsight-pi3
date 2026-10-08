@@ -1,7 +1,9 @@
 """Operações de persistência e leitura temporal para análises."""
 
+from collections.abc import Collection
 from datetime import datetime
 from decimal import Decimal
+from typing import NamedTuple
 from uuid import UUID
 
 from sqlalchemy import select
@@ -9,6 +11,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 
 from src.entities import Analise, Refil, StatusAnalise
+
+
+class PontoAnalise(NamedTuple):
+    """Projeção enxuta de uma leitura persistida para gráficos e resumos."""
+
+    analisado_em: datetime
+    percentual_coberto: Decimal
+    status: StatusAnalise
 
 
 class AnaliseRepository:
@@ -153,6 +163,44 @@ class AnaliseRepository:
             .limit(1)
         )
         return self._session.scalars(statement).first()
+
+    def list_pontos_by_refil_ids(
+        self,
+        refil_ids: Collection[UUID],
+    ) -> dict[UUID, list[PontoAnalise]]:
+        """Lê pontos de vários refis em um SELECT sem carregar entidades.
+
+        Args:
+            refil_ids: identificadores dos ciclos cujas análises serão projetadas.
+
+        Returns:
+            Pontos agrupados por refil e ordenados cronologicamente.
+        """
+        identificadores = set(refil_ids)
+        pontos_por_refil = {refil_id: [] for refil_id in identificadores}
+        statement = (
+            select(
+                Analise.refil_id,
+                Analise.analisado_em,
+                Analise.percentual_coberto,
+                Analise.status,
+            )
+            .where(Analise.refil_id.in_(identificadores))
+            .order_by(
+                Analise.refil_id.asc(),
+                Analise.analisado_em.asc(),
+                Analise.id.asc(),
+            )
+        )
+        for row in self._session.execute(statement):
+            pontos_por_refil[row.refil_id].append(
+                PontoAnalise(
+                    analisado_em=row.analisado_em,
+                    percentual_coberto=row.percentual_coberto,
+                    status=StatusAnalise(row.status),
+                )
+            )
+        return pontos_por_refil
 
     @staticmethod
     def _validate_limit(limit: int | None) -> None:

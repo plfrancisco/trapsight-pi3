@@ -35,6 +35,20 @@ def test_app_exposes_docs_and_keeps_settings_at_initialization(
     assert response.status_code == 200
     assert app.state.settings.model_weights_path == "/caminho-ficticio/pesos.pt"
     assert app.state.settings.cors_origens == ["http://localhost:5173"]
+    assert app.state.inferidor.__class__.__name__ == "InferidorStub"
+
+
+def test_app_rejeita_model_version_invalida_antes_de_subir(
+    fake_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Falha na criação do app antes de atender uma versão sem três componentes."""
+    from src.main import create_app
+
+    monkeypatch.setenv("MODEL_VERSION", "1.2")
+
+    with pytest.raises(ValueError):
+        create_app()
 
 
 def test_cors_accepts_list_with_spaces_and_rejects_other_origins(

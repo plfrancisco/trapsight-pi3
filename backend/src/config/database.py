@@ -19,7 +19,7 @@ def database_url_from_environment() -> URL:
         URL SQLAlchemy pronta para criar um engine PostgreSQL.
 
     Raises:
-        DatabaseConfigurationError: se DATABASE_URL estiver ausente ou inválida.
+        DatabaseConfigurationError: se a URL estiver ausente ou inválida.
     """
     value = os.environ.get("DATABASE_URL")
     if not value:
@@ -27,8 +27,14 @@ def database_url_from_environment() -> URL:
             "DATABASE_URL não definida; configure a variável de ambiente."
         )
 
+    return _validated_database_url(value)
+
+
+def _validated_database_url(value: str | URL) -> URL:
+    """Valida uma URL sem reproduzir seu conteúdo em mensagens de erro."""
+
     try:
-        url = make_url(value)
+        url = value if isinstance(value, URL) else make_url(value)
         _validate_url_port(url)
     except (ArgumentError, ValueError):
         raise DatabaseConfigurationError(
@@ -48,8 +54,11 @@ def _validate_url_port(url: URL) -> None:
     _ = url.port
 
 
-def create_database_engine() -> Engine:
+def create_database_engine(database_url: str | URL | None = None) -> Engine:
     """Cria um engine Psycopg com parâmetros ocultos em logs.
+
+    Args:
+        database_url: URL validada pelo chamador ou None para ler o ambiente.
 
     Returns:
         Engine configurado para PostgreSQL com verificação de conexão.
@@ -57,8 +66,13 @@ def create_database_engine() -> Engine:
     Raises:
         DatabaseConfigurationError: se DATABASE_URL estiver ausente ou inválida.
     """
+    url = (
+        database_url_from_environment()
+        if database_url is None
+        else _validated_database_url(database_url)
+    )
     return create_engine(
-        database_url_from_environment(),
+        url,
         pool_pre_ping=True,
         hide_parameters=True,
     )
