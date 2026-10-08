@@ -1,10 +1,13 @@
 """Verifica a leitura segura da configuração de conexão."""
 
 import pytest
+from sqlalchemy import create_engine
 
 from src.config.database import (
     DatabaseConfigurationError,
     create_database_engine,
+    create_session_factory,
+    database_url_from_environment,
 )
 
 
@@ -18,6 +21,17 @@ def test_engine_uses_psycopg_driver_from_environment(
         assert engine.url.drivername == "postgresql+psycopg"
     finally:
         engine.dispose()
+
+
+def test_database_url_helper_returns_psycopg_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Compartilha a mesma conversão PostgreSQL usada pelo Alembic e pelo engine."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql://db:5432/armadilhas")
+
+    url = database_url_from_environment()
+
+    assert url.drivername == "postgresql+psycopg"
 
 
 def test_missing_database_url_has_clear_error(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -37,3 +51,20 @@ def test_invalid_database_url_does_not_leak_value(
         create_database_engine()
     assert "DATABASE_URL inválida" in str(captured.value)
     assert invalid_url not in str(captured.value)
+
+
+def test_session_factory_requires_and_uses_the_given_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Vincula as sessões ao engine explícito sem ler configuração adicional."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    engine = create_engine("postgresql+psycopg://")
+    try:
+        session_factory = create_session_factory(engine)
+        session = session_factory()
+        try:
+            assert session.get_bind() is engine
+        finally:
+            session.close()
+    finally:
+        engine.dispose()

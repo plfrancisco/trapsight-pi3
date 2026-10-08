@@ -11,12 +11,15 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.entities import Analise, Armadilha, Base, Refil
+from src.entities import Analise, Armadilha, Base, Refil, StatusAnalise
 from src.repositories import (
     AnaliseRepository,
     ArmadilhaRepository,
+    DataTrocaInvalida,
+    ErroDeDominio,
     IdentificadorDuplicado,
     RefilAtivoExistente,
+    RefilJaEncerrado,
     RefilRepository,
 )
 
@@ -48,9 +51,9 @@ def test_armadilha_create_get_list_and_update(session: Session) -> None:
     assert armadilha.identificador == "ARM-003"
     assert armadilha.modelo is None
     assert armadilha.localizacao == "Expedição"
-    assert repository.update(outra.id, localizacao="") is outra
-    assert repository.update(outra.id, modelo="") is outra
-    assert repository.update(outra.id, identificador="") is outra
+    assert repository.update(outra.id, localizacao="Laboratório") is outra
+    assert repository.update(outra.id, modelo="StickFly K-46") is outra
+    assert repository.update(outra.id, identificador="ARM-004") is outra
     assert repository.update(UUID(int=0), identificador="x") is None
 
 
@@ -115,7 +118,7 @@ def test_analise_queries_order_and_limit(session: Session) -> None:
         refil_id=first_refil.id,
         analisado_em=datetime(2026, 1, 3, tzinfo=timezone.utc),
         percentual_coberto=Decimal("30.00"),
-        status="ok",
+        status=StatusAnalise.OK,
         caminho_imagem="analises/primeira.jpg",
         modelo_versao="v1.0.0+12345678",
     )
@@ -123,7 +126,7 @@ def test_analise_queries_order_and_limit(session: Session) -> None:
         refil_id=first_refil.id,
         analisado_em=datetime(2026, 1, 5, tzinfo=timezone.utc),
         percentual_coberto=Decimal("45.00"),
-        status="atencao",
+        status=StatusAnalise.ATENCAO,
         caminho_imagem="analises/segunda.jpg",
         modelo_versao="v1.0.0+12345678",
     )
@@ -131,18 +134,52 @@ def test_analise_queries_order_and_limit(session: Session) -> None:
         refil_id=second_refil.id,
         analisado_em=datetime(2026, 1, 4, tzinfo=timezone.utc),
         percentual_coberto=Decimal("70.00"),
-        status="atencao",
+        status=StatusAnalise.ATENCAO,
         caminho_imagem="analises/terceira.jpg",
+        modelo_versao="v1.0.0+12345678",
+    )
+    latest_refil = repository.create(
+        refil_id=first_refil.id,
+        analisado_em=datetime(2026, 1, 7, tzinfo=timezone.utc),
+        percentual_coberto=Decimal("82.00"),
+        status=StatusAnalise.TROCAR,
+        caminho_imagem="analises/quarta.jpg",
         modelo_versao="v1.0.0+12345678",
     )
 
     assert repository.get_by_id(first.id) is first
     assert repository.get_by_id(UUID(int=0)) is None
-    assert repository.get_latest_for_refil(first_refil.id) is latest_first
-    assert repository.list_by_refil(first_refil.id) == [first, latest_first]
-    assert repository.list_by_refil(first_refil.id, limit=1) == [first]
-    assert repository.list_by_armadilha(armadilha.id) == [first, middle, latest_first]
-    assert repository.list_by_armadilha(armadilha.id, limit=2) == [first, middle]
+    assert repository.get_latest_for_refil(first_refil.id) is latest_refil
+    assert repository.list_by_refil(first_refil.id) == [
+        first,
+        latest_first,
+        latest_refil,
+    ]
+    assert repository.list_by_refil(first_refil.id, limit=2) == [
+        latest_first,
+        latest_refil,
+    ]
+    assert repository.list_by_refil(first_refil.id, limit=None) == [
+        first,
+        latest_first,
+        latest_refil,
+    ]
+    assert repository.list_by_armadilha(armadilha.id) == [
+        first,
+        middle,
+        latest_first,
+        latest_refil,
+    ]
+    assert repository.list_by_armadilha(armadilha.id, limit=2) == [
+        latest_first,
+        latest_refil,
+    ]
+    assert repository.list_by_armadilha(armadilha.id, limit=None) == [
+        first,
+        middle,
+        latest_first,
+        latest_refil,
+    ]
     assert repository.list_by_armadilha(UUID(int=0)) == []
     with pytest.raises(ValueError, match="maior que zero"):
         repository.list_by_refil(first_refil.id, limit=0)
@@ -166,12 +203,36 @@ def test_analysis_checks_are_enforced_by_postgres(
         armadilha_id=armadilha.id,
         data_instalacao=date(2026, 1, 1),
     )
-    with pytest.raises(IntegrityError):
-        AnaliseRepository(session).create(
+    session.add(
+        Analise(
             refil_id=refil.id,
             analisado_em=datetime(2026, 1, 2, tzinfo=timezone.utc),
             percentual_coberto=percentual,
             status=status,
+            caminho_imagem="analises/teste.jpg",
+            modelo_versao="v1.0.0+12345678",
+        )
+    )
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_analysis_repository_rejects_unknown_status_before_database(
+    session: Session,
+) -> None:
+    """Converte a classificação antes de adicionar a análise à sessão."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-STATUS")
+    refil = RefilRepository(session).create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+    )
+
+    with pytest.raises(ValueError):
+        AnaliseRepository(session).create(
+            refil_id=refil.id,
+            analisado_em=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            percentual_coberto=Decimal("10.00"),
+            status="invalido",
             caminho_imagem="analises/teste.jpg",
             modelo_versao="v1.0.0+12345678",
         )
@@ -282,6 +343,74 @@ def test_multiple_closed_refils_are_allowed(session: Session) -> None:
     )
 
     assert repository.list_closed_for_armadilha(armadilha.id) == [first, second]
+
+
+def test_close_refil_validates_current_state_and_installation_date(
+    session: Session,
+) -> None:
+    """Impede reencerramento e datas anteriores sem alterar o ciclo ativo."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-DATAS")
+    repository = RefilRepository(session)
+    closed = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 1, 1),
+        data_troca=date(2026, 1, 31),
+    )
+    active = repository.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 1),
+    )
+
+    with pytest.raises(RefilJaEncerrado):
+        repository.close(closed.id, date(2026, 2, 1))
+    with pytest.raises(DataTrocaInvalida):
+        repository.close(active.id, date(2026, 1, 31))
+
+    assert closed.data_troca == date(2026, 1, 31)
+    assert active.data_troca is None
+    assert repository.close(active.id, date(2026, 2, 28)) is active
+    assert repository.close(UUID(int=0), date(2026, 3, 1)) is None
+
+
+def test_create_refil_rejects_exchange_date_before_installation(
+    session: Session,
+) -> None:
+    """Rejeita datas incoerentes antes de adicionar o refil à sessão."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-CREATE-DATA")
+    repository = RefilRepository(session)
+
+    with pytest.raises(DataTrocaInvalida):
+        repository.create(
+            armadilha_id=armadilha.id,
+            data_instalacao=date(2026, 2, 1),
+            data_troca=date(2026, 1, 31),
+        )
+
+    assert repository.get_active_for_armadilha(armadilha.id) is None
+    assert repository.list_closed_for_armadilha(armadilha.id) == []
+
+
+def test_refil_date_check_remains_enforced_by_postgres(session: Session) -> None:
+    """Mantém a constraint do banco como barreira para gravações diretas."""
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-CHECK-DATA")
+    session.add(
+        Refil(
+            armadilha_id=armadilha.id,
+            data_instalacao=date(2026, 2, 1),
+            data_troca=date(2026, 1, 31),
+        )
+    )
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_domain_exceptions_share_a_common_base() -> None:
+    """Permite que chamadores capturem as falhas de domínio em conjunto."""
+    assert issubclass(IdentificadorDuplicado, ErroDeDominio)
+    assert issubclass(RefilAtivoExistente, ErroDeDominio)
+    assert issubclass(RefilJaEncerrado, ErroDeDominio)
+    assert issubclass(DataTrocaInvalida, ErroDeDominio)
 
 
 def test_database_rejects_duplicate_active_refil_without_repository(

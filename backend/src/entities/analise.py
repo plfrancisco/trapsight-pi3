@@ -19,9 +19,13 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.entities.base import Base, UUIDTimestampMixin
+from src.entities.status import StatusAnalise
 
 if TYPE_CHECKING:
     from src.entities.refil import Refil
+
+# A CHECK aceita literais fixos do enum, nunca texto vindo de entrada externa.
+_STATUS_SQL_VALUES = ", ".join(repr(status.value) for status in StatusAnalise)
 
 
 class Analise(UUIDTimestampMixin, Base):
@@ -34,7 +38,7 @@ class Analise(UUIDTimestampMixin, Base):
             name="ck_analise_percentual_coberto",
         ),
         CheckConstraint(
-            "status IN ('ok', 'atencao', 'trocar')",
+            f"status IN ({_STATUS_SQL_VALUES})",
             name="ck_analise_status",
         ),
         Index(

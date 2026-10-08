@@ -2,13 +2,22 @@
 
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
-from src.repositories.exceptions import IdentificadorDuplicado, RefilAtivoExistente
+from src.repositories.exceptions import (
+    DataTrocaInvalida,
+    ErroDeDominio,
+    IdentificadorDuplicado,
+    RefilAtivoExistente,
+    RefilJaEncerrado,
+)
 from src.repositories.refil_repository import RefilRepository
 
 __all__ = [
     "AnaliseRepository",
     "ArmadilhaRepository",
+    "DataTrocaInvalida",
+    "ErroDeDominio",
     "IdentificadorDuplicado",
     "RefilAtivoExistente",
+    "RefilJaEncerrado",
     "RefilRepository",
 ]

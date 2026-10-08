@@ -6,8 +6,9 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
-from src.entities import Analise, Refil
+from src.entities import Analise, Refil, StatusAnalise
 
 
 class AnaliseRepository:
@@ -27,7 +28,7 @@ class AnaliseRepository:
         refil_id: UUID,
         analisado_em: datetime,
         percentual_coberto: Decimal,
-        status: str,
+        status: StatusAnalise,
         caminho_imagem: str,
         modelo_versao: str,
     ) -> Analise:
@@ -48,7 +49,7 @@ class AnaliseRepository:
             refil_id=refil_id,
             analisado_em=analisado_em,
             percentual_coberto=percentual_coberto,
-            status=status,
+            status=StatusAnalise(status).value,
             caminho_imagem=caminho_imagem,
             modelo_versao=modelo_versao,
         )
@@ -67,53 +68,72 @@ class AnaliseRepository:
         """
         return self._session.get(Analise, analise_id)
 
-    def list_by_refil(self, refil_id: UUID, *, limit: int = 100) -> list[Analise]:
-        """Lista análises do refil em ordem cronológica, limitando o resultado.
+    def list_by_refil(
+        self,
+        refil_id: UUID,
+        *,
+        limit: int | None = 100,
+    ) -> list[Analise]:
+        """Lista as análises mais recentes do refil em ordem cronológica.
 
         Args:
             refil_id: UUID do ciclo analisado.
-            limit: quantidade máxima de registros retornados.
+            limit: quantidade máxima de registros; None retorna todos.
 
         Returns:
-            Análises da mais antiga para a mais recente.
+            As análises selecionadas da mais antiga para a mais recente.
 
         Raises:
-            ValueError: se limit for menor que um.
+            ValueError: se limit for menor que um quando informado.
         """
-        self._validate_limit(limit)
-        statement = (
-            select(Analise)
-            .where(Analise.refil_id == refil_id)
-            .order_by(Analise.analisado_em.asc(), Analise.id.asc())
-            .limit(limit)
-        )
-        return list(self._session.scalars(statement))
+        statement = select(Analise).where(Analise.refil_id == refil_id)
+        return self._list_latest(statement, limit)
 
     def list_by_armadilha(
         self,
         armadilha_id: UUID,
         *,
-        limit: int = 100,
+        limit: int | None = 100,
     ) -> list[Analise]:
-        """Lista análises de todos os ciclos da armadilha cronologicamente.
+        """Lista as análises mais recentes da armadilha em ordem cronológica.
 
         Args:
             armadilha_id: UUID da armadilha proprietária dos refis.
-            limit: quantidade máxima de registros retornados.
+            limit: quantidade máxima de registros; None retorna todos.
 
         Returns:
-            Análises da mais antiga para a mais recente.
+            As análises selecionadas da mais antiga para a mais recente.
 
         Raises:
-            ValueError: se limit for menor que um.
+            ValueError: se limit for menor que um quando informado.
         """
-        self._validate_limit(limit)
         statement = (
             select(Analise)
             .join(Refil, Analise.refil_id == Refil.id)
             .where(Refil.armadilha_id == armadilha_id)
-            .order_by(Analise.analisado_em.asc(), Analise.id.asc())
-            .limit(limit)
+        )
+        return self._list_latest(statement, limit)
+
+    def _list_latest(
+        self,
+        filtered_statement: Select[tuple[Analise]],
+        limit: int | None,
+    ) -> list[Analise]:
+        """Limita pela recência e devolve os registros em ordem cronológica."""
+        self._validate_limit(limit)
+        if limit is not None:
+            latest_ids = (
+                filtered_statement.with_only_columns(Analise.id)
+                .order_by(Analise.analisado_em.desc(), Analise.id.desc())
+                .limit(limit)
+                .subquery()
+            )
+            filtered_statement = select(Analise).join(
+                latest_ids, Analise.id == latest_ids.c.id
+            )
+
+        statement = filtered_statement.order_by(
+            Analise.analisado_em.asc(), Analise.id.asc()
         )
         return list(self._session.scalars(statement))
 
@@ -135,7 +155,7 @@ class AnaliseRepository:
         return self._session.scalars(statement).first()
 
     @staticmethod
-    def _validate_limit(limit: int) -> None:
+    def _validate_limit(limit: int | None) -> None:
         """Rejeita limites que resultariam em leitura vazia inesperada."""
-        if limit < 1:
+        if limit is not None and limit < 1:
             raise ValueError("limit deve ser maior que zero.")

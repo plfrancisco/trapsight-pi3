@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.entities import Armadilha
+from src.repositories._integridade import nome_constraint_violada
 from src.repositories.exceptions import IdentificadorDuplicado
 
 
@@ -142,10 +143,7 @@ class ArmadilhaRepository:
         try:
             self._session.flush()
         except IntegrityError as error:
-            diagnostic = getattr(error.orig, "diag", None)
-            if getattr(diagnostic, "constraint_name", None) == (
-                "uq_armadilha_identificador"
-            ):
+            if nome_constraint_violada(error) == "uq_armadilha_identificador":
                 raise IdentificadorDuplicado(
                     "Já existe uma armadilha com este identificador."
                 ) from None

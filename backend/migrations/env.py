@@ -1,37 +1,28 @@
 """Executa as migrations usando somente a conexão definida no ambiente."""
 
-import os
-
 from alembic import context
 from alembic.util import CommandError
 from sqlalchemy import create_engine, pool
-from sqlalchemy.engine import make_url
-from sqlalchemy.exc import ArgumentError
+from sqlalchemy.engine import URL
 
+from src.config.database import (
+    DatabaseConfigurationError,
+    database_url_from_environment,
+)
 from src.entities import Base
 
 target_metadata = Base.metadata
 
 
-def database_url():
-    """Valida DATABASE_URL e seleciona o driver Psycopg 3 sem expor a URL."""
-    value = os.environ.get("DATABASE_URL")
-    if not value:
-        raise CommandError(
-            "DATABASE_URL não definida; configure a variável de ambiente."
-        )
+def database_url() -> URL:
+    """Obtém a URL validada e converte falhas em erros próprios do Alembic."""
     try:
-        url = make_url(value)
-    except (ArgumentError, ValueError):
-        raise CommandError(
-            "DATABASE_URL inválida; verifique sua configuração."
-        ) from None
-    if url.drivername not in {"postgresql", "postgresql+psycopg"}:
-        raise CommandError("DATABASE_URL deve usar PostgreSQL com Psycopg 3.")
-    return url.set(drivername="postgresql+psycopg")
+        return database_url_from_environment()
+    except DatabaseConfigurationError as error:
+        raise CommandError(str(error)) from None
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Gera comandos de migration sem abrir uma conexão com o banco."""
     context.configure(
         url=database_url(),
@@ -43,7 +34,7 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     """Aplica migrations usando uma conexão temporária com o banco."""
     engine = create_engine(
         database_url(),

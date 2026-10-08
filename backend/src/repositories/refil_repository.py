@@ -8,7 +8,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.entities import Refil
-from src.repositories.exceptions import RefilAtivoExistente
+from src.repositories._integridade import nome_constraint_violada
+from src.repositories.exceptions import (
+    DataTrocaInvalida,
+    RefilAtivoExistente,
+    RefilJaEncerrado,
+)
 
 
 class RefilRepository:
@@ -41,17 +46,17 @@ class RefilRepository:
 
         Raises:
             RefilAtivoExistente: se a armadilha já tiver um ciclo aberto.
+            DataTrocaInvalida: se a data de troca anteceder a instalação.
         """
+        if data_troca is not None:
+            self._validate_data_troca(data_instalacao, data_troca)
         refil = Refil(
             armadilha_id=armadilha_id,
             data_instalacao=data_instalacao,
             data_troca=data_troca,
         )
         self._session.add(refil)
-        if data_troca is None:
-            self._flush_or_raise_active_duplicate()
-        else:
-            self._session.flush()
+        self._flush_or_raise_active_duplicate()
         return refil
 
     def _flush_or_raise_active_duplicate(self) -> None:
@@ -59,14 +64,19 @@ class RefilRepository:
         try:
             self._session.flush()
         except IntegrityError as error:
-            diagnostic = getattr(error.orig, "diag", None)
-            if getattr(diagnostic, "constraint_name", None) == (
-                "uq_refil_ativo_por_armadilha"
-            ):
+            if nome_constraint_violada(error) == "uq_refil_ativo_por_armadilha":
                 raise RefilAtivoExistente(
                     "Esta armadilha já possui um refil ativo."
                 ) from None
             raise
+
+    @staticmethod
+    def _validate_data_troca(data_instalacao: date, data_troca: date) -> None:
+        """Rejeita uma troca anterior à instalação antes de alterar a sessão."""
+        if data_troca < data_instalacao:
+            raise DataTrocaInvalida(
+                "A data de troca não pode anteceder a instalação do refil."
+            )
 
     def get_by_id(self, refil_id: UUID) -> Refil | None:
         """Busca um refil pela chave primária.
@@ -80,13 +90,13 @@ class RefilRepository:
         return self._session.get(Refil, refil_id)
 
     def get_active_for_armadilha(self, armadilha_id: UUID) -> Refil | None:
-        """Busca o único refil sem data de troca da armadilha.
+        """Busca o refil sem data de troca, cuja unicidade é garantida pelo banco.
 
         Args:
             armadilha_id: UUID da armadilha proprietária.
 
         Returns:
-            O refil ativo ou None; múltiplos resultados revelam dados ambíguos.
+            O refil ativo ou None.
         """
         statement = select(Refil).where(
             Refil.armadilha_id == armadilha_id,
@@ -114,7 +124,7 @@ class RefilRepository:
         return list(self._session.scalars(statement))
 
     def close(self, refil_id: UUID, data_troca: date) -> Refil | None:
-        """Encerra o ciclo na data informada, deixando a CHECK validar a cronologia.
+        """Encerra um ciclo ainda ativo após validar sua cronologia.
 
         Args:
             refil_id: UUID do refil a encerrar.
@@ -122,10 +132,17 @@ class RefilRepository:
 
         Returns:
             O refil encerrado ou None se não existir.
+
+        Raises:
+            RefilJaEncerrado: se o ciclo já tiver uma data de troca.
+            DataTrocaInvalida: se a troca anteceder a instalação.
         """
         refil = self.get_by_id(refil_id)
         if refil is None:
             return None
+        if refil.data_troca is not None:
+            raise RefilJaEncerrado("Este refil já foi encerrado.")
+        self._validate_data_troca(refil.data_instalacao, data_troca)
         refil.data_troca = data_troca
         self._session.flush()
         return refil
