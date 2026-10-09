@@ -72,6 +72,36 @@ def remover_arquivos_analise(diretorio_uploads: str | Path, analise_id: UUID) ->
         shutil.rmtree(pasta)
 
 
+def resolver_caminho_arquivo(
+    diretorio_uploads: str | Path,
+    caminho_arquivo: str | Path,
+) -> Path:
+    """Resolve um arquivo de mídia e rejeita caminhos fora de UPLOADS_DIR.
+
+    Args:
+        diretorio_uploads: diretório raiz autorizado para as mídias.
+        caminho_arquivo: caminho absoluto ou relativo registrado para a mídia.
+
+    Returns:
+        Caminho absoluto normalizado para uso em uma resposta de arquivo.
+
+    Raises:
+        ValueError: se o caminho escapar da raiz ou contiver um symlink circular.
+    """
+    raiz = Path(diretorio_uploads).resolve()
+    caminho = Path(caminho_arquivo)
+    destino = caminho if caminho.is_absolute() else raiz / caminho
+    try:
+        destino_resolvido = destino.resolve()
+    except RuntimeError:
+        raise ValueError(
+            "O caminho do arquivo precisa permanecer em UPLOADS_DIR."
+        ) from None
+    if not destino_resolvido.is_relative_to(raiz):
+        raise ValueError("O caminho do arquivo precisa permanecer em UPLOADS_DIR.")
+    return destino_resolvido
+
+
 def _gravar_arquivo_atomico(
     diretorio_uploads: str | Path,
     analise_id: UUID,

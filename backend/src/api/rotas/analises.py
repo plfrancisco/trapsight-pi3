@@ -1,11 +1,16 @@
 """Endpoints de envio e consulta individual de análises de imagem."""
 
 import asyncio
-from datetime import datetime
-from typing import Annotated
+import logging
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from pathlib import Path
+from stat import S_ISREG
+from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_inferidor, get_session, get_settings
@@ -34,6 +39,7 @@ from src.services.upload import (
 
 router = APIRouter(prefix="/analises", tags=["Análises"])
 TEMPO_LIMITE_INFERENCIA_SEGUNDOS = 30
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -195,6 +201,189 @@ def obter_analise(
             detalhes={"analise_id": str(analise_id)},
         )
     return _montar_saida(analise, analise.refil.armadilha_id)
+
+
+@router.get(
+    "/{analise_id}/imagem",
+    response_class=FileResponse,
+    responses=respostas_de_erro(
+        CodigoErro.ANALISE_NAO_ENCONTRADA,
+        CodigoErro.VALIDACAO_FALHOU,
+    ),
+)
+def obter_imagem_analise(
+    request: Request,
+    analise_id: UUID,
+    session: Annotated[Session, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    """Serve a imagem original da análise como arquivo protegido.
+
+    Args:
+        request: requisição usada para avaliar cabeçalhos condicionais.
+        analise_id: UUID da análise solicitada.
+        session: sessão usada para buscar a análise.
+        settings: configuração que define a raiz dos arquivos autorizados.
+
+    Returns:
+        Arquivo JPEG ou PNG em streaming, ou resposta 304 sem corpo.
+
+    Raises:
+        ErroDeApi: se a análise ou seu arquivo não estiver disponível.
+    """
+    return _servir_recurso_analise(
+        request,
+        analise_id,
+        session,
+        settings,
+        recurso="imagem",
+    )
+
+
+@router.get(
+    "/{analise_id}/mascara",
+    response_class=FileResponse,
+    responses=respostas_de_erro(
+        CodigoErro.ANALISE_NAO_ENCONTRADA,
+        CodigoErro.VALIDACAO_FALHOU,
+    ),
+)
+def obter_mascara_analise(
+    request: Request,
+    analise_id: UUID,
+    session: Annotated[Session, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    """Serve a máscara PNG derivada do UUID da análise, sem usar caminho do banco.
+
+    Args:
+        request: requisição usada para avaliar cabeçalhos condicionais.
+        analise_id: UUID da análise solicitada.
+        session: sessão usada para confirmar que a análise existe.
+        settings: configuração que define a raiz dos arquivos autorizados.
+
+    Returns:
+        Máscara PNG em streaming, ou resposta 304 sem corpo.
+
+    Raises:
+        ErroDeApi: se a análise ou sua máscara não estiver disponível.
+    """
+    return _servir_recurso_analise(
+        request,
+        analise_id,
+        session,
+        settings,
+        recurso="mascara",
+    )
+
+
+def _servir_recurso_analise(
+    request: Request,
+    analise_id: UUID,
+    session: Session,
+    settings: Settings,
+    *,
+    recurso: Literal["imagem", "mascara"],
+) -> Response:
+    """Valida o registro e o caminho antes de criar a resposta de arquivo."""
+    analise = AnaliseRepository(session).get_by_id(analise_id)
+    if analise is None:
+        raise ErroDeApi(
+            CodigoErro.ANALISE_NAO_ENCONTRADA,
+            "A análise solicitada não foi encontrada.",
+            detalhes={"analise_id": str(analise_id)},
+        )
+
+    if recurso == "imagem":
+        caminho_salvo = analise.caminho_imagem
+        try:
+            extensao = Path(caminho_salvo).suffix.lower().lstrip(".")
+        except (TypeError, ValueError):
+            raise _erro_recurso_analise(analise_id, recurso) from None
+        tipos_por_extensao = {"jpg": "image/jpeg", "png": "image/png"}
+        tipo_midia = tipos_por_extensao.get(extensao)
+        if tipo_midia is None:
+            raise _erro_recurso_analise(analise_id, recurso)
+    else:
+        caminho_salvo = f"{analise_id}/mascara.png"
+        tipo_midia = "image/png"
+
+    try:
+        caminho = armazenamento.resolver_caminho_arquivo(
+            settings.uploads_dir,
+            caminho_salvo,
+        )
+        metadados = caminho.stat()
+        if not S_ISREG(metadados.st_mode):
+            raise ValueError("O recurso precisa ser um arquivo regular.")
+    except (OSError, RuntimeError, TypeError, ValueError):
+        raise _erro_recurso_analise(analise_id, recurso) from None
+
+    resposta = FileResponse(
+        caminho,
+        media_type=tipo_midia,
+        headers={
+            "Cache-Control": "private, max-age=31536000, immutable",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": "inline",
+        },
+        stat_result=metadados,
+    )
+    if _requisicao_nao_modificada(request, resposta):
+        return Response(
+            status_code=304,
+            headers=dict(resposta.headers.items()),
+        )
+    return resposta
+
+
+def _erro_recurso_analise(
+    analise_id: UUID,
+    recurso: Literal["imagem", "mascara"],
+) -> ErroDeApi:
+    """Registra a indisponibilidade da mídia sem incluir caminhos no erro público."""
+    logger.warning(
+        "Arquivo de análise ausente ou inválido (analise_id=%s, recurso=%s).",
+        analise_id,
+        recurso,
+    )
+    return ErroDeApi(
+        CodigoErro.ANALISE_NAO_ENCONTRADA,
+        "O arquivo solicitado não foi encontrado.",
+        detalhes={"recurso": recurso},
+    )
+
+
+def _requisicao_nao_modificada(request: Request, resposta: FileResponse) -> bool:
+    """Aplica validadores GET para evitar reenviar um arquivo imutável."""
+    etag_atual = resposta.headers["etag"]
+    etag_solicitado = request.headers.get("if-none-match")
+    if etag_solicitado is not None:
+        for candidato in etag_solicitado.split(","):
+            candidato = candidato.strip()
+            if candidato == "*":
+                return True
+            if candidato.startswith("W/"):
+                candidato = candidato[2:]
+            if candidato == etag_atual:
+                return True
+        return False
+
+    data_solicitada = request.headers.get("if-modified-since")
+    if data_solicitada is None:
+        return False
+    try:
+        instante = parsedate_to_datetime(data_solicitada)
+    except (TypeError, ValueError, OverflowError):
+        return False
+    if instante.tzinfo is None:
+        instante = instante.replace(tzinfo=timezone.utc)
+    ultima_modificacao = parsedate_to_datetime(
+        resposta.headers["last-modified"]
+    ).astimezone(timezone.utc)
+    return ultima_modificacao.replace(microsecond=0) <= instante.astimezone(
+        timezone.utc
+    ).replace(microsecond=0)
 
 
 async def _ler_upload_limitado(arquivo: UploadFile) -> bytes:
