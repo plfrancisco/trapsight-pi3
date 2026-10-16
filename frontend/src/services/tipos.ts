@@ -1,0 +1,110 @@
+/** Valores persistidos pela API; a apresentação aplica os rótulos acentuados. */
+export type StatusAnalise = 'ok' | 'atencao' | 'trocar'
+
+/** Resumo do ciclo de refil atualmente instalado. */
+export interface RefilAtivo {
+  id: string
+  data_instalacao: string
+  dias_em_uso: number
+}
+
+/** Resumo de um ciclo de refil encerrado. */
+export interface RefilAnterior {
+  id: string
+  data_instalacao: string
+  data_troca: string
+  dias_ate_troca: number
+}
+
+/** Armadilha com estado consolidado para o dashboard. */
+export interface ArmadilhaLista {
+  id: string
+  identificador: string
+  localizacao: string | null
+  modelo: string | null
+  refil_ativo: RefilAtivo | null
+  percentual_atual: number | null
+  status: StatusAnalise | null
+  dias_ate_saturar: number | null
+  ultima_analise_em: string | null
+  em_alerta_desde: string | null
+}
+
+/** Armadilha com datas de cadastro e histórico de refis. */
+export interface ArmadilhaDetalhe {
+  id: string
+  identificador: string
+  modelo: string | null
+  localizacao: string | null
+  data_instalacao: string | null
+  refil_ativo: RefilAtivo | null
+  refis_anteriores: RefilAnterior[]
+  percentual_atual: number | null
+  status: StatusAnalise | null
+  dias_ate_saturar: number | null
+}
+
+/** Campos aceitos no cadastro de uma armadilha. */
+export interface ArmadilhaCriar {
+  identificador: string
+  modelo?: string | null
+  localizacao?: string | null
+  data_instalacao?: string | null
+  criar_refil_inicial?: boolean
+}
+
+/** Campos editáveis no cadastro parcial de uma armadilha. */
+export interface ArmadilhaAtualizar {
+  identificador?: string
+  modelo?: string | null
+  localizacao?: string | null
+}
+
+/** Data de instalação do ciclo iniciado por uma troca de refil. */
+export interface RefilTrocaCriar {
+  data_instalacao: string
+}
+
+/** Ciclo de refil encerrado pela troca. */
+export interface RefilEncerrado {
+  id: string
+  data_instalacao: string
+  data_troca: string
+  dias_ate_troca: number
+}
+
+/** Ciclo de refil criado pela troca. */
+export interface RefilNovo {
+  id: string
+  data_instalacao: string
+  dias_em_uso: number
+}
+
+/** Resultado da troca, com o ciclo anterior quando havia um refil ativo. */
+export interface RefilTrocaSaida {
+  refil_encerrado: RefilEncerrado | null
+  refil_novo: RefilNovo
+}
+
+/** Resultado persistido e URLs relativas da imagem e máscara. */
+export interface Analise {
+  id: string
+  refil_id: string
+  armadilha_id: string
+  analisado_em: string
+  percentual_coberto: number
+  status: StatusAnalise
+  modelo_versao: string
+  imagem_url: string
+  mascara_url: string
+}
+
+/** Escopos aceitos pela consulta do histórico de análises. */
+export type EscopoHistorico = 'refil_ativo' | 'completo'
+
+/** Filtros opcionais da consulta de análises de uma armadilha. */
+export interface FiltrosAnalises {
+  escopo?: EscopoHistorico
+  refilId?: string
+  limite?: number
+}

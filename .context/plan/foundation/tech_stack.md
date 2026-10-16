@@ -51,9 +51,13 @@
 | Build tool | Vite | Rápido, zero config, HMR |
 | Estilização | Tailwind CSS | Produtividade, sem escrever CSS manual |
 | Componentes UI | A definir, se necessário | Para o MVP, HTML + Tailwind bastam. Radix/shadcn pode entrar depois |
+| Roteamento | React Router (modo biblioteca, rotas declarativas) | As quatro telas têm URL própria e parâmetro de caminho (`/armadilhas/:id`); roteamento declarativo é o mínimo, sem framework de dados |
+| Gráficos | Recharts | Decisão em `../frontend/telas_spec.md`, seção 8.1 |
+| Acesso à API | `fetch` nativo + hook próprio | Sem TanStack Query nem estado global: cada tela carrega seus dados e a escala não justifica cache compartilhado |
+| Testes | Vitest + Testing Library (jsdom) | Integra com o Vite sem configuração extra e testa componentes pelo comportamento visível |
 
-> **Decisão:** frontend simples no MVP — sem TanStack Router/Query/Start e sem
-> biblioteca de componentes pesada. O frontend faz upload de uma imagem, chama
+> **Decisão:** frontend simples no MVP — sem TanStack Router/Query/Start, sem
+> gerência de estado global e sem biblioteca de componentes pesada. O frontend faz upload de uma imagem, chama
 > a API do FastAPI e exibe o resultado. Se no futuro virar PWA ou produto,
 > adiciona-se roteamento e gerência de estado mais robustos.
 

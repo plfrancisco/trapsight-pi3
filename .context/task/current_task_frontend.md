@@ -33,25 +33,30 @@ Cobre as 4 telas do MVP. Não cobre a tela de comparação com o baseline
 
 ## FE02 — Camada de serviços da API
 
-- [ ] Funções cobrindo os 8 endpoints de `api_spec.md`
-- [ ] Dados da API mantidos em `snake_case`, sem conversão para camelCase
+- [x] Funções cobrindo os 8 endpoints de `api_spec.md`
+- [x] Dados da API mantidos em `snake_case`, sem conversão para camelCase
+- [x] Erros da API convertidos em um tipo único com `codigo`, `mensagem` e `detalhes`
+- [x] Infraestrutura de testes (Vitest + Testing Library) funcionando
+- [x] Base da interface: roteamento das 4 telas, layout, `StatusBadge` e formatadores
 
 **Especificação:** `../plan/api/api_spec.md`; `../plan/frontend/telas_spec.md`,
 seção 8.5.
 **Dependências:** FE01.
+**Concluída em:** 2026-10-16.
 
 **Nota:** código próprio do frontend (fora da API) segue `camelCase`
 normalmente — a exceção é só nos dados vindos da API.
 
 ## FE03 — Dashboard
 
-- [ ] Lista de armadilhas ordenada por urgência (`trocar` primeiro, depois
+- [x] Lista de armadilhas ordenada por urgência (`trocar` primeiro, depois
       menor `dias_ate_saturar`)
-- [ ] Painel de alertas no topo, com contagem e lista de casos em `trocar`
-- [ ] Estados de exceção: sem armadilhas, sem refil ativo, sem análises
+- [x] Painel de alertas no topo, com contagem e lista de casos em `trocar`
+- [x] Estados de exceção: sem armadilhas, sem refil ativo, sem análises
 
 **Especificação:** `../plan/frontend/telas_spec.md`, seções 4.1 e 6.
 **Dependências:** FE02, `completed/current_task_api.md` (API03).
+**Concluída em:** 2026-10-16.
 
 ## FE04 — Detalhe da armadilha
 
@@ -75,21 +80,23 @@ normalmente — a exceção é só nos dados vindos da API.
 
 ## FE06 — Nova análise
 
-- [ ] Fluxo: seleciona armadilha, envia imagem, exibe resultado
-- [ ] Resultado mostra imagem original e máscara lado a lado, percentual,
+- [x] Fluxo: seleciona armadilha, envia imagem, exibe resultado
+- [x] Resultado mostra imagem original e máscara lado a lado, percentual,
       status e versão do modelo
-- [ ] Bloqueia envio se armadilha sem refil ativo
+- [x] Bloqueia envio se armadilha sem refil ativo
 
 **Especificação:** `../plan/frontend/telas_spec.md`, seção 4.3.
 **Dependências:** FE02, `completed/current_task_api.md` (API07).
+**Concluída em:** 2026-10-16.
 
 ## FE07 — Cadastro de armadilha
 
-- [ ] Formulário: identificador, modelo, localização, data de instalação
-- [ ] Ao criar, oferece criação imediata do primeiro refil
+- [x] Formulário: identificador, modelo, localização, data de instalação
+- [x] Ao criar, oferece criação imediata do primeiro refil
 
 **Especificação:** `../plan/frontend/telas_spec.md`, seção 4.4.
 **Dependências:** FE02.
+**Concluída em:** 2026-10-16.
 
 ---
 
