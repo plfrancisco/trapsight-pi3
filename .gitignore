@@ -78,3 +78,6 @@ mlruns/
 
 # Skills especializadas de terceiros (ver .context/rules/ai_development_rules.md, seção 3.1)
 .agents/skills/
+
+# Relatórios de segurança (podem conter detalhes da superfície)
+security/reports/

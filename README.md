@@ -87,7 +87,7 @@ Os três serviços (frontend, API e banco) sobem juntos com Docker Compose. O tr
 | Ambiente de desenvolvimento e Docker Compose                       | Concluída     |
 | Banco de dados (esquema, migrations, regras de integridade)        | Concluída     |
 | API (endpoints, upload de imagem, histórico e projeção de saturação) | Concluída     |
-| Interface web (dashboard, cadastro e nova análise prontos; detalhe e timelapse em desenvolvimento) | Em andamento  |
+| Interface web (dashboard, cadastro, nova análise e detalhe da armadilha prontos; timelapse em desenvolvimento) | Em andamento  |
 | Gerador de dataset sintético                                       | Não iniciada  |
 | Treinamento e avaliação do modelo                                  | Não iniciada  |
 | Validação com fotos reais da empresa parceira                      | Não iniciada  |

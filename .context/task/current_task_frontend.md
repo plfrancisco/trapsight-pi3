@@ -60,13 +60,14 @@ normalmente — a exceção é só nos dados vindos da API.
 
 ## FE04 — Detalhe da armadilha
 
-- [ ] Dados da armadilha e do refil ativo
-- [ ] Gráfico de evolução do percentual (Recharts)
-- [ ] Lista de análises com miniatura, data, percentual e status
-- [ ] Botão "Registrar troca de refil"
+- [x] Dados da armadilha e do refil ativo
+- [x] Gráfico de evolução do percentual (Recharts)
+- [x] Lista de análises com miniatura, data, percentual e status
+- [x] Botão "Registrar troca de refil"
 
 **Especificação:** `../plan/frontend/telas_spec.md`, seção 4.2.
 **Dependências:** FE02.
+**Concluída em:** 2026-10-16.
 
 ## FE05 — Timelapse
 

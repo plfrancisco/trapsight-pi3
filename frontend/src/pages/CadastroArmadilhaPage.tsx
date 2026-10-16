@@ -7,6 +7,7 @@ import EstadoCarregando from '../components/EstadoCarregando'
 import FormularioArmadilha from '../components/FormularioArmadilha'
 import MensagemErro from '../components/MensagemErro'
 import { useCarregamento } from '../hooks/useCarregamento'
+import { isArmadilhaAusente } from '../lib/armadilha'
 import { ApiError } from '../services/erros'
 import { getArmadilha } from '../services/armadilhas'
 import type { ArmadilhaDetalhe } from '../services/tipos'
@@ -57,7 +58,7 @@ export default function CadastroArmadilhaPage() {
     )
   }
 
-  if (erro instanceof ApiError && erro.codigo === 'ARMADILHA_NAO_ENCONTRADA') {
+  if (isArmadilhaAusente(erro)) {
     return (
       <EstadoEdicao>
         <ArmadilhaNaoEncontrada />

@@ -197,4 +197,16 @@ describe('CadastroArmadilhaPage', () => {
       '/',
     )
   })
+
+  it('trata UUID inválida como armadilha ausente no modo de edição', async () => {
+    vi.mocked(getArmadilha).mockRejectedValue(
+      new ApiError('VALIDACAO_FALHOU', 'UUID inválida.', 422, {
+        campos_invalidos: [{ campo: 'armadilha_id', tipo: 'uuid_parsing' }],
+      }),
+    )
+    renderCadastro('/armadilhas/id-invalido/editar')
+
+    expect(await screen.findByText('Armadilha não encontrada')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument()
+  })
 })

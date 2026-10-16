@@ -1,0 +1,6 @@
+# Ferramental isolado da suíte de invasão. Não faz parte do produto e não é
+# instalado nas imagens do backend nem do frontend.
+pytest>=8,<10
+httpx>=0.28.1,<1
+pillow>=11,<13
+psycopg[binary]>=3.2,<4
