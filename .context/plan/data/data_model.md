@@ -81,6 +81,7 @@ o foco do MVP.
 ```mermaid
 erDiagram
     ESTABELECIMENTO ||--o{ ARMADILHA : "possui"
+    MODELO_ARMADILHA ||--o{ ARMADILHA : "define o modelo de"
     ARMADILHA ||--o{ REFIL : "recebe"
     REFIL ||--o{ ANALISE : "é analisado por"
     USUARIO ||--o{ SESSAO : "abre"
@@ -97,8 +98,22 @@ erDiagram
         uuid estabelecimento_id FK
         varchar identificador
         varchar modelo
+        uuid modelo_id FK
         varchar localizacao
         date data_instalacao
+        timestamptz criado_em
+    }
+
+    MODELO_ARMADILHA {
+        uuid id PK
+        varchar codigo
+        varchar nome
+        varchar fabricante
+        varchar descricao
+        varchar atracao
+        int refil_largura_mm
+        int refil_altura_mm
+        boolean ativo
         timestamptz criado_em
     }
 
@@ -172,7 +187,8 @@ Unidade física instalada em um estabelecimento.
 | `id` | `uuid` | PK |
 | `estabelecimento_id` | `uuid` | **Não existe no MVP.** Adicionada, junto com a tabela `estabelecimento` e a FK, por migration da Fase 2 — uma FK para tabela inexistente não pode ser criada |
 | `identificador` | `varchar` | Código legível para identificar a unidade em campo. **Único** (`UNIQUE`) — sustenta o erro `IDENTIFICADOR_DUPLICADO` de `../api/api_spec.md`, seção 2.3 |
-| `modelo` | `varchar` | Ex.: `StickFly K-45` |
+| `modelo` | `varchar` | Nome do modelo, copiado do catálogo no cadastro (ex.: `StickFly K-45`). Preservado para armadilhas sem vínculo |
+| `modelo_id` | `uuid` | FK opcional para `modelo_armadilha.id`, `ON DELETE RESTRICT`. A API recebe só este campo e deriva `modelo` do catálogo |
 | `localizacao` | `varchar` | Descrição do ponto de instalação |
 | `data_instalacao` | `date` | |
 | `criado_em` | `timestamptz` | Default `now()` |
@@ -266,6 +282,24 @@ e-mail digitado nem a senha, para não registrar senhas escritas no campo errado
 
 Registros com mais de 24 horas podem ser removidos.
 
+## 6.8 `modelo_armadilha`
+
+Catálogo dos modelos fabricados, pré-cadastrado e escolhido ao registrar uma
+armadilha. Não é editável pela API: cada modelo novo entra por migração,
+como o StickFly K-45 (migração `0004`).
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `codigo` | `varchar` | Identificador estável, **único** (ex.: `stickfly-k45`) |
+| `nome` | `varchar` | Nome exibido (ex.: `StickFly K-45`) |
+| `fabricante` | `varchar` | Obrigatório |
+| `descricao` | `varchar` | Opcional |
+| `atracao` | `varchar` | Opcional (ex.: `UV-A`) |
+| `refil_largura_mm`, `refil_altura_mm` | `integer` | Dimensões do refil em milímetros; `CHECK` ambos maiores que zero. Permitem converter percentual em área física |
+| `ativo` | `boolean` | Padrão verdadeiro. Modelo desativado não aceita novos cadastros, mas as armadilhas existentes o mantêm |
+| `criado_em` | `timestamptz` | Padrão `now()` |
+
 ---
 
 # 7. Regras de persistência
@@ -326,6 +360,8 @@ a última barreira contra dado inconsistente.
 | todas | `id uuid` com default `gen_random_uuid()` | Identificador gerado pelo banco |
 | todas | `criado_em timestamptz` com default `now()` | Conforme as seções 6.2 a 6.4 |
 | `armadilha` | `UNIQUE (identificador)` | Erro `IDENTIFICADOR_DUPLICADO` da API |
+| `armadilha` | FK `modelo_id` → `modelo_armadilha.id`, `ON DELETE RESTRICT` | Um modelo em uso não pode ser apagado |
+| `modelo_armadilha` | `UNIQUE (codigo)` e `CHECK (refil_largura_mm > 0 AND refil_altura_mm > 0)` | Catálogo consistente |
 | `refil` | FK `armadilha_id` → `armadilha.id`, `ON DELETE RESTRICT` | Não há exclusão de armadilha no MVP; RESTRICT impede apagar histórico por acidente |
 | `refil` | `CHECK (data_troca IS NULL OR data_troca >= data_instalacao)` | Um refil não é trocado antes de instalado |
 | `refil` | índice em `armadilha_id` | Consulta do refil ativo e do histórico por armadilha |
@@ -380,7 +416,7 @@ como volume no container do backend.
 
 | Decisão | Escolha | Seção |
 |---|---|---|
-| Banco no MVP | Sim — `armadilha`, `refil`, `analise` | 2, 4 |
+| Banco no MVP | Sim — `armadilha`, `refil`, `analise`, `modelo_armadilha` (catálogo) | 2, 4, 6.8 |
 | SGBD | PostgreSQL em Docker | 3 |
 | ORM | SQLAlchemy | 3 |
 | Migrations | Alembic, desde a primeira tabela | 3.2 |

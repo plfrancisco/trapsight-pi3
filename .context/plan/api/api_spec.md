@@ -188,6 +188,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | Método | Rota | Tela que atende |
 |---|---|---|
 | `GET` | `/api/armadilhas` | Dashboard |
+| `GET` | `/api/modelos-armadilha` | Cadastro (escolha do modelo) |
 | `POST` | `/api/armadilhas` | Cadastro |
 | `GET` | `/api/armadilhas/{id}` | Detalhe |
 | `PATCH` | `/api/armadilhas/{id}` | Cadastro (edição) |
@@ -233,6 +234,29 @@ sem sessão. O aplicativo o chama ao carregar para recuperar o estado.
 
 # 4. Armadilhas
 
+## 4.0 `GET /api/modelos-armadilha`
+
+Catálogo dos modelos de armadilha fabricados e pré-cadastrados, usado na
+escolha do modelo ao cadastrar uma armadilha. Exige sessão, como todo
+endpoint sob `/api`. É somente leitura: novos modelos entram por migração.
+
+**Resposta `200`:** apenas modelos ativos, ordenados por nome.
+
+```json
+[
+  {
+    "id": "b81c...",
+    "codigo": "stickfly-k45",
+    "nome": "StickFly K-45",
+    "fabricante": "StickFly",
+    "descricao": "Armadilha de parede com 3 lâmpadas UVA de 15 W...",
+    "atracao": "UV-A",
+    "refil_largura_mm": 450,
+    "refil_altura_mm": 220
+  }
+]
+```
+
 ## 4.1 `GET /api/armadilhas`
 
 Lista as armadilhas com estado atual consolidado. Alimenta o dashboard.
@@ -249,6 +273,7 @@ frontend não faz esse cálculo, conforme `../frontend/telas_spec.md`, seção 5
     "identificador": "ARM-001",
     "localizacao": "Área de recebimento",
     "modelo": "StickFly K-45",
+    "modelo_id": "b81c...",
     "refil_ativo": {
       "id": "9c1b...",
       "data_instalacao": "2026-08-01",
@@ -289,7 +314,7 @@ descobrir há quanto tempo a armadilha exige ação.
 ```json
 {
   "identificador": "ARM-002",
-  "modelo": "StickFly K-45",
+  "modelo_id": "b81c...",
   "localizacao": "Depósito",
   "data_instalacao": "2026-08-21",
   "criar_refil_inicial": true
@@ -299,6 +324,12 @@ descobrir há quanto tempo a armadilha exige ação.
 O campo `criar_refil_inicial` cria o primeiro refil junto com a armadilha.
 Existe porque uma armadilha sem refil ativo não aceita análises, e exigir duas
 chamadas separadas para o caso comum seria uma armadilha de usabilidade.
+
+O campo `modelo_id` é opcional e deve ser o identificador de um modelo ativo
+do catálogo (seção 4.0). Um identificador inexistente ou de modelo
+desativado devolve `422 VALIDACAO_FALHOU`, com `detalhes.campo` igual a
+`modelo_id`. O servidor grava o nome do modelo junto à armadilha; o
+cliente não envia o nome.
 
 **Resposta `201`:** objeto da armadilha criada.
 
@@ -314,6 +345,7 @@ anteriores.
   "id": "3f2a...",
   "identificador": "ARM-001",
   "modelo": "StickFly K-45",
+  "modelo_id": "b81c...",
   "localizacao": "Área de recebimento",
   "data_instalacao": "2026-06-15",
   "refil_ativo": {
@@ -340,7 +372,9 @@ do projeto: mostra, com histórico real, quanto tempo cada refil durou.
 
 ## 4.4 `PATCH /api/armadilhas/{id}`
 
-Atualização parcial. Aceita `identificador`, `modelo` e `localizacao`.
+Atualização parcial. Aceita `identificador`, `modelo_id` e `localizacao`.
+
+`modelo_id` segue a regra da seção 4.2; enviar `null` desvincula o modelo.
 
 `data_instalacao` não é editável — alterá-la invalidaria o histórico.
 
