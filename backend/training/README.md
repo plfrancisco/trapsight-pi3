@@ -155,6 +155,11 @@ mantém `IDADE_MAXIMA_DIAS` pendente de calibração; substitua-o pelo limite
 aprovado antes de gerar o dataset de treinamento. A idade máxima é obrigatória
 na CLI para não transformar uma estimativa arbitrária em padrão do projeto.
 
+O gerador permite até 2400 tentativas de composição por imagem para que alvos
+altos não parem prematuramente. Esse número é um teto de segurança; a composição
+encerra quando a máscara fica dentro da tolerância de 2 pontos percentuais ou
+quando atinge esse limite de tentativas.
+
 Os pesos padrão distribuem 70% das seleções entre moscas, mosquitos e
 mariposas, e 30% entre formigas, baratas e besouros. Cada linha de amostra e
 a configuração global registram os pesos efetivos. Para alterá-los, informe

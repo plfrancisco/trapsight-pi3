@@ -31,7 +31,7 @@ LARGURA_MODELO = 768
 ALTURA_MODELO = 576
 RESOLUCAO_PADRAO = (LARGURA_MODELO * 2, ALTURA_MODELO * 2)
 TOLERANCIA_COBERTURA_PP = 2.0
-LIMITE_SPRITES_POR_AMOSTRA = 240
+LIMITE_SPRITES_POR_AMOSTRA = 2400
 TENTATIVAS_POR_SPRITE = 10
 CATEGORIAS = ("pequeno", "medio", "grande")
 GRUPOS_INSETOS = ("mosca", "mosquito", "formiga", "barata", "mariposa", "besouro")
@@ -94,7 +94,7 @@ class ConfiguracaoDataset:
         idade_maxima_dias: Limite superior exclusivo da idade simulada.
         quantidade: Número de amostras, estratificado nas três faixas.
         resolucao: Largura e altura de saída em pixels.
-        limite_sprites: Máximo de sprites aceitos em uma amostra.
+        limite_sprites: Máximo de tentativas de composição em uma amostra.
     """
 
     diretorio_saida: Path
@@ -343,7 +343,7 @@ def generate_sample(
         idade_maxima_dias: Limite usado para normalizar o envelhecimento.
         rng: Gerador aleatório exclusivo desta amostra.
         resolucao: Largura e altura da cena em pixels.
-        limite_sprites: Máximo de inserções para evitar composição sem fim.
+        limite_sprites: Máximo de tentativas para limitar a composição.
         pesos_grupo: Pesos normalizados usados para selecionar os grupos.
 
     Returns:

@@ -72,7 +72,10 @@ def criar_parser() -> argparse.ArgumentParser:
         "--limite-sprites",
         type=int,
         default=LIMITE_SPRITES_POR_AMOSTRA,
-        help=f"Máximo de sprites por imagem (padrão: {LIMITE_SPRITES_POR_AMOSTRA}).",
+        help=(
+            "Máximo de tentativas de composição por imagem "
+            f"(padrão: {LIMITE_SPRITES_POR_AMOSTRA})."
+        ),
     )
     parser.add_argument(
         "--pesos-grupo",
