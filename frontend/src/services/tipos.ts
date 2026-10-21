@@ -108,3 +108,21 @@ export interface FiltrosAnalises {
   refilId?: string
   limite?: number
 }
+
+/** Usuário autenticado, como devolvido pela API (sem dados de senha). */
+export interface Usuario {
+  id: string
+  email: string
+  nome: string
+}
+
+/** Sessão atual: o usuário e o token CSRF exigido em métodos que alteram estado. */
+export interface SessaoAtual {
+  usuario: Usuario
+  csrf_token: string
+}
+
+/** Resultado da troca de senha: a sessão é renovada e traz um novo token CSRF. */
+export interface TrocaSenhaSaida {
+  csrf_token: string
+}

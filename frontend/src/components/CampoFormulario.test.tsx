@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import CampoArmadilha from './CampoArmadilha'
+import CampoFormulario from './CampoFormulario'
 
-describe('CampoArmadilha', () => {
+describe('CampoFormulario', () => {
   it('associa o rótulo, a descrição e o erro ao campo', () => {
     render(
-      <CampoArmadilha
+      <CampoFormulario
         descricao="Use um identificador curto e único."
         erro="Já existe uma armadilha com este identificador."
         id="identificador"
@@ -26,7 +26,7 @@ describe('CampoArmadilha', () => {
 
   it('apresenta a data como somente leitura quando o cadastro está em edição', () => {
     render(
-      <CampoArmadilha
+      <CampoFormulario
         id="data-instalacao"
         nome="data_instalacao"
         rotulo="Data de instalação"

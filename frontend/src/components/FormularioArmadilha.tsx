@@ -5,7 +5,7 @@ import { ApiError } from '../services/erros'
 import { createArmadilha, updateArmadilha } from '../services/armadilhas'
 import type { ArmadilhaDetalhe } from '../services/tipos'
 import Botao from './Botao'
-import CampoArmadilha from './CampoArmadilha'
+import CampoFormulario from './CampoFormulario'
 import LinkBotao from './LinkBotao'
 import MensagemErro from './MensagemErro'
 
@@ -120,7 +120,7 @@ export default function FormularioArmadilha({
         onSubmit={saveArmadilha}
       >
         {erroEnvio ? <MensagemErro erro={erroEnvio} /> : null}
-        <CampoArmadilha
+        <CampoFormulario
           descricao="O identificador deve ser único e não pode começar ou terminar com espaços."
           erro={erroIdentificador}
           id="identificador"
@@ -131,19 +131,19 @@ export default function FormularioArmadilha({
           rotulo="Identificador"
           valorPadrao={dados?.identificador ?? ''}
         />
-        <CampoArmadilha
+        <CampoFormulario
           id="modelo"
           nome="modelo"
           rotulo="Modelo"
           valorPadrao={dados?.modelo ?? ''}
         />
-        <CampoArmadilha
+        <CampoFormulario
           id="localizacao"
           nome="localizacao"
           rotulo="Localização"
           valorPadrao={dados?.localizacao ?? ''}
         />
-        <CampoArmadilha
+        <CampoFormulario
           descricao={
             id
               ? 'A data de instalação não pode ser alterada depois do cadastro.'

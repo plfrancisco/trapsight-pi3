@@ -6,3 +6,19 @@ if (!apiUrl) {
 
 /** Endereço público usado pelo frontend para localizar a API. */
 export const API_URL = apiUrl
+
+/**
+ * Endereço base da API resolvido contra a origem da página. Aceita URL absoluta
+ * (desenvolvimento) e caminho relativo como `/api` (produção, mesma origem).
+ */
+export const API_BASE = new URL(
+  apiUrl.replace(/\/+$/, '') + '/',
+  window.location.origin,
+)
+
+/**
+ * Liga a exigência de login no frontend. É apenas apresentação (mostra a tela de
+ * login e protege as rotas da interface): quem impõe a autenticação é sempre o
+ * backend. Desligada, serve para testar a interface isolada.
+ */
+export const AUTENTICACAO_ATIVA = import.meta.env.VITE_AUTENTICACAO_ATIVA === 'true'

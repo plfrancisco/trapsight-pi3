@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
+  readonly VITE_AUTENTICACAO_ATIVA?: string
 }
 
 interface ImportMeta {

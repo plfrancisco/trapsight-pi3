@@ -1,8 +1,8 @@
-import { API_URL } from '../config'
+import { API_BASE } from '../config'
 
 /** Converte um caminho relativo da API em URL absoluta da mesma origem. */
 export function urlAbsoluta(caminhoRelativo: string): string {
-  const origem = new URL(API_URL).origin
+  const origem = API_BASE.origin
   const url = new URL(caminhoRelativo, origem)
   if (url.origin !== origem) {
     throw new TypeError('A URL de mídia precisa permanecer na origem da API.')
@@ -11,8 +11,7 @@ export function urlAbsoluta(caminhoRelativo: string): string {
 }
 
 function urlRecursoAnalise(analiseId: string, recurso: 'imagem' | 'mascara'): string {
-  const api = new URL(API_URL)
-  const prefixo = api.pathname.replace(/\/+$/, '')
+  const prefixo = API_BASE.pathname.replace(/\/+$/, '')
   const caminho =
     prefixo + '/analises/' + encodeURIComponent(analiseId) + '/' + recurso
   return urlAbsoluta(caminho)

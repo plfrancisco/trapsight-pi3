@@ -1,4 +1,10 @@
+import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
+import { useAuth } from '../auth/useAuth'
+import Botao from './Botao'
+import LinkBotao from './LinkBotao'
+import MarcaTrapSight from './MarcaTrapSight'
+import MensagemErro from './MensagemErro'
 
 const classesDeLink = ({ isActive }: { isActive: boolean }) =>
   [
@@ -9,8 +15,20 @@ const classesDeLink = ({ isActive }: { isActive: boolean }) =>
       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
   ].join(' ')
 
-/** Apresenta a identidade e a navegação que permanecem disponíveis em todas as rotas. */
+/** Apresenta a identidade, a navegação e a conta do usuário, presentes em todas as rotas. */
 export default function Layout() {
+  const { ativa, usuario, logout } = useAuth()
+  const [erroSaida, setErroSaida] = useState<string | null>(null)
+
+  async function sair() {
+    setErroSaida(null)
+    try {
+      await logout()
+    } catch {
+      setErroSaida('Não foi possível encerrar a sessão. Tente novamente.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-stone-50 text-slate-950">
       <a
@@ -27,26 +45,40 @@ export default function Layout() {
             className="inline-flex min-h-11 w-fit items-center gap-3 rounded-lg text-xl font-bold tracking-tight text-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800"
             to="/"
           >
-            <span
-              aria-hidden="true"
-              className="inline-flex size-9 items-center justify-center rounded-xl bg-emerald-900 text-sm font-bold text-white"
-            >
-              TS
-            </span>
-            TrapSight
+            <MarcaTrapSight />
           </Link>
 
-          <nav aria-label="Navegação principal" className="flex flex-wrap gap-2">
-            <NavLink className={classesDeLink} end to="/">
-              Dashboard
-            </NavLink>
-            <NavLink className={classesDeLink} end to="/analises/nova">
-              Nova análise
-            </NavLink>
-            <NavLink className={classesDeLink} end to="/armadilhas/nova">
-              Nova armadilha
-            </NavLink>
-          </nav>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <nav aria-label="Navegação principal" className="flex flex-wrap gap-2">
+              <NavLink className={classesDeLink} end to="/">
+                Dashboard
+              </NavLink>
+              <NavLink className={classesDeLink} end to="/analises/nova">
+                Nova análise
+              </NavLink>
+              <NavLink className={classesDeLink} end to="/armadilhas/nova">
+                Nova armadilha
+              </NavLink>
+            </nav>
+
+            {ativa && usuario ? (
+              <div
+                aria-label="Conta"
+                className="flex flex-wrap items-center gap-2 border-slate-200 sm:border-l sm:pl-6"
+                role="group"
+              >
+                <span className="text-sm font-medium text-slate-700" title={usuario.nome}>
+                  {usuario.email}
+                </span>
+                <LinkBotao tamanho="compacto" to="/conta/senha" variante="discreto">
+                  Alterar senha
+                </LinkBotao>
+                <Botao onClick={() => void sair()} tamanho="compacto" variante="secundario">
+                  Sair
+                </Botao>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -55,6 +87,11 @@ export default function Layout() {
         id="conteudo-principal"
         tabIndex={-1}
       >
+        {erroSaida ? (
+          <div className="mb-6">
+            <MensagemErro erro={erroSaida} />
+          </div>
+        ) : null}
         <Outlet />
       </main>
     </div>

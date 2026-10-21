@@ -1,7 +1,14 @@
-import { API_URL } from '../config'
+import { API_BASE } from '../config'
 import { ApiError } from './erros'
+import { notificarSessaoExpirada, obterCsrf } from './sessao'
 
 const TIMEOUT_PADRAO_MS = 15_000
+const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+// Em produção a API fica na mesma origem da página; em desenvolvimento (portas
+// diferentes) o cookie de sessão só viaja com credenciais explícitas.
+const MODO_CREDENCIAIS: RequestCredentials =
+  API_BASE.origin === window.location.origin ? 'same-origin' : 'include'
 export const TIMEOUT_UPLOAD_MS = 40_000
 
 interface OpcoesRequisicao {
@@ -65,8 +72,7 @@ function interpretarEnvelopeDeErro(texto: string, status: number): ApiError {
 }
 
 function montarUrl(caminho: string): string {
-  const base = API_URL.replace(/\/+$/, '') + '/'
-  return new URL(caminho.replace(/^\/+/, ''), base).toString()
+  return new URL(caminho.replace(/^\/+/, ''), API_BASE).toString()
 }
 
 /**
@@ -100,7 +106,14 @@ export async function request<T>(
     controlador.abort()
   }, opcoes.timeoutMs ?? TIMEOUT_PADRAO_MS)
 
+  const metodo = (opcoes.method ?? 'GET').toUpperCase()
   const cabecalhos: Record<string, string> = { Accept: 'application/json' }
+
+  // Token CSRF sincronizado: obrigatório em todo método que altera estado.
+  const tokenCsrf = obterCsrf()
+  if (!METODOS_SEGUROS.has(metodo) && tokenCsrf) {
+    cabecalhos['X-CSRF-Token'] = tokenCsrf
+  }
 
   let corpo: BodyInit | undefined
   if (opcoes.body !== undefined) {
@@ -114,15 +127,23 @@ export async function request<T>(
 
   try {
     const resposta = await fetch(montarUrl(caminho), {
-      method: opcoes.method ?? 'GET',
+      method: metodo,
       headers: cabecalhos,
       body: corpo,
+      credentials: MODO_CREDENCIAIS,
       signal: controlador.signal,
     })
     const texto = await resposta.text()
 
     if (!resposta.ok) {
-      throw interpretarEnvelopeDeErro(texto, resposta.status)
+      const erroDaApi = interpretarEnvelopeDeErro(texto, resposta.status)
+      if (erroDaApi.codigo === 'NAO_AUTENTICADO') notificarSessaoExpirada()
+      throw erroDaApi
+    }
+
+    // 204 e corpo vazio (ex.: logout) não têm JSON a interpretar.
+    if (resposta.status === 204 || texto === '') {
+      return undefined as T
     }
 
     try {

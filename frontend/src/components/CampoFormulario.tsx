@@ -1,10 +1,12 @@
 import type { ChangeEventHandler, Ref } from 'react'
 
-interface CampoArmadilhaProps {
+interface CampoFormularioProps {
   id: string
   nome: string
   rotulo: string
-  tipo?: 'text' | 'date'
+  tipo?: 'text' | 'date' | 'email' | 'password'
+  /** Sugestão de preenchimento do navegador e dos gerenciadores de senha. */
+  autoComplete?: string
   valorPadrao?: string
   obrigatorio?: boolean
   somenteLeitura?: boolean
@@ -14,12 +16,13 @@ interface CampoArmadilhaProps {
   onChange?: ChangeEventHandler<HTMLInputElement>
 }
 
-/** Associa cada campo da armadilha ao seu rótulo, ajuda e mensagem de erro. */
-export default function CampoArmadilha({
+/** Associa cada campo de formulário ao seu rótulo, ajuda e mensagem de erro. */
+export default function CampoFormulario({
   id,
   nome,
   rotulo,
   tipo = 'text',
+  autoComplete,
   valorPadrao,
   obrigatorio = false,
   somenteLeitura = false,
@@ -27,7 +30,7 @@ export default function CampoArmadilha({
   erro,
   referencia,
   onChange,
-}: CampoArmadilhaProps) {
+}: CampoFormularioProps) {
   const descricoes = [
     descricao ? `${id}-ajuda` : null,
     erro ? `${id}-erro` : null,
@@ -44,6 +47,7 @@ export default function CampoArmadilha({
       <input
         aria-describedby={descricoes || undefined}
         aria-invalid={erro ? true : undefined}
+        autoComplete={autoComplete}
         className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:border-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 read-only:bg-slate-100"
         defaultValue={somenteLeitura ? undefined : valorPadrao}
         id={id}

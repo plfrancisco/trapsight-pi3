@@ -3,11 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { Rotas } from './App'
+import AuthProvider from './auth/AuthProvider'
 
+// Com a autenticação desligada o aplicativo se comporta como antes do login.
 const montarRota = (caminho: string) =>
   render(
     <MemoryRouter initialEntries={[caminho]}>
-      <Rotas />
+      <AuthProvider ativa={false}>
+        <Rotas />
+      </AuthProvider>
     </MemoryRouter>,
   )
 
