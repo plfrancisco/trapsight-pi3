@@ -43,7 +43,8 @@ registrar() {
 
 # garante a imagem e grava o digest (evidência reproduzível)
 preparar() {
-  if ! docker pull -q "$1" >/dev/null 2>&1; then return 1; fi
+  # imagem só local (ex.: SEC_IMAGEM) é aceita quando não há como baixá-la
+  if ! docker pull -q "$1" >/dev/null 2>&1 && ! docker image inspect "$1" >/dev/null 2>&1; then return 1; fi
   docker image inspect --format '{{index .RepoDigests 0}}' "$1" 2>/dev/null >> "$OUT/imagens.txt" || echo "$1 (sem digest)" >> "$OUT/imagens.txt"
 }
 
@@ -69,19 +70,23 @@ codigo() {
     -v "$REPO:/repo:ro" aquasec/trivy:latest fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL \
     --exit-code 1 --skip-dirs /repo/frontend/node_modules --skip-dirs /repo/.git /repo
   rodar trivy-dockerfiles aquasec/trivy:latest \
-    -v "$REPO:/repo:ro" aquasec/trivy:latest config --severity HIGH,CRITICAL --exit-code 1 /repo/backend /repo/frontend
-  for svc in backend frontend; do
-    if docker image inspect "projeto-integrador-$svc" >/dev/null 2>&1; then
-      docker save -o "$OUT/$svc.tar" "projeto-integrador-$svc"
+    -v "$REPO:/repo:ro" aquasec/trivy:latest config --severity HIGH,CRITICAL --exit-code 1 \
+    --skip-dirs /repo/frontend/node_modules --skip-dirs /repo/.git /repo
+  # Imagens de produção (docker compose -f docker-compose.prod.yml build); o prefixo é o
+  # nome do projeto do Compose (COMPOSE_PROJECT_NAME ou o nome da pasta, sem espaços).
+  local projeto="${COMPOSE_PROJECT_NAME:-projetointegrador}"
+  for svc in backend proxy; do
+    if docker image inspect "$projeto-$svc" >/dev/null 2>&1; then
+      docker save -o "$OUT/$svc.tar" "$projeto-$svc"
       rodar "trivy-imagem-$svc" aquasec/trivy:latest \
         -v "$OUT:/out" aquasec/trivy:latest image --input "/out/$svc.tar" --severity HIGH,CRITICAL --exit-code 1
       rm -f "$OUT/$svc.tar"
     else
-      registrar "trivy-imagem-$svc" "NAO_EXECUTADO (imagem projeto-integrador-$svc não existe; rode docker compose build)"
+      registrar "trivy-imagem-$svc" "NAO_EXECUTADO (imagem $projeto-$svc não existe; rode docker compose -f docker-compose.prod.yml build)"
     fi
   done
-  for df in backend frontend; do
-    rodar "hadolint-$df" hadolint/hadolint:latest -v "$REPO/$df/Dockerfile:/Dockerfile:ro" hadolint/hadolint:latest hadolint /Dockerfile
+  for df in backend/Dockerfile deploy/proxy/Dockerfile security/Dockerfile; do
+    rodar "hadolint-$(echo "$df" | tr '/' '-')" hadolint/hadolint:latest -v "$REPO/$df:/Dockerfile:ro" hadolint/hadolint:latest hadolint /Dockerfile
   done
   rodar pip-audit python:3.12-slim -v "$REPO/backend:/b:ro" python:3.12-slim \
     sh -c "pip install -q pip-audit && pip-audit -r /b/requirements.txt"
@@ -125,8 +130,15 @@ pentest() {
     -e SEC_IDLE_TIMEOUT_SECONDS -e SEC_ABSOLUTE_TIMEOUT_SECONDS -e PYTEST_ARGS
     -e SEC_DB_DSN_APP -e SEC_DB_DSN_ADMIN)
   # PASSADA (1, 2, 3) nomeia o relatório; PYTEST_ARGS seleciona testes (ex.: -k expiracao)
-  rodar "pentest-${PASSADA:-1}" python:3.12-slim "${envs[@]}" -v "$REPO/security:/sec:ro" -v "$OUT:/out:rw" python:3.12-slim \
-    sh -c "pip install -q -r /sec/requirements.txt && cd /sec && eval python -m pytest -p no:cacheprovider -rs --junitxml=/out/pentest-${PASSADA:-1}.xml \$PYTEST_ARGS"
+  # CA extra (somente ambiente local com certificado interno): montada no executor.
+  local ca=()
+  if [ -n "${SEC_CA_FILE:-}" ]; then ca=(-v "$SEC_CA_FILE:/ca.pem:ro" -e SEC_CA_FILE=/ca.pem); fi
+  # SEC_IMAGEM: imagem com as dependências já instaladas (docker build -t <nome> security),
+  # necessária quando o executor roda numa rede sem internet.
+  local imagem="${SEC_IMAGEM:-python:3.12-slim}" instalar="pip install -q -r /sec/requirements.txt && "
+  [ -n "${SEC_IMAGEM:-}" ] && instalar=""
+  rodar "pentest-${PASSADA:-1}" "$imagem" "${envs[@]}" ${ca[@]+"${ca[@]}"} -v "$REPO/security:/sec:ro" -v "$OUT:/out:rw" "$imagem" \
+    sh -c "${instalar}cd /sec && eval python -m pytest -p no:cacheprovider -rs --junitxml=/out/pentest-${PASSADA:-1}.xml \$PYTEST_ARGS"
 }
 
 ativo() {

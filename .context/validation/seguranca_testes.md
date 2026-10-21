@@ -216,7 +216,7 @@ entregue, foi calibrada de três formas:
 |---|---|
 | **Contra o sistema atual** (sem login) | 58 falham (rotas abertas sem sessão, `/docs` público, `/auth/login` inexistente, sem HTTPS, porta do backend acessível), 97 passam, 104 são ignoradas por falta de credencial |
 | **Contra um servidor de referência** que implementa o contrato de `login.md` | Todos os testes passam, **exceto os 9 da camada de proxy/TLS** (HTTPS, HSTS, CSP, cabeçalhos, `Server`), que só existem com o Caddy. Passada de limites: 2/2. Passada de expiração: 2/2 |
-| **Teste de mutação**: 22 defeitos deliberados no servidor de referência e no banco de calibração | **22/22 detectados**. Autenticação e sessão: CSRF desligado, cookie sem `HttpOnly`/`SameSite`, mensagem que revela a conta, logout sem revogar, fixação de sessão, mídia sem autenticação, erro 500 com SQL, ausência de bloqueio, token fraco, CORS `*` com credenciais. Política de senha: mínimo de 8, regra de composição, sem normalização Unicode, sem lista de bloqueio, erro que devolve a senha, troca sem confirmar a atual. Banco: papel superusuário, hash Argon2id fraco, token em claro, credencial padrão (`admin/admin`), `pg_hba` com `trust`, `pg_hba` aberto a todos |
+| **Teste de mutação**: 23 defeitos deliberados no servidor de referência e no banco de calibração | **23/23 detectados**. Autenticação e sessão: código de erro diferente do contrato (`NAO_AUTENTICADO`), CSRF desligado, cookie sem `HttpOnly`/`SameSite`, mensagem que revela a conta, logout sem revogar, fixação de sessão, mídia sem autenticação, erro 500 com SQL, ausência de bloqueio, token fraco, CORS `*` com credenciais. Política de senha: mínimo de 8, regra de composição, sem normalização Unicode, sem lista de bloqueio, erro que devolve a senha, troca sem confirmar a atual. Banco: papel superusuário, hash Argon2id fraco, token em claro, credencial padrão (`admin/admin`), `pg_hba` com `trust`, `pg_hba` aberto a todos |
 
 O servidor de referência e o banco de calibração foram descartáveis e não
 fazem parte do repositório. A calibração revelou quatro defeitos da própria
@@ -289,10 +289,17 @@ primeira publicação e a cada mudança de autenticação.
 
 # 11. Execução cega (separação de funções)
 
-Quem **implementa** o sistema (Codex) **só executa** a suíte. Quem **revisa**
-(o revisor, hoje o Claude, com o dono do projeto) é o único que lê os
-resultados. Isso evita ajustar o sistema à resposta do teste e preserva a
-independência da verificação.
+Quem **implementa** o sistema **só executa** a suíte quando a verificação
+precisa ser independente. Quem **revisa** é o único que lê os resultados. Isso
+evita ajustar o sistema à resposta do teste.
+
+> **Papéis atuais (2026-10-17).** A implementação de autenticação e hospedagem
+> foi feita pelo Claude, que por isso rodou a suíte em modo direto, contra o
+> ambiente local de produção, para corrigir o sistema (nunca os testes). A
+> independência vem agora da **rodada do Codex** (seção 12): ele ataca o sistema
+> implantado, sem acesso ao código-fonte da correção, e entrega achados com
+> passos de reprodução. A execução cega continua válida para quem implementar
+> alterações depois de uma rodada de ataque.
 
 | Papel | Pode | Não pode |
 |---|---|---|

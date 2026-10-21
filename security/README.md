@@ -93,6 +93,18 @@ consegue mais logar por 15 minutos, então **reinicie o backend ou espere**
 antes de uma nova execução), e prazos curtos derrubariam a sessão dos outros
 testes no meio da execução. O teste de limite por IP roda por último.
 
+**Variáveis `SEC_*` (da suíte) e variáveis do backend** (`.context/plan/api/api_spec.md`,
+seção 2.6). Os valores de uma devem refletir os da outra:
+
+| Suíte | Backend |
+|---|---|
+| `SEC_IDLE_TIMEOUT_SECONDS` | `SESSAO_INATIVIDADE_SEGUNDOS` |
+| `SEC_ABSOLUTE_TIMEOUT_SECONDS` | `SESSAO_DURACAO_MAXIMA_SEGUNDOS` |
+| `SEC_MAX_SESSIONS` | `SESSAO_MAXIMA_POR_USUARIO` |
+| `SEC_LOCKOUT_THRESHOLD` | `LOGIN_FALHAS_POR_CONTA` |
+| limite de IP elevado (passada 1) ou padrão (passada 2) | `LOGIN_FALHAS_POR_IP` |
+| 30 análises por minuto | `ANALISES_POR_MINUTO` |
+
 ## Variáveis de ambiente
 
 | Variável | Função |
@@ -109,6 +121,14 @@ testes no meio da execução. O teste de limite por IP roda por último.
 | `SEC_MAX_SESSIONS` | Limite de sessões simultâneas (padrão 5) |
 | `SEC_IDLE_TIMEOUT_SECONDS`, `SEC_ABSOLUTE_TIMEOUT_SECONDS` | Prazos curtos da homologação |
 | `SEC_RUN_RATE_LIMIT` | `1` liga os testes que esgotam limites |
+| `SEC_CA_FILE` | CA extra (somente ambiente local com certificado interno do Caddy); o teste de validade do certificado fica como "não verificado" |
+| `SEC_IMAGEM` | Imagem do executor com dependências já instaladas (`docker build -t trapsight-seguranca:local security`); necessária quando o executor roda na rede interna, sem internet |
+
+**Entre as passadas**, limpe as tentativas de login do IP do executor
+(`delete from tentativa_login`, como administrador do banco) e desbloqueie a
+conta de bloqueio (`python -m src.cli desbloquear-usuario`). Na passada 1,
+eleve também `ANALISES_POR_MINUTO` (os testes de upload enviam mais de 30
+requisições por minuto).
 | `CONFIRMO_HOMOLOGACAO` | `sim` libera o modo `ativo` |
 
 ## Como interpretar
