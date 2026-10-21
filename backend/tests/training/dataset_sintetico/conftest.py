@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 from training.dataset_sintetico import (
     ConfiguracaoDataset,
+    LIMITE_SPRITES_POR_AMOSTRA,
     SpriteCatalogado,
     generate_dataset,
     load_sprite_catalog,
@@ -69,7 +70,7 @@ def gerar_dataset_teste(
         diretorio: Path,
         quantidade: int,
         semente: int = 20261021,
-        limite_sprites: int = 240,
+        limite_sprites: int = LIMITE_SPRITES_POR_AMOSTRA,
     ) -> list[dict[str, object]]:
         configuracao = ConfiguracaoDataset(
             diretorio_saida=diretorio,
