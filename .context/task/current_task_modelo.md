@@ -56,6 +56,46 @@ ponderada, Dice loss, ou combinação).
 **Especificação:** `../plan/data/dataset_sintetico.md`.
 **Dependências:** nenhuma.
 
+## ML02A — Banco de sprites de insetos
+
+- [ ] Fonte do MVP: **fotos de insetos brasileiros com licença aberta**
+      (iNaturalist, observações com `quality_grade=research`, Brasil,
+      licenças CC0, CC-BY e CC-BY-NC), recortadas com segmentador pronto;
+      conjuntos do Roboflow Universe só entram se trouxerem máscara e forem
+      de insetos presentes no Brasil
+- [ ] Grupos cobertos: moscas (doméstica, varejeira, drosófila), mosquitos
+      (*Culex*, *Aedes*), formigas, baratas, mariposas e besouros pequenos;
+      cada sprite grava o `grupo` no manifesto
+- [ ] A **licença e o autor de cada foto** ficam registrados no manifesto;
+      descartar qualquer foto sem licença que permita uso acadêmico (CC-ND e
+      "todos os direitos reservados" ficam fora)
+- [ ] Script de preparo em `backend/training/` que lê o conjunto baixado,
+      recorta cada inseto pela máscara fornecida e grava PNG com canal alfa
+- [ ] `manifest.json` no formato do README do gerador (`arquivo`, `categoria`,
+      `fonte`, `licenca`, `especie`, `fragmentado`), com as três categorias de
+      tamanho e fragmentos de inseto
+- [ ] Limiar de qualidade do recorte: descartar sprites vazios, minúsculos ou
+      com bordas serrilhadas, e registrar quantos foram descartados e por quê
+- [ ] Mínimo de 300 sprites válidos no banco final, distribuídos entre as
+      categorias, para a composição não repetir sempre os mesmos insetos
+- [ ] Banco e conjuntos baixados ficam **fora do repositório** (caminho
+      configurável); a chave de API do Roboflow vem de variável de ambiente e
+      nunca é gravada em arquivo versionado
+- [ ] Inspeção visual de uma amostra do dataset gerado com o banco real
+      (máscara de três classes, distratores fora da máscara) e relatório com
+      as imagens da amostra
+
+**Especificação:** `../plan/data/dataset_sintetico.md`, seções 3 e 9.
+**Dependências:** ML02.
+
+**Nota:** o uso de `rembg` (grupo opcional de dependências de treino, fora das
+dependências da API) está **aprovado** para o MVP, porque não há fotos reais do
+parceiro (EXT01) nem conjunto brasileiro com máscara. A qualidade do recorte é
+garantida pelo limiar de qualidade, não pela confiança no segmentador: o que
+falhar é descartado. Quando as fotos reais chegarem, o banco é refeito com elas.
+O custo é de tempo de máquina (download e processamento local); não consome
+tokens de IA.
+
 ## ML03 — Baseline OpenCV
 
 - [ ] Segmentação por limiar de luminosidade (canal V do HSV)
@@ -64,7 +104,7 @@ ponderada, Dice loss, ou combinação).
 - [ ] **Não implementar limiar adaptativo**
 
 **Especificação:** `../plan/model/modelo_spec.md`, seção 9.
-**Dependências:** ML02 (precisa de imagens para calibrar).
+**Dependências:** ML02 e ML02A (precisa de imagens para calibrar).
 
 **Nota:** o baseline existe para representar a abordagem clássica ingênua.
 Torná-lo adaptativo aproximaria seu comportamento do modelo treinado e
@@ -81,7 +121,7 @@ enfraqueceria a comparação — ver seção 9.2 da especificação.
 
 **Especificação:** ML01 (pipeline de treino); divisão dos conjuntos em
 `../plan/model/avaliacao_spec.md`, seção 2.
-**Dependências:** ML01, ML02.
+**Dependências:** ML01, ML02, ML02A.
 
 ## ML05 — Avaliação e métricas comparativas
 
@@ -134,7 +174,7 @@ pipeline — não deve ser tratado como resultado final.
 
 # 5. Ordem de execução
 
-ML01 e ML02 em paralelo → ML03 (depende de ML02) → ML04 (depende de ML01 e
+ML01 e ML02 em paralelo → ML02A → ML03 (depende de ML02) → ML04 (depende de ML01 e
 ML02) → ML05 → ML06 → ML07.
 
 ---
