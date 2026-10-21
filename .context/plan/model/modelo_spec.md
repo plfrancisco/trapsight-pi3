@@ -80,6 +80,7 @@ Classificação de tudo que pode aparecer sobre a superfície adesiva.
 | Mosquitos e moscas | Alvo principal |
 | Insetos grandes — mariposas, besouros, vespas | Ocupam área desproporcional; uma mariposa equivale a dezenas de mosquitos |
 | Insetos muito pequenos — drosófilas, formigas aladas | Relevantes em açougue e hortifrúti; ocupam poucos pixels na resolução de entrada |
+| Formigas e baratas | Pragas comuns em estabelecimentos (restaurantes, padarias, hospitais). Raras no refil de armadilha UV, que captura voadores, mas contam como cobertura quando presentes; entram no treino por decisão do projeto (ampliar a variedade e cobrir placas de cola) |
 | **Fragmentos** — asas soltas, pernas, corpos parciais | Ocupam a cola e reduzem a captura como um inseto inteiro. Regra deliberadamente simples, para manter consistência entre anotadores |
 | Insetos sobrepostos | Ver regra de união na seção 3.3 |
 

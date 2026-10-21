@@ -66,6 +66,7 @@ Banco de sprites
 |---|---|
 | Licença | Registrar a licença de cada sprite na origem (CC-BY, CC-BY-NC, etc.); nenhum sprite sem licença identificada entra no banco |
 | Variedade mínima | Banco deve conter ao menos três categorias de tamanho — pequeno (drosófila/mosquito), médio (mosca comum), grande (mariposa/besouro) — conforme a taxonomia de `../model/modelo_spec.md`, seção 3.2 |
+| Grupos de inseto | O banco reúne todos os grupos relevantes em estabelecimentos brasileiros: moscas (doméstica, varejeira, drosófila), mosquitos (*Culex*, *Aedes*), formigas, baratas, mariposas e besouros pequenos. Cada sprite registra o `grupo` no manifesto, para ponderar a composição (voadores dominam o refil UV) e para analisar o erro por grupo |
 | Qualidade de recorte | Bordas do recorte devem ser nítidas; sprites com halo ou fundo residual visível são descartados, não corrigidos manualmente pixel a pixel |
 
 ## 3.4 Fragmentos
