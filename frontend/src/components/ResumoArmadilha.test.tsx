@@ -8,6 +8,7 @@ const armadilha: ArmadilhaDetalhe = {
   id: 'arm-1',
   identificador: 'ARM-001',
   modelo: 'StickFly K-45',
+  modelo_id: null,
   localizacao: 'Área de recebimento',
   data_instalacao: '2026-06-15',
   refil_ativo: null,

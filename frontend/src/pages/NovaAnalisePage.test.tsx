@@ -17,6 +17,7 @@ const armadilhaComRefil: ArmadilhaLista = {
   identificador: 'ARM-001',
   localizacao: 'Depósito',
   modelo: 'StickFly K-45',
+  modelo_id: null,
   refil_ativo: { id: 'refil-1', data_instalacao: '2026-10-01', dias_em_uso: 13 },
   percentual_atual: null,
   status: null,

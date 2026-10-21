@@ -13,6 +13,7 @@ const buildArmadilha = (
   identificador: dados.identificador,
   localizacao: dados.localizacao ?? null,
   modelo: null,
+  modelo_id: null,
   refil_ativo: { id: 'refil-1', data_instalacao: '2026-10-01', dias_em_uso: 13 },
   percentual_atual: 85,
   status: dados.status ?? 'trocar',

@@ -15,6 +15,7 @@ const buildArmadilha = (
   identificador: dados.identificador,
   localizacao: dados.localizacao ?? 'Área de recebimento',
   modelo: null,
+  modelo_id: null,
   refil_ativo:
     dados.refil_ativo === undefined
       ? { id: `refil-${dados.id}`, data_instalacao: '2026-10-01', dias_em_uso: 13 }

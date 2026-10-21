@@ -5,7 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CadastroArmadilhaPage from './CadastroArmadilhaPage'
 import { localDateIso } from '../lib/datas'
 import { ApiError } from '../services/erros'
-import type { ArmadilhaDetalhe } from '../services/tipos'
+import type { ArmadilhaDetalhe, ModeloArmadilha } from '../services/tipos'
+
+vi.mock('../services/modelos', () => ({ listModelos: vi.fn() }))
 
 vi.mock('../services/armadilhas', () => ({
   createArmadilha: vi.fn(),
@@ -14,11 +16,13 @@ vi.mock('../services/armadilhas', () => ({
 }))
 
 import { createArmadilha, getArmadilha, updateArmadilha } from '../services/armadilhas'
+import { listModelos } from '../services/modelos'
 
 const armadilha: ArmadilhaDetalhe = {
   id: 'arm-1',
   identificador: 'ARM-001',
   modelo: 'StickFly K-45',
+  modelo_id: 'mod-1',
   localizacao: 'Depósito',
   data_instalacao: '2026-10-01',
   refil_ativo: null,
@@ -26,6 +30,17 @@ const armadilha: ArmadilhaDetalhe = {
   percentual_atual: null,
   status: null,
   dias_ate_saturar: null,
+}
+
+const stickfly: ModeloArmadilha = {
+  id: 'mod-1',
+  codigo: 'stickfly-k45',
+  nome: 'StickFly K-45',
+  fabricante: 'StickFly',
+  descricao: 'Armadilha de parede com lâmpadas UVA.',
+  atracao: 'UV-A',
+  refil_largura_mm: 450,
+  refil_altura_mm: 220,
 }
 
 function DestinoArmadilha() {
@@ -49,6 +64,8 @@ beforeEach(() => {
   vi.mocked(createArmadilha).mockReset()
   vi.mocked(getArmadilha).mockReset()
   vi.mocked(updateArmadilha).mockReset()
+  vi.mocked(listModelos).mockReset()
+  vi.mocked(listModelos).mockResolvedValue([stickfly])
 })
 
 afterEach(() => {
@@ -60,6 +77,7 @@ describe('CadastroArmadilhaPage', () => {
     const usuario = userEvent.setup()
     vi.mocked(createArmadilha).mockResolvedValue({ ...armadilha, id: 'arm-nova' })
     renderCadastro('/armadilhas/nova')
+    await screen.findByRole('radio', { name: /StickFly K-45/ })
 
     await usuario.type(screen.getByLabelText('Identificador *'), '  ARM-007  ')
     const dataInstalacao = localDateIso(new Date())
@@ -70,7 +88,7 @@ describe('CadastroArmadilhaPage', () => {
     await screen.findByText('Detalhe da armadilha arm-nova')
     expect(createArmadilha).toHaveBeenCalledWith({
       identificador: 'ARM-007',
-      modelo: null,
+      modelo_id: 'mod-1',
       localizacao: null,
       data_instalacao: dataInstalacao,
       criar_refil_inicial: true,
@@ -157,7 +175,7 @@ describe('CadastroArmadilhaPage', () => {
     await waitFor(() =>
       expect(updateArmadilha).toHaveBeenCalledWith('arm-1', {
         identificador: 'ARM-001',
-        modelo: 'StickFly K-45',
+        modelo_id: 'mod-1',
         localizacao: 'Recebimento',
       }),
     )
@@ -166,13 +184,60 @@ describe('CadastroArmadilhaPage', () => {
     )
   })
 
-  it('preenche a data de instalação com o dia local, mesmo perto da meia-noite', () => {
+  it('lista os modelos do fabricante e exige a escolha quando há mais de um', async () => {
+    const usuario = userEvent.setup()
+    const outro: ModeloArmadilha = { ...stickfly, id: 'mod-2', codigo: 'k-60', nome: 'StickFly K-60' }
+    vi.mocked(listModelos).mockResolvedValue([stickfly, outro])
+    vi.mocked(createArmadilha).mockResolvedValue({ ...armadilha, id: 'arm-nova' })
+    renderCadastro('/armadilhas/nova')
+
+    const opcao = await screen.findByRole('radio', { name: /StickFly K-60/ })
+    expect(screen.getByRole('radio', { name: /StickFly K-45/ })).not.toBeChecked()
+    expect(screen.getAllByText('Refil 450 × 220 mm', { exact: false })).toHaveLength(2)
+    await usuario.type(screen.getByLabelText('Identificador *'), 'ARM-010')
+    await usuario.click(screen.getByRole('button', { name: 'Cadastrar armadilha' }))
+
+    expect(await screen.findByText('Escolha o modelo da armadilha.')).toBeVisible()
+    expect(createArmadilha).not.toHaveBeenCalled()
+
+    await usuario.click(opcao)
+    await usuario.click(screen.getByRole('button', { name: 'Cadastrar armadilha' }))
+
+    await screen.findByText('Detalhe da armadilha arm-nova')
+    expect(createArmadilha).toHaveBeenCalledWith(
+      expect.objectContaining({ identificador: 'ARM-010', modelo_id: 'mod-2' }),
+    )
+  })
+
+  it('marca o modelo cadastrado ao editar uma armadilha', async () => {
+    vi.mocked(getArmadilha).mockResolvedValue(armadilha)
+    renderCadastro('/armadilhas/arm-1/editar')
+
+    expect(await screen.findByRole('radio', { name: /StickFly K-45/ })).toBeChecked()
+  })
+
+  it('informa a falha ao carregar os modelos e permite tentar de novo', async () => {
+    const usuario = userEvent.setup()
+    vi.mocked(listModelos).mockRejectedValueOnce(new Error('rede'))
+    renderCadastro('/armadilhas/nova')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar os modelos de armadilha.',
+    )
+    expect(screen.getByRole('button', { name: 'Cadastrar armadilha' })).toBeDisabled()
+
+    await usuario.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+
+    expect(await screen.findByRole('radio', { name: /StickFly K-45/ })).toBeChecked()
+  })
+
+  it('preenche a data de instalação com o dia local, mesmo perto da meia-noite', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 16, 23, 30))
 
     renderCadastro('/armadilhas/nova')
 
-    expect(screen.getByLabelText('Data de instalação')).toHaveValue('2026-10-16')
+    expect(await screen.findByLabelText('Data de instalação')).toHaveValue('2026-10-16')
   })
 
   it('não preenche a data atual na edição quando não há data registrada', async () => {

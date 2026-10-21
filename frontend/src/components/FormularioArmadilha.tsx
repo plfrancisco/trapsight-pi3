@@ -1,13 +1,17 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
+import { useCarregamento } from '../hooks/useCarregamento'
 import { localDateIso } from '../lib/datas'
 import { ApiError } from '../services/erros'
 import { createArmadilha, updateArmadilha } from '../services/armadilhas'
+import { listModelos } from '../services/modelos'
 import type { ArmadilhaDetalhe } from '../services/tipos'
 import Botao from './Botao'
 import CampoFormulario from './CampoFormulario'
+import EstadoCarregando from './EstadoCarregando'
 import LinkBotao from './LinkBotao'
 import MensagemErro from './MensagemErro'
+import SeletorModelo from './SeletorModelo'
 
 interface FormularioArmadilhaProps {
   id?: string
@@ -32,6 +36,17 @@ export default function FormularioArmadilha({
   const dataInstalacaoRef = useRef<HTMLInputElement>(null)
   const [erroIdentificador, setErroIdentificador] = useState<string | null>(null)
   const [erroDataInstalacao, setErroDataInstalacao] = useState<string | null>(null)
+  const [erroModelo, setErroModelo] = useState<string | null>(null)
+  const carregarModelos = useCallback(
+    (signal: AbortSignal) => listModelos(signal),
+    [],
+  )
+  const {
+    dados: modelos,
+    erro: erroModelos,
+    carregando: carregandoModelos,
+    recarregar: recarregarModelos,
+  } = useCarregamento(carregarModelos)
   const [erroEnvio, setErroEnvio] = useState<ApiError | string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -39,6 +54,7 @@ export default function FormularioArmadilha({
     evento.preventDefault()
     setErroIdentificador(null)
     setErroDataInstalacao(null)
+    setErroModelo(null)
     setErroEnvio(null)
 
     const formulario = new FormData(evento.currentTarget)
@@ -46,6 +62,12 @@ export default function FormularioArmadilha({
     if (!identificador) {
       setErroIdentificador('Informe o identificador da armadilha.')
       identificadorRef.current?.focus()
+      return
+    }
+
+    const modeloId = parseOptionalValue(formulario.get('modelo_id'))
+    if (!id && modeloId === null) {
+      setErroModelo('Escolha o modelo da armadilha.')
       return
     }
 
@@ -64,7 +86,7 @@ export default function FormularioArmadilha({
       if (id) {
         const armadilhaAtualizada = await updateArmadilha(id, {
           identificador,
-          modelo: parseOptionalValue(formulario.get('modelo')),
+          modelo_id: modeloId,
           localizacao: parseOptionalValue(formulario.get('localizacao')),
         })
         navigate(`/armadilhas/${encodeURIComponent(armadilhaAtualizada.id)}`)
@@ -73,7 +95,7 @@ export default function FormularioArmadilha({
 
       const armadilhaCriada = await createArmadilha({
         identificador,
-        modelo: parseOptionalValue(formulario.get('modelo')),
+        modelo_id: modeloId,
         localizacao: parseOptionalValue(formulario.get('localizacao')),
         data_instalacao: dataInstalacao,
         criar_refil_inicial: criarRefilInicial,
@@ -131,12 +153,31 @@ export default function FormularioArmadilha({
           rotulo="Identificador"
           valorPadrao={dados?.identificador ?? ''}
         />
-        <CampoFormulario
-          id="modelo"
-          nome="modelo"
-          rotulo="Modelo"
-          valorPadrao={dados?.modelo ?? ''}
-        />
+        {carregandoModelos ? <EstadoCarregando /> : null}
+        {erroModelos ? (
+          <div className="space-y-3">
+            <MensagemErro
+              erro={
+                erroModelos instanceof ApiError
+                  ? erroModelos
+                  : 'Não foi possível carregar os modelos de armadilha.'
+              }
+            />
+            <Botao onClick={recarregarModelos} variante="discreto">
+              Tentar novamente
+            </Botao>
+          </div>
+        ) : null}
+        {modelos ? (
+          <SeletorModelo
+            erro={erroModelo}
+            modelos={modelos}
+            onChange={() => setErroModelo(null)}
+            valorPadrao={
+              dados?.modelo_id ?? (!id && modelos.length === 1 ? modelos[0].id : null)
+            }
+          />
+        ) : null}
         <CampoFormulario
           id="localizacao"
           nome="localizacao"
@@ -185,7 +226,7 @@ export default function FormularioArmadilha({
 
         <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
           <Botao
-            disabled={enviando}
+            disabled={enviando || modelos === null}
             tamanho="amplo"
             type="submit"
             variante="primario"

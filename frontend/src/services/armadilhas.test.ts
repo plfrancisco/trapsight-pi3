@@ -7,6 +7,7 @@ import {
   replaceRefil,
   updateArmadilha,
 } from './armadilhas'
+import { listModelos } from './modelos'
 
 const respostaJson = (dados: unknown, status = 200) =>
   ({
@@ -124,5 +125,19 @@ describe('serviços de armadilhas', () => {
     expect(url).toBe(urlDaApi('armadilhas/arm-1/refis'))
     expect(init.method).toBe('POST')
     expect(JSON.parse(String(init.body))).toEqual(entrada)
+  })
+})
+
+describe('serviço de modelos', () => {
+  it('lista o catálogo sem converter os campos da API', async () => {
+    const dados = [{ id: 'mod-1', codigo: 'stickfly-k45', nome: 'StickFly K-45' }]
+    fetchSimulado.mockResolvedValue(respostaJson(dados))
+
+    await expect(listModelos()).resolves.toEqual(dados)
+
+    expect(fetchSimulado).toHaveBeenCalledWith(
+      urlDaApi('modelos-armadilha'),
+      expect.objectContaining({ method: 'GET' }),
+    )
   })
 })

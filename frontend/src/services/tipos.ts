@@ -22,6 +22,7 @@ export interface ArmadilhaLista {
   identificador: string
   localizacao: string | null
   modelo: string | null
+  modelo_id: string | null
   refil_ativo: RefilAtivo | null
   percentual_atual: number | null
   status: StatusAnalise | null
@@ -35,6 +36,7 @@ export interface ArmadilhaDetalhe {
   id: string
   identificador: string
   modelo: string | null
+  modelo_id: string | null
   localizacao: string | null
   data_instalacao: string | null
   refil_ativo: RefilAtivo | null
@@ -44,10 +46,22 @@ export interface ArmadilhaDetalhe {
   dias_ate_saturar: number | null
 }
 
+/** Modelo de armadilha pré-cadastrado pelo fabricante. */
+export interface ModeloArmadilha {
+  id: string
+  codigo: string
+  nome: string
+  fabricante: string
+  descricao: string | null
+  atracao: string | null
+  refil_largura_mm: number
+  refil_altura_mm: number
+}
+
 /** Campos aceitos no cadastro de uma armadilha. */
 export interface ArmadilhaCriar {
   identificador: string
-  modelo?: string | null
+  modelo_id?: string | null
   localizacao?: string | null
   data_instalacao?: string | null
   criar_refil_inicial?: boolean
@@ -56,7 +70,7 @@ export interface ArmadilhaCriar {
 /** Campos editáveis no cadastro parcial de uma armadilha. */
 export interface ArmadilhaAtualizar {
   identificador?: string
-  modelo?: string | null
+  modelo_id?: string | null
   localizacao?: string | null
 }
 

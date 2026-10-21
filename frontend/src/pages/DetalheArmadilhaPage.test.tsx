@@ -21,6 +21,7 @@ function buildArmadilha(
     id: 'arm-1',
     identificador: 'ARM-001',
     modelo: 'StickFly K-45',
+    modelo_id: 'mod-1',
     localizacao: 'Área de recebimento',
     data_instalacao: '2026-06-15',
     refil_ativo: { id: 'refil-1', data_instalacao: '2026-08-01', dias_em_uso: 20 },
