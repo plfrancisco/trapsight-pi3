@@ -14,6 +14,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
+from tests.auth_helpers import autenticar_cliente
 from src.api.erros import CodigoErro
 from src.entities import Analise, StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository
@@ -52,6 +53,7 @@ def client(
     app.dependency_overrides[get_session] = substituir_sessao
     app.dependency_overrides[get_agora] = lambda: _AGORA
     with TestClient(app) as test_client:
+        autenticar_cliente(test_client, session)
         yield test_client
     app.dependency_overrides.clear()
 

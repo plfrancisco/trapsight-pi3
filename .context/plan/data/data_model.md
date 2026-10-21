@@ -65,6 +65,9 @@ Adicionar migrations a um banco já existente é retrabalho evitável.
 | `armadilha` | Unidade física instalada | **MVP** |
 | `refil` | Ciclo de vida de um refil, da instalação à troca | **MVP** |
 | `analise` | Resultado de uma inferência do modelo | **MVP** |
+| `usuario` | Conta com acesso ao sistema | **Hospedagem pública** |
+| `sessao` | Sessão autenticada de um usuário | **Hospedagem pública** |
+| `tentativa_login` | Registro de tentativas de login, base do bloqueio e do limite por IP | **Hospedagem pública** |
 | `estabelecimento` | Cliente onde as armadilhas estão instaladas | Fase 2 |
 
 O `estabelecimento` está especificado abaixo para que o modelo fique completo,
@@ -80,6 +83,7 @@ erDiagram
     ESTABELECIMENTO ||--o{ ARMADILHA : "possui"
     ARMADILHA ||--o{ REFIL : "recebe"
     REFIL ||--o{ ANALISE : "é analisado por"
+    USUARIO ||--o{ SESSAO : "abre"
 
     ESTABELECIMENTO {
         uuid id PK
@@ -114,6 +118,33 @@ erDiagram
         varchar status
         varchar caminho_imagem
         varchar modelo_versao
+    }
+
+    USUARIO {
+        uuid id PK
+        varchar email
+        varchar nome
+        varchar senha_hash
+        boolean ativo
+        timestamptz bloqueado_ate
+        timestamptz criado_em
+    }
+
+    SESSAO {
+        uuid id PK
+        uuid usuario_id FK
+        varchar token_hash
+        varchar csrf_token
+        timestamptz expira_em
+        timestamptz revogada_em
+    }
+
+    TENTATIVA_LOGIN {
+        uuid id PK
+        varchar identificador_hash
+        varchar ip
+        timestamptz ocorrida_em
+        boolean sucesso
     }
 ```
 
@@ -179,6 +210,61 @@ Resultado de uma inferência do modelo sobre uma imagem.
 | `status` | `varchar` | `ok`, `atencao` ou `trocar` |
 | `caminho_imagem` | `varchar` | Caminho relativo do arquivo, não o binário |
 | `modelo_versao` | `varchar` | Versão do modelo no formato `semver+hash` — ver seção 7.2 |
+
+## 6.5 `usuario`
+
+Conta com acesso ao sistema. Criada **somente pelo administrador**, por linha de
+comando; não há cadastro aberto (`login.md`, 5.4).
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `email` | `varchar` | Obrigatório, **único**; normalizado (minúsculas, NFKC, sem espaços nas pontas) |
+| `nome` | `varchar` | Obrigatório; usado na exibição |
+| `senha_hash` | `varchar` | String PHC do Argon2id (carrega algoritmo, parâmetros e sal); **nunca** a senha |
+| `ativo` | `boolean` | Padrão `true`; `false` bloqueia o login e revoga as sessões |
+| `bloqueado_ate` | `timestamptz` | Nulo; preenchido no bloqueio temporário por tentativas |
+| `senha_alterada_em` | `timestamptz` | Auditoria |
+| `ultimo_login_em` | `timestamptz` | Nulo até o primeiro login |
+| `criado_em` | `timestamptz` | Padrão `now()` |
+
+Usuários nunca são excluídos: são **desativados**, para preservar a auditoria.
+
+## 6.6 `sessao`
+
+Sessão autenticada. O token entregue ao navegador **nunca** é gravado: só o seu
+SHA-256 (`login.md`, 7.1), para que um vazamento do banco não entregue sessões
+utilizáveis.
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `usuario_id` | `uuid` | FK, obrigatório |
+| `token_hash` | `varchar(64)` | SHA-256 do token em hexadecimal, **único** |
+| `csrf_token` | `varchar` | Token CSRF sincronizado, vinculado à sessão |
+| `criado_em` | `timestamptz` | Padrão `now()`; base da duração absoluta |
+| `ultimo_uso_em` | `timestamptz` | Base da inatividade; atualizado com frequência limitada |
+| `expira_em` | `timestamptz` | Fim absoluto da sessão |
+| `revogada_em` | `timestamptz` | Nulo enquanto válida; preenchido no logout e nas revogações |
+| `ip` | `varchar` | Auditoria |
+| `user_agent` | `varchar` | Auditoria |
+
+Sessões expiradas são removidas na inicialização e a cada login do usuário.
+
+## 6.7 `tentativa_login`
+
+Base do bloqueio por conta e do limite por IP (`login.md`, 6.3). Não guarda o
+e-mail digitado nem a senha, para não registrar senhas escritas no campo errado.
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `identificador_hash` | `varchar` | Hash do e-mail normalizado |
+| `ip` | `varchar` | Endereço de origem (do proxy confiável) |
+| `ocorrida_em` | `timestamptz` | Padrão `now()` |
+| `sucesso` | `boolean` | Falhas contam para o limite; o sucesso zera o contador da conta |
+
+Registros com mais de 24 horas podem ser removidos.
 
 ---
 
@@ -247,6 +333,11 @@ a última barreira contra dado inconsistente.
 | `analise` | `CHECK (percentual_coberto BETWEEN 0 AND 100)` | Regra da seção 6.4 |
 | `analise` | `CHECK (status IN ('ok', 'atencao', 'trocar'))` | Valores da seção 6.4; sem acento, conforme a seção 7.3 |
 | `analise` | índice em `(refil_id, analisado_em)` | Série temporal por refil, ordenada — a consulta central do sistema |
+| `usuario` | `UNIQUE (email)` | Uma conta por e-mail normalizado |
+| `sessao` | FK `usuario_id` → `usuario.id`, `ON DELETE RESTRICT` | Usuários são desativados, não excluídos |
+| `sessao` | `UNIQUE (token_hash)` e `CHECK (token_hash ~ '^[0-9a-f]{64}$')` | O banco só aceita o SHA-256 em hexadecimal, nunca o token em claro |
+| `sessao` | índice em `(usuario_id, revogada_em)` | Consulta das sessões ativas e do limite por usuário |
+| `tentativa_login` | índices em `(identificador_hash, ocorrida_em)` e `(ip, ocorrida_em)` | Contagem de falhas na janela, por conta e por IP |
 
 A regra de **um refil ativo por armadilha** (seção 6.3) **não** faz parte da
 migration inicial: é a task DB03, em migration própria.

@@ -1,0 +1,52 @@
+# Senhas comuns que o sistema recusa mesmo com 15 caracteres ou mais (sem distinção de caixa).
+# Linhas começadas por "#" e linhas vazias são ignoradas.
+# Esta lista COMPLEMENTA as regras de senhas_bloqueadas (palavra comum + números, repetições,
+# sequências e senhas contextuais); deve conter, no mínimo, as senhas de
+# security/pentest/senhas_bloqueadas_minimas.txt.
+
+# Sequências numéricas e repetições
+123456789012345
+1234567890123456
+12345678901234567890
+0123456789012345
+9876543210987654
+0000000000000000
+1111111111111111
+aaaaaaaaaaaaaaaa
+# Teclado e alfabeto
+qwertyuiopasdfghjkl
+qwertyuiopasdfghjklzxcvbnm
+asdfghjklzxcvbnm
+zxcvbnmasdfghjkl
+1qaz2wsx3edc4rfv
+1qaz2wsx3edc4rfv5tgb
+qazwsxedcrfvtgbyhn
+1q2w3e4r5t6y7u8i
+1234qwer5678asdf
+poiuytrewqlkjhgfdsa
+abcdefghijklmnopqrstuvwxyz
+abcdefghijklmno
+abcdefghijklmnop
+# Palavras comuns repetidas ou com números
+passwordpassword
+password12345678
+password1234567890
+senhasenhasenha1
+senha123456789012
+senha1234567890123
+minhasenha123456
+minhasenha1234567
+senhasecreta12345
+mudar123mudar123
+changemechangeme
+letmeinletmein
+welcome123456789
+iloveyouiloveyou
+administrator1234
+admin12345678901
+brasilbrasilbrasil
+trapsight12345678
+trapsight-trapsight
+# Frases muito conhecidas
+thequickbrownfox
+asenhaedificil123

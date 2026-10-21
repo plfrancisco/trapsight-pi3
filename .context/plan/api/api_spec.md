@@ -32,10 +32,13 @@ interface não consuma.
 | `200` | Sucesso em leitura ou atualização |
 | `201` | Recurso criado |
 | `400` | Requisição malformada ou arquivo inválido |
+| `401` | Sem sessão válida ou credenciais inválidas |
+| `403` | Requisição recusada pela proteção contra CSRF (`Origin` ou token) |
 | `404` | Recurso não encontrado |
 | `409` | Conflito de estado — ex.: análise em armadilha sem refil ativo |
 | `413` | Arquivo acima do limite de tamanho |
 | `422` | Falha de validação de campo |
+| `429` | Limite de tentativas de login ou de análises excedido |
 | `500` | Falha na inferência ou erro interno |
 
 ## 2.2 Formato de erro
@@ -80,6 +83,12 @@ podem ser reescritas sem aviso, códigos não.
 | `ROTA_NAO_ENCONTRADA` | 404 | Rota inexistente |
 | `METODO_NAO_PERMITIDO` | 405 | Método HTTP não aceito pela rota |
 | `ERRO_INTERNO` | 500 | Falha inesperada; a mensagem é genérica e o detalhe fica só no log do servidor |
+| `NAO_AUTENTICADO` | 401 | Sem sessão, sessão expirada ou revogada |
+| `CREDENCIAIS_INVALIDAS` | 401 | Qualquer falha de login (conta inexistente, senha errada, conta inativa **ou bloqueada**): resposta única, sem distinguir o motivo; também a senha atual errada na troca de senha |
+| `CSRF_INVALIDO` | 403 | Token `X-CSRF-Token` ausente ou incorreto, ou `Origin` não permitido |
+| `LIMITE_TENTATIVAS` | 429 | Limite de falhas de login por IP; traz `Retry-After` |
+| `LIMITE_ANALISES` | 429 | Excesso de análises por usuário; traz `Retry-After` |
+| `SENHA_FRACA` | 422 | Senha fora da política (`login.md`, 5.2); o motivo vai em `detalhes` e a senha **nunca** é devolvida |
 
 ## 2.4 Restrições de upload
 
@@ -114,7 +123,10 @@ decisão deve ser reavaliada.
 
 **CORS:** origem permitida definida pela variável `CORS_ORIGENS`, aceitando
 lista separada por vírgula. Em desenvolvimento, `http://localhost:5173`
-— porta padrão do Vite.
+— porta padrão do Vite. Com a sessão em cookie, o CORS precisa liberar
+credenciais (`Access-Control-Allow-Credentials: true`) com origem **explícita**,
+nunca `*`. Em produção, API e frontend ficam na **mesma origem** (`/api`), o que
+dispensa CORS no uso normal (`login.md`, 4.2).
 
 **Variáveis de ambiente do backend:**
 
@@ -127,16 +139,47 @@ lista separada por vírgula. Em desenvolvimento, `http://localhost:5173`
 | `CORS_ORIGENS` | `http://localhost:5173` | Sim |
 | `LIMIAR_ATENCAO` | `40` | Não — padrão 40 |
 | `LIMIAR_TROCAR` | `70` | Não — padrão 70 |
+| `AMBIENTE` | `producao` | Sim — `desenvolvimento`, `homologacao` ou `producao`; em `producao` a documentação interativa (`/docs`, `/redoc`, `/openapi.json`) é desativada |
+| `COOKIE_SECURE` | `true` | Não — padrão `true`; `false` só com `AMBIENTE=desenvolvimento` |
+| `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | Não — padrão 1800 (30 min) |
+| `SESSAO_DURACAO_MAXIMA_SEGUNDOS` | `28800` | Não — padrão 28800 (8 h) |
+| `SESSAO_MAXIMA_POR_USUARIO` | `5` | Não — padrão 5 |
+| `LOGIN_FALHAS_POR_CONTA` | `5` | Não — padrão 5 em `LOGIN_JANELA_SEGUNDOS` |
+| `LOGIN_BLOQUEIO_SEGUNDOS` | `900` | Não — padrão 900 (15 min) |
+| `LOGIN_FALHAS_POR_IP` | `30` | Não — padrão 30 em `LOGIN_JANELA_SEGUNDOS` |
+| `LOGIN_JANELA_SEGUNDOS` | `900` | Não — padrão 900 (15 min) |
+| `ANALISES_POR_MINUTO` | `30` | Não — padrão 30 por usuário |
+| `ARGON2_MEMORIA_KIB` | `19456` | Não — padrão 19456 (19 MiB), mínimo do OWASP |
+| `ARGON2_ITERACOES` | `2` | Não — padrão 2 |
+| `ARGON2_PARALELISMO` | `1` | Não — padrão 1 |
+| `FORWARDED_ALLOW_IPS` | `172.20.0.0/16` | Sim em produção — só deste endereço (o proxy) o `X-Forwarded-For` é confiável |
+
+Prazos e limites são variáveis de ambiente para a homologação poder usar valores
+curtos nos testes de expiração e de limite (`../../security/README.md`).
 
 **Variáveis do frontend:**
 
 | Variável | Exemplo |
 |---|---|
-| `VITE_API_URL` | `http://localhost:8000/api` |
+| `VITE_API_URL` | `http://localhost:8000/api` em desenvolvimento; `/api` em produção (mesma origem) |
 
 Os limiares são variáveis de ambiente porque serão recalibrados com dados
 reais, conforme `../foundation/project_overview.md`, seção 7.2. Fixá-los no
 código exigiria alteração e novo build a cada ajuste.
+
+## 2.7 Autenticação e sessão
+
+Todas as rotas `/api/*` **exigem sessão**, exceto `POST /api/auth/login`. A
+autenticação é aplicada no roteador-raiz: rota nova nasce protegida
+(`login.md`, 9.2).
+
+| Item | Regra |
+|---|---|
+| Cookie de sessão | `__Host-trapsight_sessao` em produção (em desenvolvimento, `trapsight_sessao`), `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, sem `Domain` e sem `Max-Age` |
+| Token CSRF | Devolvido em `csrf_token` no login e em `GET /api/auth/me`; enviado em `X-CSRF-Token` em todo `POST`, `PATCH`, `PUT` e `DELETE` |
+| `Origin` | Em métodos não seguros precisa coincidir com a origem permitida; ausente ou `null` é recusado (`403 CSRF_INVALIDO`) |
+| Respostas de autenticação | Sempre com `Cache-Control: no-store` |
+| Sem sessão | `401 NAO_AUTENTICADO` em toda rota protegida, **antes** de validar o corpo ou buscar o recurso: um id inexistente sem sessão responde `401`, nunca `404` nem `422` |
 
 ---
 
@@ -152,6 +195,39 @@ código exigiria alteração e novo build a cada ajuste.
 | `GET` | `/api/armadilhas/{id}/analises` | Detalhe (gráfico e histórico) |
 | `POST` | `/api/analises` | Nova análise |
 | `GET` | `/api/analises/{id}` | Nova análise (resultado) |
+| `GET` | `/api/analises/{id}/imagem` e `/mascara` | Nova análise e Detalhe (mídia) |
+| `POST` | `/api/auth/login` | Login |
+| `POST` | `/api/auth/logout` | Cabeçalho (sair) |
+| `GET` | `/api/auth/me` | Carga inicial do aplicativo |
+| `POST` | `/api/auth/senha` | Alterar senha |
+| `GET` | `/healthz` | Verificação de saúde (sem dados sensíveis, fora de `/api`) |
+
+## 3.1 Endpoints de autenticação
+
+**`POST /api/auth/login`** — corpo `{ "email": "...", "senha": "..." }` (e-mail até
+254 caracteres, senha até 128).
+
+- `200`: `{ "usuario": { "id", "email", "nome" }, "csrf_token": "..." }` e `Set-Cookie`
+  da sessão (token novo a cada login).
+- `401 CREDENCIAIS_INVALIDAS` com a mensagem única "E-mail ou senha inválidos." para
+  qualquer falha de credencial, conta inativa ou bloqueada.
+- `429 LIMITE_TENTATIVAS` com `Retry-After`; `403 CSRF_INVALIDO` com `Origin` hostil;
+  `422 VALIDACAO_FALHOU` para corpo malformado.
+
+**`POST /api/auth/logout`** — exige sessão e `X-CSRF-Token`. `204`; revoga a sessão
+**no servidor** e limpa o cookie.
+
+**`GET /api/auth/me`** — exige sessão. `200`:
+`{ "usuario": { "id", "email", "nome" }, "csrf_token": "..." }`; `401 NAO_AUTENTICADO`
+sem sessão. O aplicativo o chama ao carregar para recuperar o estado.
+
+**`POST /api/auth/senha`** — exige sessão e `X-CSRF-Token`. Corpo
+`{ "senha_atual": "...", "senha_nova": "..." }`.
+
+- `200`: `{ "csrf_token": "..." }` e `Set-Cookie` de uma sessão **nova**; todas as
+  outras sessões do usuário são revogadas.
+- `401 CREDENCIAIS_INVALIDAS` se a senha atual estiver errada; `422 SENHA_FRACA` se
+  a nova violar a política (`login.md`, 5.2).
 
 ---
 
@@ -425,7 +501,8 @@ imagem original, evitando reprocessamento a cada visualização.
 
 | Item | Motivo |
 |---|---|
-| Autenticação e autorização | Fora do escopo do MVP |
+| Perfis de acesso (autorização por papel) | Fase 2. Na v1 todo usuário autenticado e ativo acessa todo o sistema (`login.md`, 4.3) |
+| MFA e recuperação de senha por e-mail | Fase 2 (`login.md`, 12.3); a senha é redefinida pelo administrador por linha de comando |
 | Endpoints de estabelecimento | Entidade prevista para a Fase 2 |
 | Endpoint de comparação com baseline | A comparação ocorre offline, nos notebooks de avaliação |
 | Paginação completa | O volume do MVP não justifica; `limite` é suficiente |

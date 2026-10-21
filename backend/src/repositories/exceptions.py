@@ -19,3 +19,7 @@ class RefilJaEncerrado(ErroDeDominio):
 
 class DataTrocaInvalida(ErroDeDominio):
     """Indica que a data de troca antecede a instalação do refil."""
+
+
+class EmailDuplicado(ErroDeDominio):
+    """Indica que outro usuário já usa o e-mail informado."""

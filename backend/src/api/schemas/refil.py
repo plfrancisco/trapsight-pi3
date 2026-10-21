@@ -3,13 +3,13 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+
+from src.api.schemas.entrada import EntradaBase
 
 
-class RefilTrocaCriar(BaseModel):
+class RefilTrocaCriar(EntradaBase):
     """Valida a data de início do novo ciclo de refil."""
-
-    model_config = ConfigDict(extra="forbid")
 
     data_instalacao: date
 

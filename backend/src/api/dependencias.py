@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.config.settings import Settings
 from src.inference.contrato import Inferidor
+from src.services.senhas import ServicoDeSenhas
 
 
 def get_settings(request: Request) -> Settings:
@@ -46,6 +47,33 @@ def get_session(request: Request) -> Iterator[Session]:
         yield session
     finally:
         session.close()
+
+
+def get_relogio(request: Request) -> datetime:
+    """Retorna o instante atual pelo relógio da aplicação.
+
+    Diferente de `get_agora`, é o relógio que a proteção de sessão também usa,
+    então sessões criadas e validadas concordam sobre o tempo.
+
+    Args:
+        request: requisição que referencia a aplicação ativa.
+
+    Returns:
+        Instante atual com fuso horário UTC.
+    """
+    return request.app.state.relogio()
+
+
+def get_servico_de_senhas(request: Request) -> ServicoDeSenhas:
+    """Obtém o serviço de senhas criado na inicialização (hash fictício incluso).
+
+    Args:
+        request: requisição que referencia a aplicação ativa.
+
+    Returns:
+        Serviço de hash e verificação de senhas.
+    """
+    return request.app.state.servico_de_senhas
 
 
 def get_inferidor(request: Request) -> Inferidor:

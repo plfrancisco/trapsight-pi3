@@ -8,13 +8,13 @@ from uuid import UUID
 
 from pydantic import (
     BaseModel,
-    ConfigDict,
     Field,
     field_serializer,
     field_validator,
     model_validator,
 )
 
+from src.api.schemas.entrada import EntradaBase
 from src.entities import StatusAnalise
 
 
@@ -25,10 +25,8 @@ def _validar_identificador(valor: str) -> str:
     return valor
 
 
-class ArmadilhaCriar(BaseModel):
+class ArmadilhaCriar(EntradaBase):
     """Valida os campos aceitos no cadastro de uma armadilha."""
-
-    model_config = ConfigDict(extra="forbid")
 
     identificador: str = Field(min_length=1, max_length=64)
     modelo: str | None = Field(default=None, max_length=100)
@@ -57,10 +55,8 @@ class ArmadilhaCriar(BaseModel):
         return self.data_instalacao
 
 
-class ArmadilhaAtualizar(BaseModel):
+class ArmadilhaAtualizar(EntradaBase):
     """Valida uma atualização parcial sem permitir mudar datas históricas."""
-
-    model_config = ConfigDict(extra="forbid")
 
     identificador: str | None = Field(default=None, min_length=1, max_length=64)
     modelo: str | None = Field(default=None, max_length=100)

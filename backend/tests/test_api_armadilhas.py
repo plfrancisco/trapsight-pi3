@@ -10,6 +10,7 @@ from sqlalchemy import Engine, event
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
+from tests.auth_helpers import autenticar_cliente
 from src.entities import StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
@@ -46,6 +47,7 @@ def client(
     app.dependency_overrides[get_session] = substituir_sessao
     app.dependency_overrides[get_agora] = lambda: _AGORA
     with TestClient(app) as test_client:
+        autenticar_cliente(test_client, session)
         yield test_client
     app.dependency_overrides.clear()
 
@@ -190,6 +192,12 @@ def test_listar_armadilhas_consolida_campos_nulos_estados_e_ordem(
     assert itens[4]["status"] is None
 
 
+def _consulta_de_autenticacao(statement: str) -> bool:
+    """Identifica as consultas da proteção de sessão (tabelas sessao e usuario)."""
+    normalizada = " ".join(statement.split())  # o SQL gerado quebra linhas
+    return " FROM sessao" in normalizada or " FROM usuario" in normalizada
+
+
 @pytest.mark.parametrize("quantidade", [5, 20])
 def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
     client: TestClient,
@@ -204,7 +212,11 @@ def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
     consultas: list[str] = []
 
     def contar_selects(_conn, _cursor, statement, _parameters, _context, _many) -> None:
-        if statement.lstrip().upper().startswith("SELECT"):
+        # A checagem de sessão do middleware consulta sessao e usuario; o que
+        # este teste garante é que as consultas DO DASHBOARD não crescem com N.
+        if statement.lstrip().upper().startswith("SELECT") and not _consulta_de_autenticacao(
+            statement
+        ):
             consultas.append(statement)
 
     event.listen(engine, "before_cursor_execute", contar_selects)

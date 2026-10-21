@@ -247,7 +247,14 @@ def test_entity_metadata_matches_migrated_schema(session: Session) -> None:
     differences = compare_metadata(migration_context, Base.metadata)
     assert differences == []
 
-    assert set(Base.metadata.tables) == {"armadilha", "refil", "analise"}
+    assert set(Base.metadata.tables) == {
+        "armadilha",
+        "refil",
+        "analise",
+        "usuario",
+        "sessao",
+        "tentativa_login",
+    }
     assert {constraint.name for constraint in Armadilha.__table__.constraints} == {
         "pk_armadilha",
         "uq_armadilha_identificador",

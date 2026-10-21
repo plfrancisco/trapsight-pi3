@@ -12,7 +12,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
-from src.entities import Armadilha, Refil
+from tests.auth_helpers import (
+    aplicar_credenciais,
+    autenticar_cliente,
+    criar_sessao,
+    criar_usuario,
+)
+from src.entities import Armadilha, Refil, Sessao, Usuario
 from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
 
@@ -44,6 +50,7 @@ def client(session: Session, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     app.dependency_overrides[get_session] = substituir_sessao
     app.dependency_overrides[get_agora] = lambda: _AGORA
     with TestClient(app) as test_client:
+        autenticar_cliente(test_client, session)
         yield test_client
     app.dependency_overrides.clear()
 
@@ -299,9 +306,21 @@ def test_trocas_concorrentes_em_sessoes_reais_produzem_ciclos_coerentes(
     for app in apps:
         app.dependency_overrides[get_session] = sessao_por_requisicao
         app.dependency_overrides[get_agora] = lambda: _AGORA
+        # A proteção de sessão consulta o banco real, fora da barreira das rotas.
+        app.state.provedor_de_sessao = lambda: Session(engine, expire_on_commit=False)
+
+    # Usuário e sessão confirmados no banco, para a proteção de sessão enxergá-los.
+    with Session(engine) as sessao_de_acesso:
+        usuario_concorrente = criar_usuario(
+            sessao_de_acesso, apps[0], email=f"concorrente-{uuid4()}@exemplo.com"
+        )
+        credenciais = criar_sessao(sessao_de_acesso, apps[0], usuario_concorrente)
+        sessao_de_acesso.commit()
+        usuario_concorrente_id = usuario_concorrente.id
 
     def solicitar_troca(indice: int):
         with TestClient(apps[indice]) as test_client:
+            aplicar_credenciais(test_client, credenciais)
             return test_client.post(
                 f"/api/armadilhas/{armadilha_id}/refis",
                 json={"data_instalacao": "2026-03-21"},
@@ -333,5 +352,11 @@ def test_trocas_concorrentes_em_sessoes_reais_produzem_ciclos_coerentes(
             )
             sessao_limpeza.execute(
                 delete(Armadilha).where(Armadilha.id == armadilha_id)
+            )
+            sessao_limpeza.execute(
+                delete(Sessao).where(Sessao.usuario_id == usuario_concorrente_id)
+            )
+            sessao_limpeza.execute(
+                delete(Usuario).where(Usuario.id == usuario_concorrente_id)
             )
             sessao_limpeza.commit()

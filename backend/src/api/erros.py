@@ -36,6 +36,12 @@ class CodigoErro(StrEnum):
     ROTA_NAO_ENCONTRADA = "ROTA_NAO_ENCONTRADA"
     METODO_NAO_PERMITIDO = "METODO_NAO_PERMITIDO"
     ERRO_INTERNO = "ERRO_INTERNO"
+    NAO_AUTENTICADO = "NAO_AUTENTICADO"
+    CREDENCIAIS_INVALIDAS = "CREDENCIAIS_INVALIDAS"
+    CSRF_INVALIDO = "CSRF_INVALIDO"
+    LIMITE_TENTATIVAS = "LIMITE_TENTATIVAS"
+    LIMITE_ANALISES = "LIMITE_ANALISES"
+    SENHA_FRACA = "SENHA_FRACA"
 
 
 STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
@@ -55,6 +61,12 @@ STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
         CodigoErro.ROTA_NAO_ENCONTRADA: 404,
         CodigoErro.METODO_NAO_PERMITIDO: 405,
         CodigoErro.ERRO_INTERNO: 500,
+        CodigoErro.NAO_AUTENTICADO: 401,
+        CodigoErro.CREDENCIAIS_INVALIDAS: 401,
+        CodigoErro.CSRF_INVALIDO: 403,
+        CodigoErro.LIMITE_TENTATIVAS: 429,
+        CodigoErro.LIMITE_ANALISES: 429,
+        CodigoErro.SENHA_FRACA: 422,
     }
 )
 
@@ -67,6 +79,8 @@ class ErroDeApi(Exception):
         codigo: CodigoErro,
         mensagem: str,
         detalhes: dict[str, Any] | None = None,
+        *,
+        headers: Mapping[str, str] | None = None,
     ) -> None:
         """Armazena o erro sem aceitar um status HTTP independente do código.
 
@@ -74,10 +88,12 @@ class ErroDeApi(Exception):
             codigo: código estável definido pela API.
             mensagem: texto em português que pode ser exibido ao usuário.
             detalhes: contexto adicional que pode ser omitido da resposta.
+            headers: cabeçalhos da resposta (ex.: `Retry-After`).
         """
         self.codigo = CodigoErro(codigo)
         self.mensagem = mensagem
         self.detalhes = None if detalhes is None else dict(detalhes)
+        self.headers = None if headers is None else dict(headers)
         super().__init__(mensagem)
 
     @property
@@ -108,7 +124,9 @@ def registrar_handlers(app: FastAPI) -> None:
     """
 
     async def tratar_erro_de_api(_request: Request, exc: ErroDeApi) -> JSONResponse:
-        return _resposta_erro(exc.codigo, exc.mensagem, exc.detalhes)
+        return _resposta_erro(
+            exc.codigo, exc.mensagem, exc.detalhes, headers=exc.headers
+        )
 
     async def tratar_validacao(
         _request: Request,
@@ -165,7 +183,19 @@ def registrar_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return _resposta_erro_interno(exc)
 
+    async def tratar_json_profundo(
+        _request: Request,
+        _exc: RecursionError,
+    ) -> JSONResponse:
+        # JSON com aninhamento absurdo estoura a recursão do parser: é entrada
+        # hostil do cliente, não falha do servidor.
+        return _resposta_erro(
+            CodigoErro.REQUISICAO_INVALIDA,
+            "A requisição não pôde ser processada.",
+        )
+
     app.add_exception_handler(ErroDeApi, tratar_erro_de_api)
+    app.add_exception_handler(RecursionError, tratar_json_profundo)
     app.add_exception_handler(RequestValidationError, tratar_validacao)
     app.add_exception_handler(StarletteHTTPException, tratar_erro_http)
     app.add_exception_handler(Exception, tratar_excecao_inesperada)
@@ -189,6 +219,37 @@ def _detalhes_validacao(exc: RequestValidationError) -> dict[str, Any]:
         )
 
     return {"campos_invalidos": campos_invalidos}
+
+
+def resposta_de_erro(
+    codigo: CodigoErro,
+    mensagem: str,
+    *,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
+    """Monta a resposta padronizada para uso fora dos handlers (middlewares).
+
+    Args:
+        codigo: código estável definido pela API.
+        mensagem: texto em português que pode ser exibido ao usuário.
+        headers: cabeçalhos adicionais da resposta.
+
+    Returns:
+        Resposta JSON no formato `{ "erro": {...} }` com o status do código.
+    """
+    return _resposta_erro(codigo, mensagem, headers=headers)
+
+
+def resposta_de_erro_interno(exc: Exception) -> JSONResponse:
+    """Registra a falha no log e devolve a mensagem genérica, para middlewares.
+
+    Args:
+        exc: exceção inesperada capturada pelo middleware.
+
+    Returns:
+        Resposta `ERRO_INTERNO` sem detalhes do servidor.
+    """
+    return _resposta_erro_interno(exc)
 
 
 def _resposta_erro(

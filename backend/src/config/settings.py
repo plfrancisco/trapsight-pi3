@@ -1,8 +1,14 @@
 """Configuração validada do backend, carregada exclusivamente do ambiente."""
 
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import SecretStr, ValidationError, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import (
     BaseSettings,
     NoDecode,
@@ -18,7 +24,25 @@ _ENVIRONMENT_NAMES = {
     "cors_origens": "CORS_ORIGENS",
     "limiar_atencao": "LIMIAR_ATENCAO",
     "limiar_trocar": "LIMIAR_TROCAR",
+    "ambiente": "AMBIENTE",
+    "cookie_secure": "COOKIE_SECURE",
+    "sessao_inatividade_segundos": "SESSAO_INATIVIDADE_SEGUNDOS",
+    "sessao_duracao_maxima_segundos": "SESSAO_DURACAO_MAXIMA_SEGUNDOS",
+    "sessao_maxima_por_usuario": "SESSAO_MAXIMA_POR_USUARIO",
+    "login_falhas_por_conta": "LOGIN_FALHAS_POR_CONTA",
+    "login_bloqueio_segundos": "LOGIN_BLOQUEIO_SEGUNDOS",
+    "login_falhas_por_ip": "LOGIN_FALHAS_POR_IP",
+    "login_janela_segundos": "LOGIN_JANELA_SEGUNDOS",
+    "analises_por_minuto": "ANALISES_POR_MINUTO",
+    "argon2_memoria_kib": "ARGON2_MEMORIA_KIB",
+    "argon2_iteracoes": "ARGON2_ITERACOES",
+    "argon2_paralelismo": "ARGON2_PARALELISMO",
 }
+
+Ambiente = Literal["desenvolvimento", "homologacao", "producao"]
+
+# Combinações equivalentes de Argon2id recomendadas pelo OWASP (memória em KiB, passadas).
+_ARGON2_MINIMOS = ((47104, 1), (19456, 2), (12288, 3), (9216, 4), (7168, 5))
 
 
 class SettingsConfigurationError(ValueError):
@@ -42,6 +66,20 @@ class Settings(BaseSettings):
     cors_origens: Annotated[list[str], NoDecode]
     limiar_atencao: int = 40
     limiar_trocar: int = 70
+    ambiente: Ambiente = "desenvolvimento"
+    # None significa "decidir pelo ambiente": só desenvolvimento aceita cookie sem Secure.
+    cookie_secure: bool | None = None
+    sessao_inatividade_segundos: int = Field(default=1800, ge=1)
+    sessao_duracao_maxima_segundos: int = Field(default=28800, ge=1)
+    sessao_maxima_por_usuario: int = Field(default=5, ge=1)
+    login_falhas_por_conta: int = Field(default=5, ge=1)
+    login_bloqueio_segundos: int = Field(default=900, ge=1)
+    login_falhas_por_ip: int = Field(default=30, ge=1)
+    login_janela_segundos: int = Field(default=900, ge=1)
+    analises_por_minuto: int = Field(default=30, ge=1)
+    argon2_memoria_kib: int = 19456
+    argon2_iteracoes: int = 2
+    argon2_paralelismo: int = Field(default=1, ge=1)
 
     def __init__(self, **values: Any) -> None:
         """Converte falhas de validação em mensagens seguras para os logs."""
@@ -63,7 +101,13 @@ class Settings(BaseSettings):
                     else:
                         message = f"{variable}: valor inválido."
                 else:
-                    message = "LIMIAR_ATENCAO e LIMIAR_TROCAR: valores inconsistentes."
+                    # Validadores do modelo escrevem mensagens próprias, sem valores.
+                    texto = str(issue.get("msg", ""))
+                    message = (
+                        texto.removeprefix("Value error, ")
+                        if issue.get("type") == "value_error" and texto
+                        else "Configuração com valores inconsistentes."
+                    )
                 if message not in messages:
                     messages.append(message)
 
@@ -113,6 +157,56 @@ class Settings(BaseSettings):
         if any("*" in origin for origin in origins):
             raise ValueError("CORS_ORIGENS exige origens explícitas.")
         return origins
+
+    @property
+    def cookie_seguro(self) -> bool:
+        """Indica se o cookie de sessão leva o atributo Secure."""
+        if self.cookie_secure is None:
+            return self.ambiente != "desenvolvimento"
+        return self.cookie_secure
+
+    @property
+    def documentacao_habilitada(self) -> bool:
+        """A documentação interativa só existe fora de produção."""
+        return self.ambiente != "producao"
+
+    @model_validator(mode="after")
+    def _validate_ambiente(self) -> Self:
+        """Impede combinações inseguras fora do desenvolvimento local."""
+        if self.ambiente != "desenvolvimento" and not self.cookie_seguro:
+            raise ValueError(
+                "COOKIE_SECURE=false só é aceito com AMBIENTE=desenvolvimento."
+            )
+        if self.ambiente == "producao" and any(
+            not origem.startswith("https://") for origem in self.cors_origens
+        ):
+            raise ValueError(
+                "CORS_ORIGENS deve usar somente origens https em produção."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_argon2(self) -> Self:
+        """Exige parâmetros de Argon2id iguais ou acima do mínimo do OWASP."""
+        if not any(
+            self.argon2_memoria_kib >= memoria and self.argon2_iteracoes >= iteracoes
+            for memoria, iteracoes in _ARGON2_MINIMOS
+        ):
+            raise ValueError(
+                "ARGON2_MEMORIA_KIB e ARGON2_ITERACOES ficam abaixo do mínimo do OWASP "
+                "(19456 KiB com 2 iterações, ou combinação equivalente)."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_sessao(self) -> Self:
+        """A duração absoluta nunca pode ser menor que o prazo de inatividade."""
+        if self.sessao_duracao_maxima_segundos < self.sessao_inatividade_segundos:
+            raise ValueError(
+                "SESSAO_DURACAO_MAXIMA_SEGUNDOS deve ser maior ou igual a "
+                "SESSAO_INATIVIDADE_SEGUNDOS."
+            )
+        return self
 
     @model_validator(mode="after")
     def _validate_thresholds(self) -> Self:
