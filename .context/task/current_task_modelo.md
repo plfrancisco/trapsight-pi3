@@ -28,13 +28,12 @@ obtenção de material da empresa parceira (`current_task_externo.md`).
 
 ## ML01 — Especificar o pipeline de treino
 
-- [ ] Documento definindo função de perda, tratamento do desbalanceamento
+- [x] Documento definindo função de perda, tratamento do desbalanceamento
       de classes, otimizador, taxa de aprendizado, tamanho de lote, número
       de épocas, parada antecipada e parâmetros de augmentation
-- [ ] Publicado em `../plan/model/` e referenciado no índice de planejamento
+- [x] Publicado em `../plan/model/` e referenciado no índice de planejamento
 
-**Especificação:** ainda não existe — este é o único documento de
-arquitetura pendente no projeto. Contexto de stack em
+**Especificação:** `../plan/model/treino_spec.md`. Contexto de stack em
 `../plan/foundation/tech_stack.md`, seção 4.
 
 **Dependências:** nenhuma.

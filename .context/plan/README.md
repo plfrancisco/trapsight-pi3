@@ -50,6 +50,7 @@ plan/
 | Dados | `data/dataset_sintetico.md` | Geração do dataset sintético — fonte de sprites, composição, metadados, critérios de aceite |
 | Modelo | `model/modelo_spec.md` | Classes de segmentação, pré-processamento, cálculo do percentual e carregamento de pesos |
 | Modelo | `model/avaliacao_spec.md` | Divisão dos conjuntos, métricas e critérios de aprovação |
+| Modelo | `model/treino_spec.md` | Entrada, função de perda, otimização, augmentation, seleção do modelo, reprodutibilidade e experimentos do treino |
 | Frontend | `frontend/telas_spec.md` | Telas, conteúdo e comportamento esperado |
 | API | `api/api_spec.md` | Contrato REST — endpoints, payloads e erros |
 
