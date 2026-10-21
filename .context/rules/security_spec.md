@@ -25,14 +25,15 @@ este documento antes de ser aprovada.
 
 ## 2.1 Escopo do MVP
 
-O MVP roda **localmente ou em rede fechada, para demonstração** — não é
-implantado publicamente na internet. Isso **não reduz nenhum controle deste
-documento**, incluindo a regra da seção 3. Reduz apenas a urgência de alguns
-itens marcados explicitamente como "Fase 2" na seção 10 — ex.: HTTPS
-obrigatório só importa quando houver rede externa envolvida. Segredo
-hardcoded é problema em qualquer ambiente, local ou não: entra no histórico
-do Git, é lido por qualquer pessoa com acesso ao repositório, e sobrevive à
-mudança de ambiente sem que ninguém perceba.
+O protótipo será **hospedado e acessível pela internet** (decisão de
+2026-10-16). A partir daí **todos os controles deste documento valem sem
+exceção**, e a autenticação, o HTTPS e a regra de **exposição zero** (nenhum
+serviço interno alcançável de fora; só as portas 80 e 443) deixam de ser
+"Fase 2": estão especificados em `../plan/foundation/login.md` e são
+verificados pela suíte de `../validation/seguranca_testes.md`. Segredo
+hardcoded continua sendo problema em qualquer ambiente, local ou não: entra no
+histórico do Git, é lido por qualquer pessoa com acesso ao repositório, e
+sobrevive à mudança de ambiente sem que ninguém perceba.
 
 ## 2.2 Superfícies de ataque relevantes
 
@@ -42,13 +43,16 @@ mudança de ambiente sem que ninguém perceba.
 | Campos de texto livre (`identificador`, `localizacao`, `modelo`) | Entram no banco e são exibidos no frontend |
 | Carregamento do modelo (`MODEL_WEIGHTS_PATH`) | Arquivo binário desserializado na inicialização do backend |
 | CORS | Define quem pode chamar a API a partir de um navegador |
+| Login e sessão (`/api/auth/*`) | Porta de entrada pública: força bruta, enumeração de contas, roubo e fixação de sessão, CSRF (`login.md`, seções 6 a 8) |
+| Serviços internos (banco, backend, servidor de desenvolvimento) | Se alcançáveis de fora, anulam todo o resto; a regra de exposição zero os mantém na rede interna (`login.md`, 10.5) |
+| Proxy reverso e TLS | Única superfície pública: certificado, versões de TLS, cabeçalhos de segurança (`login.md`, 10.1 a 10.3) |
 | Variáveis de ambiente e segredos | Credenciais de banco, chaves de API, caminhos de sistema — ver seção 3 |
 
 ## 2.3 Fora de escopo nesta versão
 
-Autenticação de usuário e autorização por papel — o MVP não tem contas de
-usuário (`project_overview.md`, seção 5.2). A ausência de autenticação é um
-**risco aceito e documentado**, não um esquecimento — ver seção 4.
+MFA, perfis de acesso por papel e recuperação de senha por e-mail (Fase 2,
+`../plan/foundation/login.md`, seção 12.3). A **autenticação em si não é mais
+fora de escopo**: é requisito da hospedagem pública — ver seção 4.
 
 ---
 
@@ -89,22 +93,26 @@ regra — o hábito de checar o diff antes de commitar é o controle real.
 
 ---
 
-# 4. Autenticação — risco aceito
+# 4. Autenticação e exposição pública
 
-O MVP não implementa autenticação. Todos os endpoints de escrita
-(`POST`/`PATCH`/`DELETE`) estão abertos a qualquer cliente que alcance a
-API.
+Substitui a decisão anterior de "risco aceito": como o protótipo será
+publicado, a autenticação é **pré-requisito**, não pendência. O desenho
+completo está em `../plan/foundation/login.md`; esta seção fixa apenas os
+controles que não podem ser violados.
 
-**Controle obrigatório de compensação:** o backend **nunca** deve ser
-exposto a uma rede não confiável (internet pública) sem autenticação
-adicionada antes. `CORS_ORIGENS` restrito a origens conhecidas (seção 7) é
-mitigação parcial para navegador, não para chamada direta à API.
+| Controle | Detalhe |
+|---|---|
+| Toda rota de dados exige sessão | Autenticação aplicada no roteador-raiz; rota pública é exceção explícita e testada (`login.md`, 9.2) |
+| Sessão opaca em cookie `HttpOnly`; nenhum token em `localStorage` | `login.md`, seção 7 |
+| Senha com Argon2id e política do NIST (mínimo de 15 caracteres, sem regra de composição) | `login.md`, seção 5 |
+| Login com resposta única, limite por conta e por IP, sem bloqueio permanente | `login.md`, seção 6 |
+| CSRF: token sincronizado, verificação de `Origin` e `SameSite=Strict` | `login.md`, seção 8 |
+| **Exposição zero:** nenhum serviço interno público; o banco nunca é alcançável de fora; só as portas 80 e 443 | `login.md`, 10.5 |
+| Sem usuário nem senha padrão em nenhum ambiente | `login.md`, 5.4 |
+| Nada é publicado sem a suíte de invasão verde e o relatório arquivado | `../validation/seguranca_testes.md` |
 
-Adicionar autenticação é pré-requisito obrigatório antes de qualquer
-implantação além de demonstração controlada — registrado como pendência de
-Fase 2 na seção 10, não implementado agora por decisão de escopo, não por
-descuido. Quando implementada, qualquer chave/segredo de autenticação segue
-integralmente a seção 3.
+Qualquer chave, senha ou segredo de autenticação segue integralmente a seção
+3. Implementação em `../task/current_task_autenticacao_hospedagem.md`.
 
 ---
 
@@ -224,13 +232,15 @@ apenas ao log do servidor.
 | Lockfile commitado (`uv.lock`, `package-lock.json`) | Build reprodutível, conforme `tech_stack.md`, seção 7 |
 | Atualização de dependência é uma mudança revisada, não automática | Alinhado com a seção 4.2 de `ai_development_rules.md` — mudar dependência exige nova confirmação |
 
-## 10.3 Pendente para além do MVP (Fase 2)
+## 10.3 Pendências de infraestrutura
 
-- [ ] Autenticação e autorização (seção 4)
-- [ ] Rate limiting no endpoint de análise, se exposto além de demonstração
-      controlada — inferência é operação computacionalmente cara e pode ser
-      usada para negação de serviço
-- [ ] HTTPS obrigatório em qualquer implantação além de localhost
+- [ ] Autenticação (seção 4) — requisito da hospedagem pública; tasks AUTH01 a
+      AUTH06
+- [ ] Limite de análises por usuário — inferência é operação computacionalmente
+      cara e pode ser usada para negação de serviço; requisito em `login.md`,
+      9.4 (task AUTH04)
+- [ ] HTTPS obrigatório e proxy reverso com cabeçalhos de segurança — `login.md`,
+      seção 10 (tasks HOST01 a HOST03)
 - [ ] Rotina de verificação de vulnerabilidades conhecidas nas dependências
       (ex.: `pip-audit`, `npm audit`) antes de cada entrega relevante
 - [ ] Gerenciador de segredos dedicado (ex.: Doppler, Vault) se o número de
@@ -255,8 +265,8 @@ apenas ao log do servidor.
       (ex.: `python-magic`) e integrá-la em `../task/completed/current_task_api.md`, API07
 - [ ] Definir usuário não-root nas imagens Docker de `../task/completed/current_task_infra.md`,
       INFRA03
-- [ ] Revisar este documento antes de qualquer implantação além de
-      demonstração local/controlada
+- [ ] Revisar este documento e arquivar o relatório da suíte de invasão antes da
+      publicação (task SEG05)
 
 ---
 

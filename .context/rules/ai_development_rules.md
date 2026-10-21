@@ -298,8 +298,9 @@ Os nomes seguem uma convenção única, para que o código seja previsível:
 
 O MVP limita-se a estimar a porcentagem de área ocupada da armadilha e
 classificar o resultado como `ok`, `atencao` ou `trocar`. Hardware real,
-autenticação, painel completo, modelo de negócio e integração IoT permanecem
-fora do escopo inicial, salvo aprovação explícita.
+painel completo, modelo de negócio e integração IoT permanecem fora do escopo
+inicial, salvo aprovação explícita. A **autenticação** deixou de estar fora do
+escopo: é requisito da hospedagem pública (`.context/plan/foundation/login.md`).
 
 ---
 

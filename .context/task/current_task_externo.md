@@ -65,12 +65,28 @@ chegar, menor a chance de corrigir o gerador a tempo.
 **Nota:** sem isso, nenhuma outra task tem responsável nem prazo — é o item
 de menor esforço e maior efeito destravante do projeto.
 
+## EXT04 — Provedor de hospedagem e domínio
+
+- [ ] Escolher o provedor do servidor (VPS ou equivalente, com firewall de rede
+      do provedor que negue tudo por padrão)
+- [ ] Registrar um domínio e apontar o DNS (necessário ao HTTPS automático)
+- [ ] Definir quem administra o servidor, o acesso por SSH com chave e onde
+      ficam os backups do banco
+- [ ] Definir o orçamento mensal aceitável
+
+**Especificação:** `../plan/foundation/login.md`, seções 10.1 e 10.5.
+**Dependências:** nenhuma — pode ser feita a qualquer momento.
+
+**Impacto se atrasar:** bloqueia HOST02 e HOST03 de `current_task_autenticacao_hospedagem.md`
+(o proxy precisa do domínio para emitir o certificado). A implementação do login
+e a suíte local não dependem disso.
+
 ---
 
 # 4. Critério de conclusão
 
 Cada item marcado é uma resposta obtida, não uma ação de código. A task se
-encerra quando os três itens estiverem resolvidos ou explicitamente adiados
+encerra quando os quatro itens estiverem resolvidos ou explicitamente adiados
 por decisão do grupo.
 
 ---

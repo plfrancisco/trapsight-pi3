@@ -40,6 +40,8 @@
 | Linguagem | Python 3.11+ | Padrão de mercado para ML/CV |
 | Framework web | FastAPI | Async, tipagem, docs automáticas em `/docs`, fácil de servir modelo via API REST. Mesma stack usável quando virar produto real |
 | Servidor | Uvicorn | ASGI padrão para FastAPI |
+| Autenticação | Sessão opaca em cookie `HttpOnly`, sem JWT | Permite revogação real no logout e não expõe token ao JavaScript; um JWT guardado no navegador seria lido por qualquer XSS. Desenho em `login.md`, seção 4 |
+| Hash de senha | `pwdlib[argon2]` (Argon2id) | Recomendado pela documentação do FastAPI e pelo OWASP (mínimo de 19 MiB, 2 iterações, paralelismo 1). **Dependência nova**: exige confirmação, regra 4.2 de `ai_development_rules.md` |
 
 ---
 
@@ -130,7 +132,7 @@ justificativas e regras de persistência em `../data/data_model.md`.
 | Componente | Tecnologia | Justificativa |
 |---|---|---|
 | Containerização | Docker + Docker Compose | Ambiente reproduzível, fácil de subir backend, frontend e banco juntos |
-| Deploy | **Fora do escopo do MVP** | A apresentação roda via Docker Compose local. Publicar em servidor é evolução posterior, não decisão pendente |
+| Hospedagem pública | Docker Compose de produção + **Caddy** (proxy reverso com HTTPS automático) | O protótipo fica online (decisão de 2026-10-16). Só o proxy publica portas (80 e 443); backend, frontend e banco ficam em rede interna. Ver `login.md`, seção 10 |
 
 ## 6.1 O que roda em container
 
@@ -145,6 +147,20 @@ O treino fica fora do Docker deliberadamente: GPU passthrough via WSL2 no
 Windows funciona, mas o esforço de configuração não se justifica no escopo do
 projeto. O treino é um processo offline que produz um arquivo de pesos, e esse
 arquivo é montado como volume no container do backend.
+
+## 6.2 Produção
+
+| Componente | Execução em produção |
+|---|---|
+| Proxy reverso (Caddy) | Único serviço com portas publicadas (80 e 443); HTTPS automático, redirecionamento de HTTP e cabeçalhos de segurança |
+| Frontend | **Build estático** servido pelo proxy; o servidor de desenvolvimento do Vite nunca vai a produção |
+| Backend (FastAPI) | Contêiner interno, sem `ports:`; só o proxy o alcança |
+| PostgreSQL | Contêiner interno, sem `ports:`, `pg_hba.conf` só com `scram-sha-256` e papel de aplicação sem privilégios |
+
+Regras inegociáveis (`login.md`, 10.5 a 10.7): nenhum `ports:` além do proxy,
+nenhum `docker.sock`, `privileged` nem `network_mode: host`, imagens com versão
+fixa e usuário não-root, e nenhuma publicação sem a suíte de invasão verde.
+Arquivo: `docker-compose.prod.yml` (task HOST02).
 
 ---
 

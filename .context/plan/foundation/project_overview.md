@@ -82,8 +82,24 @@ Este projeto é um **MVP de validação técnica**, não uma solução completa.
 
 - Hardware/câmera real funcionando em campo 24/7.
 - Painel/app completo para empresa ou estabelecimento.
-- Autenticação, múltiplos usuários, modelo de negócio, cobrança.
+- Múltiplos perfis de acesso (administrador, operador), modelo de negócio,
+  cobrança, recuperação de senha por e-mail e MFA (Fase 2).
 - Integração real com câmeras IoT em campo.
+
+## 5.3 Hospedagem pública e autenticação
+
+O protótipo será **hospedado e acessível pela internet** (decisão de
+2026-10-16). Isso inclui no escopo, como requisito da hospedagem:
+
+- **autenticação** de usuários, com contas criadas pelo administrador (sem
+  cadastro aberto) e um único nível de acesso;
+- **exposição zero** de serviços internos: só as portas 80 e 443 ficam
+  públicas; o banco e o backend nunca são alcançáveis de fora;
+- **verificação de segurança** antes de cada publicação, por uma suíte de
+  testes de invasão.
+
+Desenho em `login.md`; testes em `../../validation/seguranca_testes.md`;
+tasks em `../../task/current_task_autenticacao_hospedagem.md`.
 
 ---
 

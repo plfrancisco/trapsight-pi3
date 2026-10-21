@@ -39,7 +39,8 @@ Além da leitura pontual, o sistema guarda o histórico de cada armadilha e **pr
 - **Dashboard operacional:** armadilhas ordenadas por urgência, com painel de alertas;
 - **Histórico e projeção:** evolução da cobertura por refil e previsão de dias até a saturação por regressão linear;
 - **Timelapse:** reprodução das imagens de um refil sincronizada com o gráfico de evolução;
-- **Ciclo de vida do refil:** registro de trocas, com histórico de duração de cada ciclo.
+- **Ciclo de vida do refil:** registro de trocas, com histórico de duração de cada ciclo;
+- **Acesso por login:** contas criadas pelo administrador, com sessão segura (cookie `HttpOnly`) e senhas protegidas com Argon2id.
 
 ## Arquitetura
 
@@ -76,7 +77,7 @@ Os três serviços (frontend, API e banco) sobem juntos com Docker Compose. O tr
 | Backend        | FastAPI, SQLAlchemy, Alembic, Pydantic                                  |
 | Banco de dados | PostgreSQL                                                              |
 | Frontend       | React, TypeScript, Vite, Tailwind CSS, Recharts                         |
-| Infraestrutura | Docker, Docker Compose                                                  |
+| Infraestrutura | Docker, Docker Compose, Caddy (proxy reverso com HTTPS automático)      |
 | Qualidade      | Ruff, pytest, ESLint                                                    |
 
 ## Status
@@ -88,6 +89,7 @@ Os três serviços (frontend, API e banco) sobem juntos com Docker Compose. O tr
 | Banco de dados (esquema, migrations, regras de integridade)        | Concluída     |
 | API (endpoints, upload de imagem, histórico e projeção de saturação) | Concluída     |
 | Interface web (dashboard, cadastro, nova análise e detalhe da armadilha prontos; timelapse em desenvolvimento) | Em andamento  |
+| Login e hospedagem pública (especificação e suíte de testes prontas) | Em preparação |
 | Gerador de dataset sintético                                       | Não iniciada  |
 | Treinamento e avaliação do modelo                                  | Não iniciada  |
 | Validação com fotos reais da empresa parceira                      | Não iniciada  |
@@ -112,6 +114,8 @@ docker compose up --build
 | --------- | ------------------------------ |
 | Frontend  | http://localhost:5173          |
 | API (docs)| http://localhost:8000/docs     |
+
+**Publicação online:** o protótipo será hospedado com um Compose de produção em que só o proxy (portas 80 e 443) fica público; o banco e o backend nunca são acessíveis de fora. O desenho está em [`.context/plan/foundation/login.md`](.context/plan/foundation/login.md) e a suíte de testes de segurança em [`security/`](security/README.md). O Compose de produção está em preparação.
 
 Para desenvolver o backend fora do Docker, instale o [`uv`](https://docs.astral.sh/uv/) e use `uv sync`, `uv run ruff check .` e `uv run pytest` na pasta `backend/`. Os testes de integração precisam de um PostgreSQL com as migrations aplicadas (`uv run alembic upgrade head`).
 

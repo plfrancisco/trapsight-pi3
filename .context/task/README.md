@@ -25,7 +25,8 @@ outra especialidade, mesmo quando há dependência entre elas — a dependência
 | `current_task_frontend.md` | ATIVA | Interface web — as 4 telas do MVP |
 | `current_task_modelo.md` | ATIVA | Especificação de treino, dataset sintético, baseline, treino da U-Net, avaliação |
 | `current_task_seed_demo.md` | ATIVA | Script de seed com os seis cenários de demonstração |
-| `current_task_externo.md` | ATIVA | Material da empresa parceira, entrevista, integrantes e prazo |
+| `current_task_externo.md` | ATIVA | Material da empresa parceira, entrevista, integrantes, prazo, provedor e domínio |
+| `current_task_autenticacao_hospedagem.md` | ATIVA | Login, proteção da API, hospedagem pública e verificação de segurança antes de publicar |
 
 ---
 

@@ -44,6 +44,7 @@ plan/
 | Fundação | `foundation/tech_stack.md` | Stack tecnológica, estrutura de pastas e decisões de ferramentas |
 | Fundação | `foundation/hardware_armadilha.md` | Especificações do equipamento real (StickFly K-45) e implicações para a visão computacional |
 | Fundação | `foundation/stakeholder_evidencias.md` | Contato real com a empresa parceira, evidências confirmadas e hipóteses ainda não validadas |
+| Fundação | `foundation/login.md` | Autenticação, sessão, hospedagem pública e regra de exposição zero |
 | Dados | `data/data_model.md` | Modelo de dados, entidades e regras de persistência |
 | Dados | `data/seed_demo.md` | Cenários de dados para a apresentação |
 | Dados | `data/dataset_sintetico.md` | Geração do dataset sintético — fonte de sprites, composição, metadados, critérios de aceite |

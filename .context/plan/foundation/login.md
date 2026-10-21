@@ -542,7 +542,7 @@ suspeita de ataque (OWASP: monitorar falhas de autenticação).
 
 ---
 
-# 13. Documentos afetados (a atualizar na aprovação)
+# 13. Documentos afetados (atualizados em 2026-10-16)
 
 | Documento | Alteração |
 |---|---|
@@ -624,11 +624,13 @@ Consultadas em outubro de 2026.
 - OWASP, [Application Security Verification Standard 5.0](https://owasp.org/www-project-application-security-verification-standard/), capítulos de autenticação, sessão e autorização: critérios de verificação.
 - ZAP, [scans em Docker](https://www.zaproxy.org/docs/docker/): *baseline*, *full* e *API scan*.
 
-**Itens não verificados em fonte primária e a conferir na implementação:**
-os valores padrão de `PasswordHash.recommended()` do `pwdlib` (por isso o teste
-da seção 14 lê os parâmetros do hash gerado), o formato exato do serviço
-*Pwned Passwords* e a configuração de `--forwarded-allow-ips` na versão do
-`uvicorn` em uso.
+**Conferido na implementação (2026-10-17):** o Argon2id é configurado com
+parâmetros explícitos (19456 KiB, 2 iterações, 1 de paralelismo), sem depender
+dos padrões de `PasswordHash.recommended()`; um teste lê os parâmetros da string
+PHC e outro confirma a regravação do hash quando eles mudam. O IP do cliente vem
+do `uvicorn --proxy-headers` com `FORWARDED_ALLOW_IPS` restrito ao endereço fixo
+do proxy. **Ainda não verificado:** o formato do serviço *Pwned Passwords*, que
+não é usado (a lista de bloqueio é local).
 
 ---
 
