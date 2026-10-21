@@ -10,8 +10,8 @@ import pytest
 from PIL import Image, ImageDraw
 
 from training.dataset_sintetico import (
-    ConfiguracaoDataset,
     LIMITE_SPRITES_POR_AMOSTRA,
+    ConfiguracaoDataset,
     SpriteCatalogado,
     generate_dataset,
     load_sprite_catalog,

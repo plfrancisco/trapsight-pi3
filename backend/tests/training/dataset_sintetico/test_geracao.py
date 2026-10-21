@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image
 import pytest
+from PIL import Image
 
 from training.dataset_sintetico import (
     calcular_correlacao_pearson,
