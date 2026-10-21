@@ -1,0 +1,10 @@
+# Contexto da raiz usado só pela imagem do proxy: libera apenas o que o build do
+# frontend e o proxy precisam; todo o resto (código do backend, dados, .env) fica de fora.
+*
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/index.html
+!frontend/tsconfig*.json
+!frontend/vite.config.ts
+!frontend/src
+!deploy/proxy/Caddyfile

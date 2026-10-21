@@ -1,0 +1,60 @@
+{
+	# Sem API administrativa do Caddy exposta.
+	admin off
+	# O redirecionamento de HTTP é declarado abaixo, para também sair sem o cabeçalho Server.
+	auto_https disable_redirects
+	servers {
+		# HTTP/3 usa UDP 443, que não é publicada; evita anunciar o que não existe.
+		protocols h1 h2
+	}
+	# Vazio em produção; "local_certs" usa a CA interna em ambientes locais.
+	{$CADDY_OPCOES_GLOBAIS}
+}
+
+http://{$SITE_ADDRESS} {
+	header -Server
+	redir https://{host}{uri} permanent
+}
+
+https://{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		-Server
+		-X-Powered-By
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), camera=(), microphone=()"
+		# Modo de relatório até a política ser validada em uso real.
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	}
+
+	# Documentação interativa e saúde não são públicas (nem pela rota de fallback do SPA).
+	@internos path /docs /docs/* /redoc /redoc/* /openapi.json /healthz /healthz/* /api/docs /api/docs/* /api/redoc /api/redoc/* /api/openapi.json
+	handle @internos {
+		respond 404
+	}
+
+	handle /api/* {
+		# Sem proxies confiáveis, o Caddy substitui o X-Forwarded-For enviado pelo cliente.
+		reverse_proxy backend:8000
+	}
+
+	root * /srv
+
+	# Só as rotas do aplicativo caem no index.html (o roteador do navegador resolve).
+	# Todo o resto, inclusive ocultos e mapas de código, é 404 de verdade.
+	@rotas path / /login /armadilhas /armadilhas/* /analises/* /conta/*
+	handle @rotas {
+		rewrite * /index.html
+		file_server
+	}
+
+	handle {
+		file_server {
+			hide .* *.map
+		}
+	}
+}
