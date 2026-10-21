@@ -82,3 +82,7 @@ mlruns/
 
 # Relatórios de segurança (podem conter detalhes da superfície)
 security/reports/
+
+# Material baixado do Classroom e arquivos de trabalho locais
+material_classroom/
+scratch_ml02a/
