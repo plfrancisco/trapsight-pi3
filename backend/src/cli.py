@@ -151,7 +151,9 @@ def alterar_ativo(
     repositorio.definir_ativo(usuario, ativo=ativo)
     if not ativo:
         ServicoDeSessoes(session, settings).revogar_todas(usuario, agora=agora)
-    registrar_evento("conta_ativada" if ativo else "conta_desativada", usuario_id=usuario.id)
+    registrar_evento(
+        "conta_ativada" if ativo else "conta_desativada", usuario_id=usuario.id
+    )
     return usuario
 
 
@@ -293,7 +295,9 @@ def _executar(
             ativo=comando == "ativar-usuario",
             agora=agora,
         )
-        return [f"Conta {'ativada' if usuario.ativo else 'desativada'}: {usuario.email}"]
+        return [
+            f"Conta {'ativada' if usuario.ativo else 'desativada'}: {usuario.email}"
+        ]
     if comando == "desbloquear-usuario":
         return [f"Conta desbloqueada: {desbloquear(session, email=args.email).email}"]
     return listar(session)

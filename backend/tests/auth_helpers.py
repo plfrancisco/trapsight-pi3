@@ -72,7 +72,9 @@ def criar_sessao(
     sessao, token = ServicoDeSessoes(session, app.state.settings).criar(
         usuario, agora=app.state.relogio(), ip=ip, user_agent="pytest"
     )
-    return CredenciaisDeTeste(token=token, csrf_token=sessao.csrf_token, usuario=usuario)
+    return CredenciaisDeTeste(
+        token=token, csrf_token=sessao.csrf_token, usuario=usuario
+    )
 
 
 def aplicar_credenciais(client: TestClient, credenciais: CredenciaisDeTeste) -> None:

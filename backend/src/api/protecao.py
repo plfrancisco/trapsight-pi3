@@ -110,7 +110,9 @@ class ProtecaoDeSessaoMiddleware:
         """
         self._app = app
 
-    async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
+    async def __call__(
+        self, scope: dict[str, Any], receive: Receive, send: Send
+    ) -> None:
         """Decide se a requisição segue para as rotas.
 
         Args:

@@ -128,7 +128,9 @@ class SessaoRepository:
         )
         if exceto is not None:
             statement = statement.where(Sessao.id != exceto)
-        resultado = self._session.execute(statement.execution_options(synchronize_session="fetch"))
+        resultado = self._session.execute(
+            statement.execution_options(synchronize_session="fetch")
+        )
         return resultado.rowcount
 
     def list_abertas(self, usuario_id: UUID) -> list[Sessao]:
@@ -156,5 +158,7 @@ class SessaoRepository:
         Returns:
             Quantidade de sessões removidas.
         """
-        resultado = self._session.execute(delete(Sessao).where(Sessao.expira_em < agora))
+        resultado = self._session.execute(
+            delete(Sessao).where(Sessao.expira_em < agora)
+        )
         return resultado.rowcount

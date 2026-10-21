@@ -64,7 +64,9 @@ class TentativaLoginRepository:
         )
         return int(self._session.scalar(statement) or 0)
 
-    def contar_falhas_por_conta(self, identificador_hash: str, *, desde: datetime) -> int:
+    def contar_falhas_por_conta(
+        self, identificador_hash: str, *, desde: datetime
+    ) -> int:
         """Conta as falhas de uma conta na janela, a partir do último sucesso.
 
         Um login bem-sucedido zera o contador da conta.

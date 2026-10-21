@@ -27,7 +27,9 @@ class CabecalhosDeSegurancaMiddleware:
         """
         self._app = app
 
-    async def __call__(self, scope: dict[str, Any], receive: Receive, send: Send) -> None:
+    async def __call__(
+        self, scope: dict[str, Any], receive: Receive, send: Send
+    ) -> None:
         """Injeta os cabeçalhos na mensagem de início da resposta.
 
         Args:
@@ -42,7 +44,9 @@ class CabecalhosDeSegurancaMiddleware:
         sem_cache = scope.get("path", "").startswith(_PREFIXO_AUTENTICACAO)
         # O Cache-Control só é substituído nas rotas de autenticação: o das imagens
         # de análise (privado e imutável) precisa seguir intacto.
-        substituidos = {b"x-content-type-options"} | ({b"cache-control"} if sem_cache else set())
+        substituidos = {b"x-content-type-options"} | (
+            {b"cache-control"} if sem_cache else set()
+        )
 
         async def enviar(mensagem: dict[str, Any]) -> None:
             if mensagem["type"] == "http.response.start":

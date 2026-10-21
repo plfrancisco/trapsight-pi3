@@ -44,9 +44,7 @@ class Sessao(UUIDTimestampMixin, Base):
     ultimo_uso_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("now()")
     )
-    expira_em: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revogada_em: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

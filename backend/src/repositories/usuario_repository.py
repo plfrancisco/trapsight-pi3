@@ -117,7 +117,9 @@ class UsuarioRepository:
         usuario.ativo = ativo
         self._session.flush()
 
-    def definir_bloqueio(self, usuario: Usuario, bloqueado_ate: datetime | None) -> None:
+    def definir_bloqueio(
+        self, usuario: Usuario, bloqueado_ate: datetime | None
+    ) -> None:
         """Define ou limpa o bloqueio temporário por tentativas.
 
         Args:

@@ -78,7 +78,9 @@ def client(
     app.dependency_overrides.clear()
 
 
-def _entrar(client: TestClient, email: str = EMAIL_DE_TESTE, senha: str = SENHA_DE_TESTE):
+def _entrar(
+    client: TestClient, email: str = EMAIL_DE_TESTE, senha: str = SENHA_DE_TESTE
+):
     return client.post("/api/auth/login", json={"email": email, "senha": senha})
 
 
@@ -433,7 +435,10 @@ def test_troca_de_senha_exige_a_senha_atual(
 
     resposta = client.post(
         "/api/auth/senha",
-        json={"senha_atual": "senha atual errada de verdade", "senha_nova": _SENHA_NOVA},
+        json={
+            "senha_atual": "senha atual errada de verdade",
+            "senha_nova": _SENHA_NOVA,
+        },
     )
 
     assert resposta.status_code == 401

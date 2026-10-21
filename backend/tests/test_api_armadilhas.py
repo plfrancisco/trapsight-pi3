@@ -214,9 +214,9 @@ def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
     def contar_selects(_conn, _cursor, statement, _parameters, _context, _many) -> None:
         # A checagem de sessão do middleware consulta sessao e usuario; o que
         # este teste garante é que as consultas DO DASHBOARD não crescem com N.
-        if statement.lstrip().upper().startswith("SELECT") and not _consulta_de_autenticacao(
-            statement
-        ):
+        if statement.lstrip().upper().startswith(
+            "SELECT"
+        ) and not _consulta_de_autenticacao(statement):
             consultas.append(statement)
 
     event.listen(engine, "before_cursor_execute", contar_selects)
