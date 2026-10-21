@@ -38,6 +38,7 @@ class ArmadilhaRepository:
         *,
         identificador: str,
         modelo: str | None = None,
+        modelo_id: UUID | None = None,
         localizacao: str | None = None,
         data_instalacao: date | None = None,
     ) -> Armadilha:
@@ -45,7 +46,8 @@ class ArmadilhaRepository:
 
         Args:
             identificador: código único que identifica a armadilha em campo.
-            modelo: modelo físico, quando conhecido.
+            modelo: nome do modelo físico, quando conhecido.
+            modelo_id: modelo do catálogo a que a armadilha pertence, se houver.
             localizacao: ponto de instalação, quando conhecido.
             data_instalacao: data da instalação, quando conhecida.
 
@@ -58,6 +60,7 @@ class ArmadilhaRepository:
         armadilha = Armadilha(
             identificador=identificador,
             modelo=modelo,
+            modelo_id=modelo_id,
             localizacao=localizacao,
             data_instalacao=data_instalacao,
         )
@@ -117,6 +120,7 @@ class ArmadilhaRepository:
         *,
         identificador: str | _Unset = _UNSET,
         modelo: str | None | _Unset = _UNSET,
+        modelo_id: UUID | None | _Unset = _UNSET,
         localizacao: str | None | _Unset = _UNSET,
     ) -> Armadilha | None:
         """Atualiza apenas os campos fornecidos e envia as mudanças ao banco.
@@ -124,7 +128,8 @@ class ArmadilhaRepository:
         Args:
             armadilha_id: UUID da armadilha a atualizar.
             identificador: novo código, se informado.
-            modelo: novo modelo, inclusive None para limpar o campo.
+            modelo: novo nome do modelo, inclusive None para limpar o campo.
+            modelo_id: novo modelo do catálogo, inclusive None para desvincular.
             localizacao: novo local, inclusive None para limpar o campo.
 
         Returns:
@@ -143,6 +148,9 @@ class ArmadilhaRepository:
             changed = True
         if modelo is not _UNSET:
             armadilha.modelo = modelo
+            changed = True
+        if modelo_id is not _UNSET:
+            armadilha.modelo_id = modelo_id
             changed = True
         if localizacao is not _UNSET:
             armadilha.localizacao = localizacao

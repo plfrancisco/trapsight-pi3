@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 from typing import TYPE_CHECKING
+from uuid import UUID
 
-from sqlalchemy import String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.entities.base import Base, UUIDTimestampMixin
@@ -24,6 +25,11 @@ class Armadilha(UUIDTimestampMixin, Base):
 
     identificador: Mapped[str] = mapped_column(String, nullable=False)
     modelo: Mapped[str | None] = mapped_column(String, nullable=True)
+    modelo_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("modelo_armadilha.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     localizacao: Mapped[str | None] = mapped_column(String, nullable=True)
     data_instalacao: Mapped[date | None] = mapped_column(nullable=True)
 

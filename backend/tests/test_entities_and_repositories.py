@@ -254,10 +254,12 @@ def test_entity_metadata_matches_migrated_schema(session: Session) -> None:
         "usuario",
         "sessao",
         "tentativa_login",
+        "modelo_armadilha",
     }
     assert {constraint.name for constraint in Armadilha.__table__.constraints} == {
         "pk_armadilha",
         "uq_armadilha_identificador",
+        "fk_armadilha_modelo_id",
     }
     assert {constraint.name for constraint in Refil.__table__.constraints} == {
         "pk_refil",

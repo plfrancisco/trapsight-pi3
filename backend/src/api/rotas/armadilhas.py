@@ -25,10 +25,11 @@ from src.api.schemas.refil import (
     RefilTrocaSaida,
 )
 from src.config.settings import Settings
-from src.entities import Armadilha, Refil, StatusAnalise
+from src.entities import Armadilha, ModeloArmadilha, Refil, StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository, PontoAnalise
 from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.exceptions import DataTrocaInvalida, IdentificadorDuplicado
+from src.repositories.modelo_armadilha_repository import ModeloArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
 from src.services.painel import (
     calcular_dias_ate_troca,
@@ -120,10 +121,12 @@ def criar_armadilha(
     Returns:
         Detalhe da armadilha criada.
     """
+    modelo = _resolver_modelo(session, dados.modelo_id)
     try:
         armadilha = ArmadilhaRepository(session).create(
             identificador=dados.identificador,
-            modelo=dados.modelo,
+            modelo=None if modelo is None else modelo.nome,
+            modelo_id=None if modelo is None else modelo.id,
             localizacao=dados.localizacao,
             data_instalacao=dados.data_instalacao,
         )
@@ -229,7 +232,15 @@ def atualizar_armadilha(
     Raises:
         ErroDeApi: se a armadilha não existir ou o identificador estiver ocupado.
     """
-    campos = {nome: getattr(dados, nome) for nome in dados.model_fields_set}
+    campos = {
+        nome: getattr(dados, nome)
+        for nome in dados.model_fields_set
+        if nome != "modelo_id"
+    }
+    if "modelo_id" in dados.model_fields_set:
+        modelo = _resolver_modelo(session, dados.modelo_id)
+        campos["modelo"] = None if modelo is None else modelo.nome
+        campos["modelo_id"] = None if modelo is None else modelo.id
     try:
         armadilha = ArmadilhaRepository(session).update(armadilha_id, **campos)
     except IdentificadorDuplicado:
@@ -348,6 +359,7 @@ def _montar_item_lista(
         identificador=armadilha.identificador,
         localizacao=armadilha.localizacao,
         modelo=armadilha.modelo,
+        modelo_id=armadilha.modelo_id,
         refil_ativo=_montar_refil_ativo(refil_ativo, agora),
         percentual_atual=resumo.percentual_atual,
         status=resumo.status,
@@ -376,6 +388,7 @@ def _montar_detalhe(
         id=armadilha.id,
         identificador=armadilha.identificador,
         modelo=armadilha.modelo,
+        modelo_id=armadilha.modelo_id,
         localizacao=armadilha.localizacao,
         data_instalacao=armadilha.data_instalacao,
         refil_ativo=_montar_refil_ativo(refil_ativo, agora),
@@ -435,6 +448,23 @@ def _erro_armadilha_nao_encontrada(armadilha_id: UUID) -> ErroDeApi:
         "A armadilha solicitada não foi encontrada.",
         detalhes={"armadilha_id": str(armadilha_id)},
     )
+
+
+def _resolver_modelo(
+    session: Session,
+    modelo_id: UUID | None,
+) -> ModeloArmadilha | None:
+    """Busca o modelo escolhido e recusa um identificador fora do catálogo ativo."""
+    if modelo_id is None:
+        return None
+    modelo = ModeloArmadilhaRepository(session).get_ativo(modelo_id)
+    if modelo is None:
+        raise ErroDeApi(
+            CodigoErro.VALIDACAO_FALHOU,
+            "Escolha um modelo da lista de modelos cadastrados.",
+            detalhes={"campo": "modelo_id"},
+        )
+    return modelo
 
 
 def _erro_identificador_duplicado(identificador: str) -> ErroDeApi:

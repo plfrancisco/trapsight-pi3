@@ -6,12 +6,12 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, event
+from sqlalchemy import Engine, event, select
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
 from tests.auth_helpers import autenticar_cliente
-from src.entities import StatusAnalise
+from src.entities import ModeloArmadilha, StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
@@ -231,16 +231,18 @@ def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
 
 def test_criar_armadilha_com_e_sem_refil_inicial(
     client: TestClient,
+    session: Session,
 ) -> None:
+    modelo_id = _modelo_stickfly(session)
     sem_refil = client.post(
         "/api/armadilhas",
-        json={"identificador": "ARM-SEM-REFIL", "modelo": "StickFly"},
+        json={"identificador": "ARM-SEM-REFIL", "modelo_id": modelo_id},
     )
     com_refil = client.post(
         "/api/armadilhas",
         json={
             "identificador": "ARM-COM-REFIL",
-            "modelo": "StickFly",
+            "modelo_id": modelo_id,
             "localizacao": None,
             "data_instalacao": "2026-03-20",
             "criar_refil_inicial": True,
@@ -251,7 +253,8 @@ def test_criar_armadilha_com_e_sem_refil_inicial(
     assert sem_refil.headers["content-type"].startswith("application/json")
     assert sem_refil.json()["refil_ativo"] is None
     assert sem_refil.json()["refis_anteriores"] == []
-    assert sem_refil.json()["modelo"] == "StickFly"
+    assert sem_refil.json()["modelo"] == "StickFly K-45"
+    assert sem_refil.json()["modelo_id"] == modelo_id
     assert com_refil.status_code == 201
     assert com_refil.headers["content-type"].startswith("application/json")
     assert com_refil.json()["refil_ativo"]["data_instalacao"] == "2026-03-20"
@@ -387,9 +390,11 @@ def test_patch_parcial_limpa_valor_e_rejeita_corpo_vazio_e_data(
     client: TestClient,
     session: Session,
 ) -> None:
+    modelo = session.scalars(select(ModeloArmadilha)).one()
     armadilha = ArmadilhaRepository(session).create(
         identificador="ARM-PATCH",
-        modelo="Modelo inicial",
+        modelo=modelo.nome,
+        modelo_id=modelo.id,
         localizacao="Local inicial",
     )
     session.commit()
@@ -398,7 +403,7 @@ def test_patch_parcial_limpa_valor_e_rejeita_corpo_vazio_e_data(
         f"/api/armadilhas/{armadilha.id}",
         json={"localizacao": "Local atualizado"},
     )
-    limpar = client.patch(f"/api/armadilhas/{armadilha.id}", json={"modelo": None})
+    limpar = client.patch(f"/api/armadilhas/{armadilha.id}", json={"modelo_id": None})
     data_nao_editavel = client.patch(
         f"/api/armadilhas/{armadilha.id}",
         json={"data_instalacao": "2026-03-01"},
@@ -411,9 +416,10 @@ def test_patch_parcial_limpa_valor_e_rejeita_corpo_vazio_e_data(
 
     assert parcial.status_code == 200
     assert parcial.json()["localizacao"] == "Local atualizado"
-    assert parcial.json()["modelo"] == "Modelo inicial"
+    assert parcial.json()["modelo"] == "StickFly K-45"
     assert limpar.status_code == 200
     assert limpar.json()["modelo"] is None
+    assert limpar.json()["modelo_id"] is None
     _assert_erro(data_nao_editavel, 422, "VALIDACAO_FALHOU")
     _assert_erro(vazio, 422, "VALIDACAO_FALHOU")
     _assert_erro(identificador_nulo, 422, "VALIDACAO_FALHOU")
@@ -459,3 +465,66 @@ def test_openapi_registra_erros_declarados_para_rotas_de_armadilha(
     assert resposta_erro["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/RespostaErro"
     }
+
+
+def _modelo_stickfly(session: Session) -> str:
+    """Devolve o id do modelo que a migration deixa pré-cadastrado."""
+    return str(session.scalars(select(ModeloArmadilha.id)).one())
+
+
+def test_catalogo_lista_o_stickfly_pre_cadastrado(client: TestClient) -> None:
+    resposta = client.get("/api/modelos-armadilha")
+
+    assert resposta.status_code == 200
+    assert [modelo["codigo"] for modelo in resposta.json()] == ["stickfly-k45"]
+    stickfly = resposta.json()[0]
+    assert stickfly["nome"] == "StickFly K-45"
+    assert (stickfly["refil_largura_mm"], stickfly["refil_altura_mm"]) == (450, 220)
+
+
+def test_modelo_fora_do_catalogo_e_recusado(client: TestClient) -> None:
+    resposta = client.post(
+        "/api/armadilhas",
+        json={"identificador": "ARM-X", "modelo_id": str(uuid4())},
+    )
+
+    _assert_erro(resposta, 422, "VALIDACAO_FALHOU")
+    assert resposta.json()["erro"]["detalhes"] == {"campo": "modelo_id"}
+
+
+def test_modelo_desativado_nao_aceita_novos_cadastros(
+    client: TestClient,
+    session: Session,
+) -> None:
+    modelo = session.scalars(select(ModeloArmadilha)).one()
+    modelo.ativo = False
+    session.flush()
+
+    lista = client.get("/api/modelos-armadilha")
+    criar = client.post(
+        "/api/armadilhas",
+        json={"identificador": "ARM-OFF", "modelo_id": str(modelo.id)},
+    )
+
+    assert lista.json() == []
+    _assert_erro(criar, 422, "VALIDACAO_FALHOU")
+
+
+def test_patch_troca_o_modelo_pelo_catalogo(
+    client: TestClient,
+    session: Session,
+) -> None:
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-TROCA")
+    session.commit()
+    modelo_id = _modelo_stickfly(session)
+
+    resposta = client.patch(
+        f"/api/armadilhas/{armadilha.id}", json={"modelo_id": modelo_id}
+    )
+    recusa = client.patch(
+        f"/api/armadilhas/{armadilha.id}", json={"modelo_id": str(uuid4())}
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json()["modelo"] == "StickFly K-45"
+    _assert_erro(recusa, 422, "VALIDACAO_FALHOU")

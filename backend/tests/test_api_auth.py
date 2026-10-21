@@ -262,7 +262,7 @@ def test_caractere_nulo_no_login_e_recusado_sem_erro_de_servidor(
     assert resposta.json()["erro"]["codigo"] == "VALIDACAO_FALHOU"
 
 
-@pytest.mark.parametrize("campo", ["identificador", "modelo", "localizacao"])
+@pytest.mark.parametrize("campo", ["identificador", "localizacao"])
 def test_caractere_nulo_nos_textos_da_armadilha_e_recusado(
     client: TestClient, session: Session, campo: str
 ) -> None:

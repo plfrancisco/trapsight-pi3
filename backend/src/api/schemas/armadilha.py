@@ -29,7 +29,7 @@ class ArmadilhaCriar(EntradaBase):
     """Valida os campos aceitos no cadastro de uma armadilha."""
 
     identificador: str = Field(min_length=1, max_length=64)
-    modelo: str | None = Field(default=None, max_length=100)
+    modelo_id: UUID | None = None
     localizacao: str | None = Field(default=None, max_length=200)
     data_instalacao: date | None = None
     criar_refil_inicial: bool = False
@@ -59,7 +59,7 @@ class ArmadilhaAtualizar(EntradaBase):
     """Valida uma atualização parcial sem permitir mudar datas históricas."""
 
     identificador: str | None = Field(default=None, min_length=1, max_length=64)
-    modelo: str | None = Field(default=None, max_length=100)
+    modelo_id: UUID | None = None
     localizacao: str | None = Field(default=None, max_length=200)
 
     @field_validator("identificador")
@@ -105,6 +105,7 @@ class ArmadilhaLista(BaseModel):
     identificador: str
     localizacao: str | None
     modelo: str | None
+    modelo_id: UUID | None
     refil_ativo: RefilAtivoSaida | None
     percentual_atual: Decimal | None
     status: StatusAnalise | None
@@ -133,6 +134,7 @@ class ArmadilhaDetalhe(BaseModel):
     id: UUID
     identificador: str
     modelo: str | None
+    modelo_id: UUID | None
     localizacao: str | None
     data_instalacao: date | None
     refil_ativo: RefilAtivoSaida | None
