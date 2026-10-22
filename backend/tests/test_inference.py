@@ -38,6 +38,7 @@ def criar_settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
         "DATABASE_URL": "postgresql://fake:fake@localhost/fake",
         "MODEL_WEIGHTS_PATH": "/caminho/ficticio/pesos.pt",
         "MODEL_VERSION": "v1.2.3",
+        "INFERENCE_MODE": "stub",
         "UPLOADS_DIR": "/diretorio/ficticio",
         "CORS_ORIGENS": "http://localhost:5173",
         "LIMIAR_ATENCAO": "40",

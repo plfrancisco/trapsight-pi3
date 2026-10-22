@@ -16,8 +16,21 @@ def criar_inferidor(settings: Settings) -> Inferidor:
     Returns:
         Implementação do protocolo de inferência.
     """
-    return InferidorStub(
+    limiar_atencao = Decimal(settings.limiar_atencao)
+    limiar_trocar = Decimal(settings.limiar_trocar)
+    if settings.inference_mode == "stub":
+        return InferidorStub(
+            modelo_versao=settings.model_version,
+            limiar_atencao=limiar_atencao,
+            limiar_trocar=limiar_trocar,
+        )
+
+    from src.inference.modelo import InferidorModelo
+
+    return InferidorModelo(
+        caminho_pesos=settings.model_weights_path,
         modelo_versao=settings.model_version,
-        limiar_atencao=Decimal(settings.limiar_atencao),
-        limiar_trocar=Decimal(settings.limiar_trocar),
+        limiar_atencao=limiar_atencao,
+        limiar_trocar=limiar_trocar,
+        threads=settings.inference_threads,
     )

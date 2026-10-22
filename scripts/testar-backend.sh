@@ -48,6 +48,7 @@ MSYS_NO_PATHCONV=1 docker run --rm --network "$REDE" \
   -e UV_PROJECT_ENVIRONMENT=/tmp/venv -e PYTHONPATH=/b \
   -e DATABASE_URL="postgresql://$USUARIO:$SENHA@db:5432/$BANCO_TESTE" \
   -e MODEL_WEIGHTS_PATH=/tmp/pesos.pt -e MODEL_VERSION=v0.1.0-dev \
+  -e INFERENCE_MODE=stub -e INFERENCE_THREADS=1 \
   -e UPLOADS_DIR=/tmp/uploads -e CORS_ORIGENS=http://localhost:5173 \
   ghcr.io/astral-sh/uv:python3.12-bookworm-slim \
   sh -c "uv sync --quiet --locked --group baseline >/dev/null 2>&1; uv run --quiet alembic upgrade head; $COMANDO"

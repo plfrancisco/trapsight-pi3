@@ -94,6 +94,8 @@ services:
       DATABASE_URL: postgresql://trapsight_app:${DB_APP_SENHA}@db:5432/${POSTGRES_DB:-armadilhas}
       MODEL_WEIGHTS_PATH: /app/models/checkpoints/latest.pt
       MODEL_VERSION: ${MODEL_VERSION:-v0.1.0-dev}
+      INFERENCE_MODE: modelo
+      INFERENCE_THREADS: ${INFERENCE_THREADS:-1}
       UPLOADS_DIR: /app/data/uploads
       CORS_ORIGENS: ${CORS_ORIGENS:?Defina CORS_ORIGENS (https://seu-dominio)}
       FORWARDED_ALLOW_IPS: 172.28.0.2
