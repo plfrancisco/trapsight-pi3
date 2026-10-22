@@ -20,6 +20,8 @@ _ENVIRONMENT_NAMES = {
     "database_url": "DATABASE_URL",
     "model_weights_path": "MODEL_WEIGHTS_PATH",
     "model_version": "MODEL_VERSION",
+    "inference_mode": "INFERENCE_MODE",
+    "inference_threads": "INFERENCE_THREADS",
     "uploads_dir": "UPLOADS_DIR",
     "storage_backend": "STORAGE_BACKEND",
     "cors_origens": "CORS_ORIGENS",
@@ -61,8 +63,10 @@ class Settings(BaseSettings):
     )
 
     database_url: SecretStr
-    model_weights_path: str
+    model_weights_path: str = "/app/models/checkpoints/latest.pt"
     model_version: str
+    inference_mode: Literal["stub", "modelo"] = "modelo"
+    inference_threads: int = Field(default=1, ge=1)
     uploads_dir: str
     storage_backend: Literal["filesystem", "database"] = "filesystem"
     cors_origens: Annotated[list[str], NoDecode]

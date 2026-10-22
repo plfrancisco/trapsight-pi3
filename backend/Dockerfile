@@ -10,7 +10,9 @@ RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app 
     && chown -R app:app /app
 
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.txt
 
 COPY --chown=app:app . .
 

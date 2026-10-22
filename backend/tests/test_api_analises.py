@@ -32,6 +32,7 @@ _AMBIENTE_FICTICIO = {
     "DATABASE_URL": "postgresql://db-ficticio:5432/armadilhas",
     "MODEL_WEIGHTS_PATH": "/caminho-ficticio/pesos.pt",
     "MODEL_VERSION": "v0.1.0-dev",
+    "INFERENCE_MODE": "stub",
     "CORS_ORIGENS": "http://localhost:5173",
 }
 
@@ -152,6 +153,73 @@ def test_post_salva_jpeg_e_png_no_layout_e_get_retorna_mesmo_formato(
     assert detalhe.status_code == 200
     assert detalhe.json() == corpo
     assert AnaliseRepository(session).get_by_id(analise_id) is not None
+
+
+def test_post_com_checkpoint_treinado_retorna_percentual_e_mascara_reais(
+    client: TestClient,
+    session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Executa a inferência carregada por checkpoint no fluxo HTTP de análise."""
+    torch = pytest.importorskip("torch")
+    smp = pytest.importorskip("segmentation_models_pytorch")
+
+    class ModeloMinimo(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.bias = torch.nn.Parameter(torch.zeros(3))
+
+        def forward(self, entrada):
+            lote, _canais, altura, largura = entrada.shape
+            logits = torch.zeros((lote, 3, altura, largura), dtype=entrada.dtype)
+            logits[:, 1] = 1
+            logits[:, 2, :, : largura // 4] = 2
+            return logits + self.bias.view(1, 3, 1, 1)
+
+    monkeypatch.setattr(smp, "Unet", lambda **_parametros: ModeloMinimo())
+    caminho_pesos = tmp_path / "mini.pt"
+    torch.save(
+        {
+            "state_dict": ModeloMinimo().state_dict(),
+            "arquitetura": {"nome": "Unet", "encoder": "resnet34", "classes": 3},
+            "entrada": {"largura": 768, "altura": 576},
+            "normalizacao": {
+                "media": [0.485, 0.456, 0.406],
+                "desvio": [0.229, 0.224, 0.225],
+            },
+            "classes": ["fundo", "placa_limpa", "placa_coberta"],
+        },
+        caminho_pesos,
+    )
+
+    from src.inference.modelo import InferidorModelo
+
+    client.app.state.inferidor = InferidorModelo(
+        caminho_pesos=caminho_pesos,
+        modelo_versao="v0.1.0-dev",
+        limiar_atencao=Decimal("40"),
+        limiar_trocar=Decimal("70"),
+    )
+    armadilha, refil = _criar_armadilha(session)
+    assert refil is not None
+
+    response = client.post(
+        "/api/analises",
+        data={"armadilha_id": str(armadilha.id)},
+        files={"imagem": ("foto.png", _imagem("PNG"), "image/png")},
+    )
+
+    assert response.status_code == 201
+    corpo = response.json()
+    assert corpo["percentual_coberto"] == 25.0
+    assert corpo["modelo_versao"].startswith("v0.1.0-dev+")
+    resposta_mascara = client.get(corpo["mascara_url"])
+    assert resposta_mascara.status_code == 200
+    assert resposta_mascara.headers["content-type"] == "image/png"
+    with Image.open(BytesIO(resposta_mascara.content)) as mascara:
+        assert mascara.format == "PNG"
+        assert mascara.size == (512, 512)
 
 
 def test_post_rejeita_campo_arquivo_ausente_e_formulario_invalido(
