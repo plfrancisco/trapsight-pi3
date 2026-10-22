@@ -116,13 +116,17 @@ Pesos de `L_ce` calculados **uma vez**, sobre as máscaras do conjunto de
 treino (nunca validação ou teste), por frequência de pixels `f_c`:
 
 ```text
-w_c = (1 / sqrt(f_c)) / média_c(1 / sqrt(f_c))      # normaliza para média 1
-w_c = min(w_c, 10)                                    # limite superior
+w_c = (f_máx / f_c) ^ 0,5       # a classe mais frequente tem peso 1
+w_c = min(w_c, 10)               # limite superior
 ```
 
 A raiz suaviza o peso: o inverso direto da frequência dá peso excessivo a uma
-classe rara e desestabiliza o treino. Os pesos calculados são gravados na
-execução. O mesmo vetor é usado como peso das classes em `L_dice`, com
+classe rara e desestabiliza o treino. O teto só atua quando a razão entre a
+classe mais frequente e a mais rara passa de 100 para 1; normalizar os pesos
+para média 1, como numa primeira redação, limitaria qualquer peso a 3 com três
+classes e tornaria o teto inócuo. Só as razões importam, porque a entropia
+cruzada e o Dice dividem pela soma dos pesos. Os pesos calculados são gravados
+na execução. O mesmo vetor é usado como peso das classes em `L_dice`, com
 `placa_coberta` recebendo no mínimo o maior peso entre as três.
 
 Origem: prática, com o expoente (0,5) e o teto (10) como hipóteses ajustadas

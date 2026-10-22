@@ -47,45 +47,47 @@ ponderada, Dice loss, ou combinação).
 
 ## ML02 — Gerador de dataset sintético
 
-- [ ] Implementar conforme `dataset_sintetico.md` — sprites, fundo, composição
+- [x] Implementar conforme `dataset_sintetico.md` — sprites, fundo, composição
       por união de silhuetas, distratores, metadados
-- [ ] Verificar os critérios de aceite da seção 9 do documento (correlação
+- [x] Verificar os critérios de aceite da seção 9 do documento (correlação
       idade × cobertura próxima de zero, reprodutibilidade por semente)
 
 **Especificação:** `../plan/data/dataset_sintetico.md`.
 **Dependências:** nenhuma.
+**Concluída em:** 2026-10-21.
 
 ## ML02A — Banco de sprites de insetos
 
-- [ ] Fonte do MVP: **fotos de insetos brasileiros com licença aberta**
+- [x] Fonte do MVP: **fotos de insetos brasileiros com licença aberta**
       (iNaturalist, observações com `quality_grade=research`, Brasil,
       licenças CC0, CC-BY e CC-BY-NC), recortadas com segmentador pronto;
       conjuntos do Roboflow Universe só entram se trouxerem máscara e forem
       de insetos presentes no Brasil
-- [ ] Grupos cobertos: moscas (doméstica, varejeira, drosófila), mosquitos
+- [x] Grupos cobertos: moscas (doméstica, varejeira, drosófila), mosquitos
       (*Culex*, *Aedes*), formigas, baratas, mariposas e besouros pequenos;
       cada sprite grava o `grupo` no manifesto
-- [ ] A **licença e o autor de cada foto** ficam registrados no manifesto;
+- [x] A **licença e o autor de cada foto** ficam registrados no manifesto;
       descartar qualquer foto sem licença que permita uso acadêmico (CC-ND e
       "todos os direitos reservados" ficam fora)
-- [ ] Script de preparo em `backend/training/` que lê o conjunto baixado,
+- [x] Script de preparo em `backend/training/` que lê o conjunto baixado,
       recorta cada inseto pela máscara fornecida e grava PNG com canal alfa
-- [ ] `manifest.json` no formato do README do gerador (`arquivo`, `categoria`,
+- [x] `manifest.json` no formato do README do gerador (`arquivo`, `categoria`,
       `fonte`, `licenca`, `especie`, `fragmentado`), com as três categorias de
       tamanho e fragmentos de inseto
-- [ ] Limiar de qualidade do recorte: descartar sprites vazios, minúsculos ou
+- [x] Limiar de qualidade do recorte: descartar sprites vazios, minúsculos ou
       com bordas serrilhadas, e registrar quantos foram descartados e por quê
-- [ ] Mínimo de 300 sprites válidos no banco final, distribuídos entre as
+- [x] Mínimo de 300 sprites válidos no banco final, distribuídos entre as
       categorias, para a composição não repetir sempre os mesmos insetos
-- [ ] Banco e conjuntos baixados ficam **fora do repositório** (caminho
+- [x] Banco e conjuntos baixados ficam **fora do repositório** (caminho
       configurável); a chave de API do Roboflow vem de variável de ambiente e
       nunca é gravada em arquivo versionado
-- [ ] Inspeção visual de uma amostra do dataset gerado com o banco real
+- [x] Inspeção visual de uma amostra do dataset gerado com o banco real
       (máscara de três classes, distratores fora da máscara) e relatório com
       as imagens da amostra
 
 **Especificação:** `../plan/data/dataset_sintetico.md`, seções 3 e 9.
 **Dependências:** ML02.
+**Concluída em:** 2026-10-21.
 
 **Nota:** o uso de `rembg` (grupo opcional de dependências de treino, fora das
 dependências da API) está **aprovado** para o MVP, porque não há fotos reais do
@@ -125,6 +127,11 @@ enfraqueceria a comparação — ver seção 9.2 da especificação.
 **Especificação:** ML01 (pipeline de treino); divisão dos conjuntos em
 `../plan/model/avaliacao_spec.md`, seção 2.
 **Dependências:** ML01, ML02, ML02A.
+
+**Estado (2026-10-22):** o pipeline está implementado em `backend/training/treino/`
+com testes em CPU. Falta o teste de fumaça E0 na GPU, que falhou por falta de
+memória de vídeo na escolha do lote por passo; a ML04 só é marcada quando o E0
+passar (`../plan/model/treino_spec.md`, seção 8).
 
 ## ML05 — Avaliação e métricas comparativas
 

@@ -247,3 +247,53 @@ arquivo de calibração. O JSON de métricas é gravado no diretório do dataset
 `metricas_baseline_teste.json`; ele inclui Dice, IoU, erro absoluto médio do
 percentual em pontos percentuais e acurácia do status. A calibração não lê
 amostras de validação ou teste.
+
+## Treino da U-Net
+
+O treino segue `.context/plan/model/treino_spec.md`. O código está em
+`training/treino/` (configuração, dados, aumentos, perda, modelo, métricas,
+seleção do melhor ponto, loop e linha de comando) e a configuração de
+referência em `training/treino/configuracao_padrao.json`.
+
+O PyTorch com CUDA vem do grupo `treino`. No Windows, o `uv.lock` usa o índice
+`cu128` do PyTorch; nas demais plataformas, o PyPI. O `backend/.venv` pode estar
+inacessível; use um ambiente fora do repositório:
+
+```powershell
+$env:UV_PROJECT_ENVIRONMENT = "D:\dados\trapsight\venv-treino"
+uv sync --python 3.12 --group dev --group treino
+```
+
+Na pasta `backend`, com esse ambiente:
+
+```powershell
+# confirma a GPU e a memória de vídeo
+uv run python -m training.treino gpu
+
+# E0, teste de fumaça (não é resultado): 1000 imagens, 5 épocas
+uv run python -m training.treino treinar --nome e0 --epocas 5 `
+  --limite-treino 1000 --limite-validacao 150
+
+# treino completo, com os valores de configuracao_padrao.json
+uv run python -m training.treino treinar --nome padrao
+
+# compara duas execuções por época (prova de reprodutibilidade)
+uv run python -m training.treino comparar --a <pasta-a> --b <pasta-b>
+
+# mede o teste, uma vez por checkpoint
+uv run python -m training.treino avaliar-teste --execucao <pasta>
+```
+
+Cada execução grava em `D:\dados\trapsight\execucoes\<data>-<nome>`, fora do
+repositório: `execucao.json` (sementes, hash do dataset, hiperparâmetros,
+bibliotecas, hardware e `modelo_versao`), `metricas_por_epoca.csv`,
+`metricas_validacao.jsonl` e os checkpoints `melhor.pt`, `melhor_dice.pt` e
+`ultimo.pt`. O treino recusa começar se o dataset repetir sementes entre
+conjuntos, tiver faixas de cobertura desbalanceadas, correlação entre idade e
+cobertura acima de 0,1 ou máscara que não confira com os metadados. O conjunto
+de teste só é aberto por `avaliar-teste`.
+
+Os testes de `tests/training/treino/` precisam do grupo `treino` e são
+ignorados sem ele. Rode-os com o ambiente acima e, se o diretório temporário
+padrão estiver sem permissão, com `--basetemp` apontando para uma pasta sua.
+
