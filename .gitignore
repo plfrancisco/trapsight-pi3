@@ -90,5 +90,5 @@ scratch_ml02a/
 # Diretórios temporários de ferramentas de trabalho
 .tmp-*/
 
-# Pastas temporárias de teste
-backend/.pytest-tmp-*/
+# Pastas e arquivos temporários de teste
+backend/.pytest-tmp-*
