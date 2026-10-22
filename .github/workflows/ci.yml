@@ -2,8 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
-  pull_request:
 
 # Uma execução por branch: um push novo cancela a anterior ainda em andamento.
 concurrency:
