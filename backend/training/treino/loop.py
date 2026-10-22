@@ -60,8 +60,8 @@ BIBLIOTECAS = (
     "opencv-python-headless",
     "pillow",
 )
-CANDIDATOS_LOTE = (8, 6, 4, 2, 1)
-FOLGA_VRAM = 0.90
+CANDIDATOS_LOTE = (4, 2, 1)
+FOLGA_VRAM = 0.75
 COLUNAS_CSV = (
     "epoca",
     "tempo_s",
@@ -135,25 +135,31 @@ def gravar_json(caminho: Path, dados: dict[str, Any]) -> None:
 def descobrir_lote_por_passo(
     configuracao: Configuracao, perda: nn.Module, dispositivo: torch.device
 ) -> int:
-    """Maior lote que cabe na VRAM com folga, por teste de passo completo.
+    """Maior lote que cabe na VRAM livre com folga, por teste de passo completo.
 
-    Usa um modelo descartável (sem pesos pré-treinados) para não alterar as
-    estatísticas do modelo real. Em CPU devolve um lote pequeno fixo.
+    O passo de teste faz a propagação, a perda, a retropropagação e um passo do
+    AdamW, porque o estado do otimizador também ocupa memória. O pico é
+    comparado com a memória **livre** no início, e não com a total: o sistema e
+    outros programas já usam parte da GPU. Usa um modelo descartável (sem pesos
+    pré-treinados) para não alterar as estatísticas do modelo real. Em CPU
+    devolve um lote pequeno fixo.
     """
     if configuracao.batch_por_passo != "auto":
         return int(configuracao.batch_por_passo)
     if dispositivo.type != "cuda":
         return min(2, configuracao.batch_efetivo)
 
+    torch.cuda.empty_cache()
+    livre, _ = torch.cuda.mem_get_info(dispositivo)
+    orcamento = FOLGA_VRAM * livre
     sonda = criar_modelo(configuracao.com(encoder_pretreinado=False)).to(dispositivo)
     sonda.to(memory_format=torch.channels_last)
     colocar_em_treino(sonda, configuracao.bn_encoder_congelado)
-    total = torch.cuda.get_device_properties(dispositivo).total_memory
+    otimizador = torch.optim.AdamW(sonda.parameters(), lr=1e-6)
     escolhido = 1
     for candidato in CANDIDATOS_LOTE:
         if candidato > configuracao.batch_efetivo:
             continue
-        torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats(dispositivo)
         try:
             entrada = torch.randn(
@@ -172,15 +178,18 @@ def descobrir_lote_por_passo(
             with torch.autocast("cuda", enabled=configuracao.precisao_mista):
                 logits = sonda(entrada)
             perda(logits, alvo).total.backward()
-            pico = torch.cuda.max_memory_allocated(dispositivo)
-            sonda.zero_grad(set_to_none=True)
+            otimizador.step()
+            pico = torch.cuda.max_memory_reserved(dispositivo)
         except torch.cuda.OutOfMemoryError:
-            sonda.zero_grad(set_to_none=True)
-            continue
-        if pico <= FOLGA_VRAM * total:
+            pico = None
+        finally:
+            otimizador.zero_grad(set_to_none=True)
+            entrada = alvo = logits = None  # libera os tensores do candidato
+            torch.cuda.empty_cache()
+        if pico is not None and pico <= orcamento:
             escolhido = candidato
             break
-    del sonda
+    del sonda, otimizador
     torch.cuda.empty_cache()
     return escolhido
 
@@ -483,6 +492,12 @@ def treinar(
                 parou_antes = True
                 registro("parada antecipada")
                 break
+    except torch.cuda.OutOfMemoryError as erro:
+        raise RuntimeError(
+            "Memória de vídeo insuficiente. Defina um batch_por_passo menor na "
+            "configuração (o lote efetivo é mantido por acúmulo de gradiente) e "
+            "feche programas que usem a GPU."
+        ) from erro
     finally:
         arquivo_csv.close()
 

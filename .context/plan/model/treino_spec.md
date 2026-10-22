@@ -65,7 +65,7 @@ nesta ordem:
 |---|---|---|
 | Precisão mista | `torch.autocast` em fp16 com `GradScaler` | Prática |
 | Formato de memória | `channels_last` | Prática |
-| Tamanho de lote por passo | Maior valor de {8, 6, 4, 2} que caiba com folga de 10% de VRAM, descoberto por teste automático antes do treino | Hipótese |
+| Tamanho de lote por passo | Maior valor de {4, 2, 1} cujo passo completo (propagação, perda, retropropagação e passo do AdamW) caiba em 75% da VRAM **livre** no início, descoberto por teste automático antes do treino. O limite 4 deixa margem para outros programas que usam a GPU; um estouro de memória no treino real interrompe a execução com a instrução de reduzir `batch_por_passo` | Hipótese |
 | Lote efetivo | 8, por acúmulo de gradiente quando o lote por passo for menor | Hipótese |
 | Carregamento | `num_workers` ≤ núcleos físicos − 1, `pin_memory=True`, persistente | Prática |
 
