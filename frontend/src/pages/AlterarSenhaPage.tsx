@@ -51,19 +51,20 @@ export default function AlterarSenhaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+    <div className="page-stack mx-auto max-w-xl">
+      <header className="page-header">
+        <p className="page-kicker">Segurança da conta</p>
+        <h1 className="page-title">
           Alterar senha
         </h1>
-        <p className="mt-3 text-base leading-7 text-slate-700">
+        <p className="page-description">
           Ao trocar a senha, as suas outras sessões são encerradas.
         </p>
       </header>
 
       {concluida ? (
         <p
-          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-950"
+          className="success-message"
           role="status"
         >
           Senha alterada. As outras sessões foram encerradas.
@@ -71,7 +72,7 @@ export default function AlterarSenhaPage() {
       ) : null}
 
       <form
-        className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+        className="form-panel space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
         noValidate
         onSubmit={enviar}
         ref={referenciaFormulario}

@@ -15,12 +15,9 @@ export default function ListaRefisAnteriores({ refis }: ListaRefisAnterioresProp
   return (
     <section
       aria-labelledby="titulo-refis-anteriores"
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="surface-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <h2
-        className="text-xl font-semibold tracking-tight text-slate-950"
-        id="titulo-refis-anteriores"
-      >
+      <h2 className="section-title" id="titulo-refis-anteriores">
         Refis anteriores
       </h2>
       <ul className="mt-4 divide-y divide-slate-200">

@@ -149,7 +149,11 @@ describe('LoginPage', () => {
     await preencher('ana@exemplo.com', 'senha-que-nao-pode-vazar')
     await screen.findByRole('alert')
 
-    expect(localStorage.length).toBe(0)
-    expect(sessionStorage.length).toBe(0)
+    // O tema visual é a única preferência gravada; nenhum valor pode conter credenciais.
+    const armazenado = [localStorage, sessionStorage]
+      .flatMap((area) => Object.keys(area).map((chave) => `${chave}=${area.getItem(chave)}`))
+      .join(' ')
+    expect(armazenado).not.toContain('ana@exemplo.com')
+    expect(armazenado).not.toContain('senha-que-nao-pode-vazar')
   })
 })

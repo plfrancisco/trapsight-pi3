@@ -65,7 +65,7 @@ describe('CartaoArmadilha', () => {
       ultima_analise_em: null,
     })
 
-    expect(screen.getByText('Sem análises')).toBeVisible()
+    expect(screen.getByText('Sem análises neste refil')).toBeVisible()
     expect(screen.queryByText('Estimativa: Sem estimativa')).not.toBeInTheDocument()
     expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
   })

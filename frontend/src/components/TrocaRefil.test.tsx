@@ -32,7 +32,7 @@ describe('TrocaRefil', () => {
     expect(dialogo).toHaveTextContent(
       'Encerrar o refil atual e iniciar um novo hoje? A série de medições recomeça do zero.',
     )
-    expect(screen.getByRole('button', { name: 'Confirmar troca' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     expect(replaceRefil).not.toHaveBeenCalled()
   })
 

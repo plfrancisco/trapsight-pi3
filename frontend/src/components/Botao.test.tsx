@@ -6,9 +6,9 @@ import LinkBotao from './LinkBotao'
 
 describe('Botao', () => {
   it.each([
-    ['primario', 'bg-emerald-900'],
-    ['secundario', 'border-slate-300'],
-    ['discreto', 'text-slate-700'],
+    ['primario', 'bg-app-primary'],
+    ['secundario', 'border-app-border'],
+    ['discreto', 'text-app-muted'],
   ] as const)('aplica a variante %s com tamanho mínimo acessível', (variante, classe) => {
     render(<Botao variante={variante}>Ação</Botao>)
 
@@ -41,6 +41,6 @@ describe('LinkBotao', () => {
     const link = screen.getByRole('link', { name: 'Cadastrar' })
     expect(link.tagName).toBe('A')
     expect(link).toHaveAttribute('href', '/armadilhas/nova')
-    expect(link).toHaveClass('bg-emerald-900', 'min-h-11')
+    expect(link).toHaveClass('bg-app-primary', 'min-h-11')
   })
 })

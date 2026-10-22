@@ -16,6 +16,7 @@ const armadilha: ArmadilhaDetalhe = {
   percentual_atual: null,
   status: null,
   dias_ate_saturar: null,
+  removida_em: null,
 }
 
 describe('ResumoArmadilha', () => {
@@ -38,5 +39,19 @@ describe('ResumoArmadilha', () => {
       'href',
       '/analises/nova',
     )
+    expect(screen.getByRole('button', { name: 'Excluir armadilha' })).toBeVisible()
+  })
+
+  it('mantém a consulta do histórico e esconde ações de uma armadilha removida', () => {
+    render(
+      <MemoryRouter>
+        <ResumoArmadilha armadilha={{ ...armadilha, removida_em: '2026-10-21T12:00:00Z' }} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent('histórico permanece disponível')
+    expect(screen.getByRole('link', { name: 'Voltar ao painel' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Excluir armadilha' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Nova análise' })).not.toBeInTheDocument()
   })
 })

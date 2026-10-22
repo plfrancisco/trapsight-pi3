@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { buildMensagemErroAnalise, validateArquivoAnalise } from './analise'
 
 describe('validateArquivoAnalise', () => {
-  it('aceita JPEG e PNG com tipo e extensão correspondentes até 10 MB', () => {
+  it('aceita JPEG e PNG com tipo e extensão correspondentes até 4 MB', () => {
     expect(
       validateArquivoAnalise({
         name: 'placa.JPG',
         type: 'image/jpeg',
-        size: 10 * 1024 * 1024,
+        size: 4 * 1024 * 1024,
       }),
     ).toBeNull()
     expect(
@@ -37,20 +37,20 @@ describe('validateArquivoAnalise', () => {
     ).toBe(mensagem)
   })
 
-  it('rejeita arquivos acima de 10 MB', () => {
+  it('rejeita arquivos acima de 4 MB', () => {
     expect(
       validateArquivoAnalise({
         name: 'placa.jpg',
         type: 'image/jpeg',
-        size: 10 * 1024 * 1024 + 1,
+        size: 4 * 1024 * 1024 + 1,
       }),
-    ).toBe('O arquivo deve ter no máximo 10 MB.')
+    ).toBe('O arquivo deve ter no máximo 4 MB.')
   })
 })
 
 describe('buildMensagemErroAnalise', () => {
   it.each([
-    ['ARQUIVO_MUITO_GRANDE', 'A imagem excede o limite de 10 MB.'],
+    ['ARQUIVO_MUITO_GRANDE', 'A imagem excede o limite de 4 MB.'],
     ['FORMATO_NAO_SUPORTADO', 'Envie uma imagem JPEG ou PNG.'],
     [
       'RESOLUCAO_INSUFICIENTE',

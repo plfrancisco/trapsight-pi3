@@ -36,7 +36,7 @@ Além da leitura pontual, o sistema guarda o histórico de cada armadilha e **pr
 ## Funcionalidades
 
 - **Análise por imagem:** upload da foto, máscara de segmentação sobreposta, percentual de cobertura e status;
-- **Dashboard operacional:** armadilhas ordenadas por urgência, com painel de alertas;
+- **Dashboard operacional:** armadilhas ordenadas por urgência, miniatura da última foto analisada e painel de alertas, com navegação adaptada para celular;
 - **Histórico e projeção:** evolução da cobertura por refil e previsão de dias até a saturação por regressão linear;
 - **Timelapse:** reprodução das imagens de um refil sincronizada com o gráfico de evolução;
 - **Ciclo de vida do refil:** registro de trocas, com histórico de duração de cada ciclo;

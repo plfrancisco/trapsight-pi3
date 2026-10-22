@@ -6,14 +6,17 @@ import CampoFormulario from '../components/CampoFormulario'
 import EstadoCarregando from '../components/EstadoCarregando'
 import MarcaTrapSight from '../components/MarcaTrapSight'
 import MensagemErro from '../components/MensagemErro'
+import ControleTema from '../components/ControleTema'
 import { mensagemDeLogin } from '../lib/autenticacao'
 import { destinoDoEstado } from '../lib/destino'
+import { useTema } from '../hooks/useTema'
 
 /** Autentica o usuário e o leva ao destino que ele tentava acessar.
  * @returns A tela de login, ou o redirecionamento quando já há sessão.
  */
 export default function LoginPage() {
   const { ativa, estado, motivoSaida, login } = useAuth()
+  const { tema, alternarTema } = useTema()
   const localizacao = useLocation()
   const referenciaSenha = useRef<HTMLInputElement>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -50,63 +53,73 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 px-4 py-12 text-slate-950">
-      <main className="mx-auto w-full max-w-md space-y-8" id="conteudo-principal">
-        <div className="flex items-center gap-3 text-xl font-bold tracking-tight text-emerald-950">
+    <div className="login-page">
+      <section aria-label="Sobre o TrapSight" className="login-art">
+        <div className="login-art__brand">
           <MarcaTrapSight />
         </div>
+        <div className="login-art__copy">
+          <p className="login-art__eyebrow">Monitoramento de precisão</p>
+          <h2 className="login-art__title">
+            Cada ponto,
+            <span> acompanhado.</span>
+          </h2>
+          <p className="login-art__description">
+            Reúna imagens, leituras e trocas de refil em um painel feito para orientar a próxima ação.
+          </p>
+        </div>
+        <p className="login-art__footnote">TrapSight · inteligência visual para armadilhas adesivas</p>
+      </section>
 
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">Entrar</h1>
-          <p className="mt-3 text-base leading-7 text-slate-700">
+      <section className="login-form-side">
+        <div className="login-form-side__theme">
+          <ControleTema onAlternar={alternarTema} tema={tema} />
+        </div>
+        <main className="login-form-content" id="conteudo-principal">
+          <p className="login-form-content__eyebrow">Acesso à plataforma</p>
+          <h1>Entrar</h1>
+          <p className="login-form-content__intro">
             Acesse o monitoramento das armadilhas com a sua conta.
           </p>
-        </header>
 
-        {motivoSaida === 'expirou' ? (
-          <p
-            className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950"
-            role="status"
-          >
-            Sua sessão expirou. Entre novamente.
-          </p>
-        ) : null}
-
-        {estado === 'carregando' ? (
-          <EstadoCarregando />
-        ) : (
-          <form
-            className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
-            noValidate
-            onSubmit={enviar}
-          >
-            {erro ? <MensagemErro erro={erro} /> : null}
-            <CampoFormulario
-              autoComplete="username"
-              id="email"
-              nome="email"
-              obrigatorio
-              rotulo="E-mail"
-              tipo="email"
-            />
-            <CampoFormulario
-              autoComplete="current-password"
-              id="senha"
-              nome="senha"
-              obrigatorio
-              referencia={referenciaSenha}
-              rotulo="Senha"
-              tipo="password"
-            />
-            <Botao className="w-full" disabled={enviando} type="submit" variante="primario">
-              {enviando ? 'Entrando…' : 'Entrar'}
-            </Botao>
-            <p className="text-sm leading-6 text-slate-700">
-              Esqueceu a senha? Peça ao administrador para redefini-la.
+          {motivoSaida === 'expirou' ? (
+            <p className="login-expired-message" role="status">
+              Sua sessão expirou. Entre novamente.
             </p>
-          </form>
-        )}
-      </main>
+          ) : null}
+
+          {estado === 'carregando' ? (
+            <EstadoCarregando />
+          ) : (
+            <form noValidate onSubmit={enviar}>
+              {erro ? <MensagemErro erro={erro} /> : null}
+              <CampoFormulario
+                autoComplete="username"
+                id="email"
+                nome="email"
+                obrigatorio
+                rotulo="E-mail"
+                tipo="email"
+              />
+              <CampoFormulario
+                autoComplete="current-password"
+                id="senha"
+                nome="senha"
+                obrigatorio
+                referencia={referenciaSenha}
+                rotulo="Senha"
+                tipo="password"
+              />
+              <Botao className="w-full" disabled={enviando} type="submit" variante="primario">
+                {enviando ? 'Entrando…' : 'Entrar'}
+              </Botao>
+              <p>
+                Esqueceu a senha? Peça ao administrador para redefini-la.
+              </p>
+            </form>
+          )}
+        </main>
+      </section>
     </div>
   )
 }

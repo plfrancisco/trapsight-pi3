@@ -121,7 +121,7 @@ describe('DashboardPage', () => {
     renderDashboard()
 
     const artigo = await screen.findByRole('article')
-    expect(within(artigo).getByText('Sem análises')).toBeVisible()
+    expect(within(artigo).getByText('Sem análises neste refil')).toBeVisible()
     expect(within(artigo).queryByText('Estimativa: Sem estimativa')).not.toBeInTheDocument()
     expect(within(artigo).queryByText('Cobertura atual')).not.toBeInTheDocument()
   })

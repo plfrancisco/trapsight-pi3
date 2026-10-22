@@ -120,15 +120,15 @@ export default function FormularioArmadilha({
   const titulo = id ? 'Editar armadilha' : 'Nova armadilha'
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-900">
+    <div className="page-stack mx-auto max-w-3xl">
+      <header className="page-header">
+        <p className="page-kicker">
           Cadastro de equipamento
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+        <h1 className="page-title">
           {titulo}
         </h1>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+        <p className="page-description">
           {id
             ? 'Atualize os dados de identificação e localização da armadilha.'
             : 'Informe os dados da armadilha para iniciar o acompanhamento.'}
@@ -136,7 +136,7 @@ export default function FormularioArmadilha({
       </header>
 
       <form
-        className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+        className="form-panel space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
         key={id ?? 'nova-armadilha'}
         noValidate
         onSubmit={saveArmadilha}

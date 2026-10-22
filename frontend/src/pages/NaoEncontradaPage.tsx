@@ -1,13 +1,24 @@
+import LinkBotao from '../components/LinkBotao'
+
 /** Informa que o endereço solicitado não corresponde a uma tela disponível. */
 export default function NaoEncontradaPage() {
   return (
-    <>
-      <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+    <section aria-labelledby="titulo-nao-encontrada" className="empty-state-panel">
+      <span aria-hidden="true" className="empty-state-panel__mark">
+        <svg className="size-7" fill="none" viewBox="0 0 28 28">
+          <circle cx="12.5" cy="12.5" r="7.5" stroke="currentColor" strokeWidth="1.7" />
+          <path d="m18 18 5 5M12.5 9.5v3m0 3h.01" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+        </svg>
+      </span>
+      <h1 className="section-title" id="titulo-nao-encontrada">
         Página não encontrada
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+      <p className="section-description">
         O endereço solicitado não corresponde a uma página disponível.
       </p>
-    </>
+      <LinkBotao to="/" variante="primario">
+        Voltar ao dashboard
+      </LinkBotao>
+    </section>
   )
 }

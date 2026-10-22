@@ -1,6 +1,6 @@
 # TELAS — Projeto Integrador
 
-**Versão:** 1.0
+**Versão:** 1.1
 **Status:** ATIVO
 **Escopo:** telas da interface, conteúdo e comportamento esperado
 
@@ -60,6 +60,8 @@ alerta. Ver seção 6.
 - status visual (`ok` verde, `atencao` âmbar, `trocar` vermelho)
 - estimativa de dias até saturar
 - data da última análise
+- miniatura da foto mais recente registrada para a armadilha, quando houver
+  análise; sem foto, a interface informa que ainda não há imagem disponível
 
 **Ordenação:** por urgência — armadilhas em `trocar` primeiro, depois por
 menor número de dias estimados até saturar.
@@ -328,7 +330,7 @@ não há evento assíncrono a notificar.
 | Tela de comparação baseline vs. modelo | Serve à banca, não ao uso operacional. A comparação fica no relatório e nos notebooks de avaliação |
 | Perfis de acesso e múltiplos papéis | Fase 2 (`../foundation/login.md`, 4.3). A autenticação em si está especificada na seção 4.5 |
 | Cadastro de estabelecimento | Entidade prevista para a Fase 2 |
-| Responsividade mobile completa | A demo roda em desktop; PWA é evolução futura |
+| Responsividade completa das quatro telas e distribuição como PWA | O dashboard e a navegação principal se adaptam a celulares como primeira etapa; o restante da experiência mobile e a instalação PWA ficam para uma evolução futura |
 
 ---
 
@@ -362,7 +364,20 @@ imagem original.
 
 O frontend exibe original e máscara lado a lado, sem processamento próprio.
 
-## 8.4 Timelapse
+## 8.4 Direção visual do dashboard
+
+O dashboard usa uma base verde-floresta escura, cartões em tons de carvão,
+destaques verde-lima e sinais âmbar ou vermelhos para os estados de atenção e
+troca. Cada armadilha pode exibir a foto mais recente do seu histórico; a
+imagem é carregada sob demanda e não é substituída por uma fotografia
+ilustrativa quando ainda não existe análise.
+
+Em telas estreitas, os cartões empilham a fotografia e os indicadores, e a
+navegação principal passa para uma barra inferior com espaçamento para a área
+segura do dispositivo. Esta adaptação cobre o dashboard; a experiência móvel
+completa das demais telas continua fora do MVP.
+
+## 8.5 Timelapse
 
 | Item | Valor |
 |---|---|
@@ -370,7 +385,7 @@ O frontend exibe original e máscara lado a lado, sem processamento próprio.
 | Faixa ajustável | 200 ms a 2000 ms |
 | Comportamento ao final | Para no último quadro, sem repetir |
 
-## 8.5 Nomenclatura
+## 8.6 Nomenclatura
 
 O frontend mantém `snake_case` nos dados vindos da API, sem camada de
 conversão para `camelCase`.

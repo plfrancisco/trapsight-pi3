@@ -29,7 +29,7 @@ export default function SeletorArmadilha({
   if (carregando) {
     return (
       <section aria-labelledby="titulo-formulario-analise" className="space-y-5">
-        <h2 className="text-xl font-semibold text-slate-950" id="titulo-formulario-analise">
+        <h2 className="section-title" id="titulo-formulario-analise">
           Preparando envio
         </h2>
         <EstadoCarregando />
@@ -40,7 +40,7 @@ export default function SeletorArmadilha({
   if (erro) {
     return (
       <section aria-labelledby="titulo-formulario-analise" className="space-y-5">
-        <h2 className="text-xl font-semibold text-slate-950" id="titulo-formulario-analise">
+        <h2 className="section-title" id="titulo-formulario-analise">
           Seleção da armadilha
         </h2>
         <MensagemErro

@@ -3,10 +3,10 @@ export type BotaoTamanho = 'compacto' | 'padrao' | 'amplo'
 
 export const CLASSES_POR_VARIANTE: Record<BotaoVariante, string> = {
   primario:
-    'bg-emerald-900 text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60',
+    'bg-app-primary text-app-on-primary transition-colors hover:bg-app-primary-hover disabled:cursor-not-allowed disabled:opacity-60',
   secundario:
-    'border border-slate-300 bg-white text-slate-800 transition-colors hover:bg-slate-100',
-  discreto: 'text-slate-700 hover:bg-slate-100',
+    'border border-app-border bg-app-surface text-app-foreground transition-colors hover:bg-app-soft',
+  discreto: 'text-app-muted transition-colors hover:bg-app-soft',
 }
 
 export const CLASSES_TAMANHO: Record<BotaoTamanho, string> = {
@@ -16,7 +16,7 @@ export const CLASSES_TAMANHO: Record<BotaoTamanho, string> = {
 }
 
 export const CLASSES_BASE =
-  'inline-flex min-h-11 items-center justify-center rounded-lg text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800'
+  'button inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[14px] text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-primary'
 
 /** Combina as classes base, de tamanho e de variante com as extras do chamador.
  * @param variante Aparência visual da ação.

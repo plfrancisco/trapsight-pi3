@@ -41,7 +41,7 @@ sessão são cobertas por `current_task_autenticacao_hospedagem.md` (AUTH06).
 - [x] Base da interface: roteamento das 4 telas, layout, `StatusBadge` e formatadores
 
 **Especificação:** `../plan/api/api_spec.md`; `../plan/frontend/telas_spec.md`,
-seção 8.5.
+seção 8.6.
 **Dependências:** FE01.
 **Concluída em:** 2026-10-16.
 
@@ -72,13 +72,14 @@ normalmente — a exceção é só nos dados vindos da API.
 
 ## FE05 — Timelapse
 
-- [ ] Reprodução automática sincronizada com marcador no gráfico
-- [ ] Arrastar o marcador pausa a reprodução
-- [ ] Alterna entre modo "refil ativo" e "histórico completo"
-- [ ] Oculto com menos de duas análises
+- [x] Reprodução automática sincronizada com marcador no gráfico
+- [x] Arrastar o marcador pausa a reprodução
+- [x] Alterna entre modo "refil ativo" e "histórico completo"
+- [x] Oculto com menos de duas análises
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.2.1.
+**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.2.1 e seção 8.5.
 **Dependências:** FE04.
+**Concluída em:** 2026-10-22.
 
 ## FE06 — Nova análise
 
@@ -100,12 +101,23 @@ normalmente — a exceção é só nos dados vindos da API.
 **Dependências:** FE02.
 **Concluída em:** 2026-10-16.
 
+## FE08 — Refinamento visual e adaptação mobile do dashboard
+
+- [x] Exibir a foto mais recente de cada armadilha quando houver análise
+- [x] Aplicar ao dashboard a direção visual escura com realces verde-lima e
+      sinais de atenção em âmbar ou vermelho
+- [x] Adaptar cartões e navegação principal para telas estreitas e áreas seguras
+
+**Especificação:** `../plan/frontend/telas_spec.md`, seções 4.1 e 8.4.
+**Dependências:** FE03.
+**Concluída em:** 2026-10-21.
+
 ---
 
 # 4. Ordem de execução
 
-FE01 → FE02 → (FE03, FE04, FE07 em paralelo) → FE05 (depende de FE04) e
-FE06 (depende do endpoint de análise estar pronto).
+FE01 → FE02 → (FE03, FE04, FE07 em paralelo) → FE05 (depende de FE04),
+FE06 (depende do endpoint de análise estar pronto) e FE08 (depende de FE03).
 
 ---
 

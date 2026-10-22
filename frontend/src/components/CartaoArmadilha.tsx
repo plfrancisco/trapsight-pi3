@@ -1,90 +1,226 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { formatDataHora, formatDiasAteSaturar, formatPercentual } from '../lib/formatacao'
+import { imagemDoModelo } from '../lib/modeloImagem'
+import { PALETA_STATUS } from '../lib/paleta'
 import type { ArmadilhaLista } from '../services/tipos'
-import LinkBotao from './LinkBotao'
+import { listAnalises } from '../services/analises'
+import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
 
 interface CartaoArmadilhaProps {
   armadilha: ArmadilhaLista
 }
 
-/** Resume os dados medidos e a urgência operacional de uma armadilha.
+/** Resume estado, última fotografia e urgência operacional de uma armadilha.
  * @param props Armadilha consolidada recebida da API.
- * @returns Um cartão com estado, medição e link para os detalhes.
+ * @returns Um cartão com imagem, medição atual e acesso aos detalhes.
  */
 export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
+  const referenciaCartao = useRef<HTMLElement | null>(null)
+  const [imagemUrl, setImagemUrl] = useState<string | null>(null)
+  const [carregandoImagem, setCarregandoImagem] = useState(true)
+  const [imagemIndisponivel, setImagemIndisponivel] = useState(false)
   const semRefil = armadilha.refil_ativo === null
+  const semAnalise = armadilha.ultima_analise_em === null
+  const imagemModelo = imagemDoModelo(armadilha.modelo)
+  const imagemExibida = imagemUrl ?? imagemModelo
+  const percentual = armadilha.percentual_atual
+  const percentualSeguro = Math.min(100, Math.max(0, percentual ?? 0))
+
+  // O estado de imagem reinicia por remontagem: o pai usa `key={armadilha.id}`.
+  useEffect(() => {
+    const controlador = new AbortController()
+    let observador: IntersectionObserver | null = null
+
+    const carregarImagem = () => {
+      void listAnalises(
+        armadilha.id,
+        { escopo: 'completo', limite: 1 },
+        controlador.signal,
+      )
+        .then((analises) => {
+          if (controlador.signal.aborted) return
+          const ultimaAnalise = analises[0]
+          setImagemUrl(ultimaAnalise ? urlImagemAnalise(ultimaAnalise.id) : null)
+          setImagemIndisponivel(false)
+          setCarregandoImagem(false)
+        })
+        .catch(() => {
+          if (controlador.signal.aborted) return
+          setImagemIndisponivel(true)
+          setCarregandoImagem(false)
+        })
+    }
+
+    const elemento = referenciaCartao.current
+    if (!elemento || typeof IntersectionObserver === 'undefined') {
+      carregarImagem()
+      return () => controlador.abort()
+    }
+
+    observador = new IntersectionObserver(
+      (entradas) => {
+        if (!entradas.some((entrada) => entrada.isIntersecting)) return
+        observador?.disconnect()
+        carregarImagem()
+      },
+      { rootMargin: '180px' },
+    )
+    observador.observe(elemento)
+
+    return () => {
+      observador?.disconnect()
+      controlador.abort()
+    }
+  }, [armadilha.id])
 
   return (
+    <Link
+      aria-label={`Ver detalhes da armadilha ${armadilha.identificador}`}
+      className="trap-card-link"
+      to={`/armadilhas/${armadilha.id}`}
+    >
     <article
       aria-labelledby={`titulo-${armadilha.id}`}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+      className="trap-card"
+      ref={referenciaCartao}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h3
-              className="text-lg font-semibold tracking-tight text-slate-950"
-              id={`titulo-${armadilha.id}`}
-            >
-              {armadilha.identificador}
-            </h3>
-            {!semRefil && armadilha.status ? (
-              <StatusBadge status={armadilha.status} />
-            ) : null}
+      <div className="trap-card__photo">
+        {imagemExibida ? (
+          <img
+            alt={imagemUrl
+              ? `Foto mais recente da armadilha ${armadilha.identificador}`
+              : `Imagem de referência do modelo ${armadilha.modelo ?? 'de armadilha'}`}
+            className="trap-card__image"
+            decoding="async"
+            loading="lazy"
+            onError={() => {
+              if (imagemUrl) {
+                setImagemUrl(null)
+                setImagemIndisponivel(true)
+              }
+            }}
+            src={imagemExibida}
+          />
+        ) : (
+          <div className={`trap-photo-placeholder${carregandoImagem ? ' trap-photo-placeholder--loading' : ''}`}>
+            <span aria-hidden="true" className="trap-photo-placeholder__symbol">
+              <svg className="size-9" fill="none" viewBox="0 0 40 40">
+                <rect height="26" rx="4" stroke="currentColor" strokeWidth="1.5" width="30" x="5" y="7" />
+                <path d="M10 12h20M10 17h20M10 22h20M12 27h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.35" />
+              </svg>
+            </span>
+            <p>
+              {carregandoImagem
+                ? 'Buscando foto…'
+                : imagemIndisponivel
+                  ? 'Foto indisponível no momento'
+                  : semAnalise
+                    ? 'A foto aparece após a primeira análise'
+                    : 'Sem foto registrada'}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-slate-700">
-            {armadilha.localizacao ?? 'Localização não informada'}
-          </p>
-        </div>
-        <LinkBotao
-          aria-label={`Ver detalhes da armadilha ${armadilha.identificador}`}
-          className="text-emerald-950 underline decoration-emerald-700 underline-offset-4 hover:bg-emerald-50"
-          tamanho="compacto"
-          to={`/armadilhas/${armadilha.id}`}
-          variante="discreto"
-        >
-          Ver detalhes
-        </LinkBotao>
+        )}
+        <div aria-hidden="true" className="trap-card__photo-scrim" />
+        <span className="trap-card__photo-label">
+          <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 20 20">
+            <rect height="12" rx="2" stroke="currentColor" strokeWidth="1.4" width="14" x="3" y="4" />
+            <circle cx="7.5" cy="8" r="1.2" stroke="currentColor" strokeWidth="1.2" />
+            <path d="m5 14 3.5-3 2.5 2 2-1.5 2 2.5" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.2" />
+          </svg>
+          {imagemUrl
+            ? 'Última leitura'
+            : imagemModelo
+              ? 'Imagem do modelo'
+              : 'Imagem da armadilha'}
+        </span>
+        <span className="trap-card__photo-index">
+          {armadilha.identificador}
+        </span>
       </div>
 
-      {semRefil ? (
-        <p className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-800">
-          Sem refil ativo
-        </p>
-      ) : armadilha.status === null ? (
-        <div className="mt-5 rounded-xl bg-slate-100 px-4 py-3">
-          <p className="text-sm font-medium text-slate-800">Sem análises</p>
+      <div className="trap-card__body">
+        <div className="trap-card__heading">
+          <div className="min-w-0">
+            <h3 className="trap-card__title" id={`titulo-${armadilha.id}`}>
+              {armadilha.identificador}
+            </h3>
+            <p className="trap-card__location">
+              <svg aria-hidden="true" className="size-4 shrink-0" fill="none" viewBox="0 0 20 20">
+                <path d="M16 8.3c0 4-6 8.7-6 8.7S4 12.3 4 8.3a6 6 0 1 1 12 0Z" stroke="currentColor" strokeWidth="1.4" />
+                <circle cx="10" cy="8" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+              <span>{armadilha.localizacao ?? 'Localização não informada'}</span>
+            </p>
+          </div>
+          {!semRefil && armadilha.status ? <StatusBadge status={armadilha.status} /> : null}
         </div>
-      ) : (
-        <dl className="mt-5 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Cobertura atual
-            </dt>
-            <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
-              {formatPercentual(armadilha.percentual_atual)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Estimativa de saturação
-            </dt>
-            <dd className="mt-1 text-base font-semibold text-slate-950">
-              {formatDiasAteSaturar(armadilha.dias_ate_saturar)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Última análise
-            </dt>
-            <dd className="mt-1 text-sm font-medium text-slate-800">
-              {armadilha.ultima_analise_em
-                ? formatDataHora(armadilha.ultima_analise_em)
-                : 'Data indisponível'}
-            </dd>
-          </div>
-        </dl>
-      )}
+
+        {semRefil ? (
+          <p className="trap-card__notice">
+            <span aria-hidden="true" className="trap-card__notice-dot" />
+            Sem refil ativo
+          </p>
+        ) : semAnalise ? (
+          <p className="trap-card__notice">
+            <span aria-hidden="true" className="trap-card__notice-dot" />
+            Sem análises neste refil
+          </p>
+        ) : (
+          <>
+            <div className="trap-card__reading">
+              <div>
+                <p className="trap-card__metric-label">Cobertura atual</p>
+                <p className="trap-card__metric-value">{formatPercentual(percentual)}</p>
+              </div>
+              <div className="trap-card__forecast">
+                <span className="trap-card__forecast-label">Até saturar</span>
+                <strong>{formatDiasAteSaturar(armadilha.dias_ate_saturar)}</strong>
+              </div>
+            </div>
+
+            <div
+              aria-label={`Cobertura da armadilha ${armadilha.identificador}`}
+              aria-valuemax={100}
+              aria-valuemin={0}
+              aria-valuenow={percentualSeguro}
+              aria-valuetext={formatPercentual(percentual)}
+              className="trap-card__progress"
+              role="progressbar"
+            >
+              <span
+                className="trap-card__progress-value"
+                style={{
+                  backgroundColor: armadilha.status
+                    ? PALETA_STATUS[armadilha.status].linha
+                    : '#4C9A68',
+                  width: `${percentualSeguro}%`,
+                }}
+              />
+            </div>
+
+            <p className="trap-card__last-read">
+              Última análise{' '}
+              <time dateTime={armadilha.ultima_analise_em ?? undefined}>
+                {armadilha.ultima_analise_em
+                  ? formatDataHora(armadilha.ultima_analise_em)
+                  : 'Data indisponível'}
+              </time>
+            </p>
+          </>
+        )}
+
+        <div className="trap-card__footer">
+          <span aria-hidden="true" className="trap-card__details-link">
+            Ver detalhes
+            <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 20 20">
+              <path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+            </svg>
+          </span>
+        </div>
+      </div>
     </article>
+    </Link>
   )
 }

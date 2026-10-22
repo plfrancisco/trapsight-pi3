@@ -32,7 +32,7 @@ export default function TrocaRefil({
 
     if (confirmando && !dialogo.open) {
       dialogo.showModal()
-      dialogo.querySelector<HTMLButtonElement>('button')?.focus()
+      dialogo.querySelector<HTMLButtonElement>('[data-foco-seguro]')?.focus()
     } else if (!confirmando && dialogo.open) {
       dialogo.close()
       referenciaAcionador.current?.focus()
@@ -53,9 +53,7 @@ export default function TrocaRefil({
 
   function handleCancel(event: SyntheticEvent<HTMLDialogElement>) {
     event.preventDefault()
-    if (enviando) return
-    setErro(null)
-    setConfirmando(false)
+    fecharConfirmacao()
   }
 
   async function confirmTroca() {
@@ -120,6 +118,7 @@ export default function TrocaRefil({
               {enviando ? 'Registrando…' : 'Confirmar troca'}
             </Botao>
             <Botao
+              data-foco-seguro
               disabled={enviando}
               onClick={fecharConfirmacao}
               variante="secundario"

@@ -12,7 +12,7 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
   return (
     <section
       aria-labelledby="titulo-resultado-analise"
-      className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+      className="surface-panel space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>

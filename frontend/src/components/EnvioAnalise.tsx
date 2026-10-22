@@ -44,7 +44,7 @@ export default function EnvioAnalise({
 
   return (
     <form
-      className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+      className="form-panel space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
       onSubmit={onSubmit}
     >
       {erroAnalise ? <MensagemErro erro={erroAnalise} /> : null}
@@ -108,7 +108,7 @@ export default function EnvioAnalise({
           </p>
         ) : (
           <p className="text-sm leading-5 text-slate-700" id="ajuda-arquivo-imagem">
-            JPEG ou PNG, até 10 MB. A API ainda verifica o conteúdo real e a
+            JPEG ou PNG, até 4 MB. A API ainda verifica o conteúdo real e a
             resolução da imagem.
           </p>
         )}

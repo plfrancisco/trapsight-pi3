@@ -77,7 +77,7 @@ describe('CadastroArmadilhaPage', () => {
     const usuario = userEvent.setup()
     vi.mocked(createArmadilha).mockResolvedValue({ ...armadilha, id: 'arm-nova' })
     renderCadastro('/armadilhas/nova')
-    await screen.findByRole('radio', { name: /StickFly K-45/ })
+    await screen.findByText('StickFly K-45', { selector: '.model-picker__selected-name' })
 
     await usuario.type(screen.getByLabelText('Identificador *'), '  ARM-007  ')
     const dataInstalacao = localDateIso(new Date())
@@ -191,9 +191,13 @@ describe('CadastroArmadilhaPage', () => {
     vi.mocked(createArmadilha).mockResolvedValue({ ...armadilha, id: 'arm-nova' })
     renderCadastro('/armadilhas/nova')
 
-    const opcao = await screen.findByRole('radio', { name: /StickFly K-60/ })
-    expect(screen.getByRole('radio', { name: /StickFly K-45/ })).not.toBeChecked()
-    expect(screen.getAllByText('Refil 450 × 220 mm', { exact: false })).toHaveLength(2)
+    await screen.findByText('Selecione um modelo')
+    await usuario.click(screen.getByText('Selecione um modelo'))
+    const opcao = await screen.findByRole('button', { name: 'StickFly K-60' })
+    expect(screen.getByRole('button', { name: 'StickFly K-45' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
     await usuario.type(screen.getByLabelText('Identificador *'), 'ARM-010')
     await usuario.click(screen.getByRole('button', { name: 'Cadastrar armadilha' }))
 
@@ -213,7 +217,9 @@ describe('CadastroArmadilhaPage', () => {
     vi.mocked(getArmadilha).mockResolvedValue(armadilha)
     renderCadastro('/armadilhas/arm-1/editar')
 
-    expect(await screen.findByRole('radio', { name: /StickFly K-45/ })).toBeChecked()
+    expect(
+      await screen.findByText('StickFly K-45', { selector: '.model-picker__selected-name' }),
+    ).toBeVisible()
   })
 
   it('informa a falha ao carregar os modelos e permite tentar de novo', async () => {
@@ -228,7 +234,9 @@ describe('CadastroArmadilhaPage', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Tentar novamente' }))
 
-    expect(await screen.findByRole('radio', { name: /StickFly K-45/ })).toBeChecked()
+    expect(
+      await screen.findByText('StickFly K-45', { selector: '.model-picker__selected-name' }),
+    ).toBeVisible()
   })
 
   it('preenche a data de instalação com o dia local, mesmo perto da meia-noite', async () => {

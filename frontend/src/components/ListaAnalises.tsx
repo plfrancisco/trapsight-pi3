@@ -5,23 +5,24 @@ import StatusBadge from './StatusBadge'
 
 interface ListaAnalisesProps {
   analises: Analise[]
+  historicoCompleto?: boolean
 }
 
 /** Exibe medições recentes primeiro e mantém a lista como alternativa ao gráfico.
  * @param props Análises recebidas da API em ordem cronológica crescente.
  * @returns Lista semântica de análises com miniaturas e resultados.
  */
-export default function ListaAnalises({ analises }: ListaAnalisesProps) {
+export default function ListaAnalises({ analises, historicoCompleto = false }: ListaAnalisesProps) {
   if (analises.length === 0) return null
 
   return (
     <section aria-labelledby="titulo-analises">
       <div className="mb-4">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-          Histórico do ciclo atual
+        <p className="section-kicker">
+          {historicoCompleto ? 'Histórico completo' : 'Histórico do ciclo atual'}
         </p>
         <h2
-          className="mt-1 text-2xl font-semibold tracking-tight text-slate-950"
+          className="section-title"
           id="titulo-analises"
         >
           Análises
@@ -34,7 +35,7 @@ export default function ListaAnalises({ analises }: ListaAnalisesProps) {
 
           return (
             <li
-              className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="surface-panel flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               key={analise.id}
             >
               <img

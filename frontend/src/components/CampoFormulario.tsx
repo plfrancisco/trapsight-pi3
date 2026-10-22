@@ -40,7 +40,7 @@ export default function CampoFormulario({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-slate-900" htmlFor={id}>
+      <label className="block text-sm font-semibold text-app-foreground" htmlFor={id}>
         {rotulo}
         {obrigatorio ? <span aria-hidden="true"> *</span> : null}
       </label>
@@ -48,7 +48,7 @@ export default function CampoFormulario({
         aria-describedby={descricoes || undefined}
         aria-invalid={erro ? true : undefined}
         autoComplete={autoComplete}
-        className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-base text-slate-950 shadow-sm placeholder:text-slate-500 focus-visible:border-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 read-only:bg-slate-100"
+        className="min-h-12 w-full rounded-[14px] border border-app-border bg-app-surface px-3.5 py-3 text-base text-app-foreground shadow-[var(--app-shadow-control)] placeholder:text-app-muted focus-visible:border-app-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-primary read-only:bg-app-soft"
         defaultValue={somenteLeitura ? undefined : valorPadrao}
         id={id}
         name={nome}
@@ -60,7 +60,7 @@ export default function CampoFormulario({
         value={somenteLeitura ? valorPadrao ?? '' : undefined}
       />
       {descricao ? (
-        <p className="text-sm leading-5 text-slate-700" id={`${id}-ajuda`}>
+        <p className="text-sm leading-5 text-app-muted" id={`${id}-ajuda`}>
           {descricao}
         </p>
       ) : null}

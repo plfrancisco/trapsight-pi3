@@ -1,10 +1,10 @@
 import { ApiError } from '../services/erros'
 import type { ArmadilhaLista } from '../services/tipos'
 
-const TAMANHO_MAXIMO_ARQUIVO = 10 * 1024 * 1024
+const TAMANHO_MAXIMO_ARQUIVO = 4 * 1024 * 1024
 
 const MENSAGENS_POR_CODIGO: Record<string, string> = {
-  ARQUIVO_MUITO_GRANDE: 'A imagem excede o limite de 10 MB.',
+  ARQUIVO_MUITO_GRANDE: 'A imagem excede o limite de 4 MB.',
   FORMATO_NAO_SUPORTADO: 'Envie uma imagem JPEG ou PNG.',
   RESOLUCAO_INSUFICIENTE:
     'A imagem precisa ter pelo menos 512 px no maior lado.',
@@ -36,7 +36,7 @@ export function validateArquivoAnalise(
     return 'Selecione um arquivo JPEG (.jpg ou .jpeg) ou PNG (.png).'
   }
   if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
-    return 'O arquivo deve ter no máximo 10 MB.'
+    return 'O arquivo deve ter no máximo 4 MB.'
   }
   return null
 }
