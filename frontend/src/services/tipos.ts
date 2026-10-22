@@ -39,6 +39,7 @@ export interface ArmadilhaDetalhe {
   modelo_id: string | null
   localizacao: string | null
   data_instalacao: string | null
+  removida_em?: string | null
   refil_ativo: RefilAtivo | null
   refis_anteriores: RefilAnterior[]
   percentual_atual: number | null

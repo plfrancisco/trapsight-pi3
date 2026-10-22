@@ -52,6 +52,17 @@ export function updateArmadilha(
   )
 }
 
+/** Remove a armadilha do painel e preserva seu histórico no banco. */
+export function deleteArmadilha(
+  armadilhaId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return request<void>(
+    'armadilhas/' + encodeURIComponent(armadilhaId),
+    { method: 'DELETE', signal },
+  )
+}
+
 /** Encerra o ciclo ativo e registra o novo refil em uma única operação da API. */
 export function replaceRefil(
   armadilhaId: string,
