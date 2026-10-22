@@ -34,14 +34,31 @@ TOLERANCIA_COBERTURA_PP = 2.0
 LIMITE_SPRITES_POR_AMOSTRA = 2400
 TENTATIVAS_POR_SPRITE = 10
 CATEGORIAS = ("pequeno", "medio", "grande")
-GRUPOS_INSETOS = ("mosca", "mosquito", "formiga", "barata", "mariposa", "besouro")
+GRUPOS_INSETOS = (
+    "mosca",
+    "mosquito",
+    "formiga",
+    "barata",
+    "mariposa",
+    "besouro",
+    "vespa",
+    "psocoptero",
+    "percevejo",
+    "cupim",
+    "outro",
+)
 PESOS_GRUPO_PADRAO = {
-    "mosca": 0.70 / 3,
-    "mosquito": 0.70 / 3,
-    "mariposa": 0.70 / 3,
-    "formiga": 0.30 / 3,
-    "barata": 0.30 / 3,
-    "besouro": 0.30 / 3,
+    "mosca": 0.20,
+    "mosquito": 0.20,
+    "mariposa": 0.20,
+    "vespa": 0.10,
+    "formiga": 0.06,
+    "barata": 0.06,
+    "besouro": 0.06,
+    "psocoptero": 0.03,
+    "percevejo": 0.03,
+    "cupim": 0.03,
+    "outro": 0.03,
 }
 FRACOES_AREA_SPRITES = {
     "pequeno": (0.0002, 0.0025),
@@ -71,6 +88,10 @@ class SpriteCatalogado:
         licenca: Identificador da licença de uso do sprite.
         especie: Espécie ou tipo do inseto, quando conhecido.
         fragmentado: Indica se o sprite representa um fragmento de inseto.
+        tamanho_mm: Comprimento máximo estimado do inseto em milímetros.
+        px_por_mm: Resolução física usada para extrair o sprite, se conhecida.
+        classe_origem: Classe taxonômica registrada pela fonte.
+        origem_escala: Indica se o tamanho físico é medido ou estimado.
     """
 
     imagem: Image.Image
@@ -82,6 +103,10 @@ class SpriteCatalogado:
     licenca: str
     especie: str | None
     fragmentado: bool
+    tamanho_mm: float | None = None
+    px_por_mm: float | None = None
+    classe_origem: str | None = None
+    origem_escala: str = "desconhecida"
 
 
 @dataclass(frozen=True)
@@ -118,7 +143,7 @@ class ConfiguracaoDataset:
             else dict(self.pesos_grupo)
         )
         if not pesos or set(pesos) - set(GRUPOS_INSETOS):
-            raise ValueError("Os pesos precisam usar apenas os seis grupos de insetos.")
+            raise ValueError("Os pesos precisam usar apenas grupos catalogados.")
         if (
             any(
                 isinstance(peso, bool)
@@ -261,6 +286,14 @@ def load_sprite_catalog(diretorio_sprites: Path) -> tuple[SpriteCatalogado, ...]
         fragmentado = registro.get("fragmentado", False)
         if not isinstance(fragmentado, bool):
             raise ValueError(f"'fragmentado' do sprite {indice} precisa ser booleano.")
+        tamanho_mm = _numero_positivo_opcional(registro, "tamanho_mm", indice)
+        px_por_mm = _numero_positivo_opcional(registro, "px_por_mm", indice)
+        classe_origem = registro.get("classe_origem")
+        if classe_origem is not None and not isinstance(classe_origem, str):
+            raise ValueError(f"'classe_origem' do sprite {indice} precisa ser texto.")
+        origem_escala = registro.get("origem_escala", "desconhecida")
+        if not isinstance(origem_escala, str) or not origem_escala.strip():
+            raise ValueError(f"'origem_escala' do sprite {indice} precisa ser texto.")
 
         sprites.append(
             SpriteCatalogado(
@@ -273,6 +306,10 @@ def load_sprite_catalog(diretorio_sprites: Path) -> tuple[SpriteCatalogado, ...]
                 licenca=licenca,
                 especie=especie,
                 fragmentado=fragmentado,
+                tamanho_mm=tamanho_mm,
+                px_por_mm=px_por_mm,
+                classe_origem=classe_origem,
+                origem_escala=origem_escala,
             )
         )
         categorias_presentes.add(categoria)
@@ -285,8 +322,6 @@ def load_sprite_catalog(diretorio_sprites: Path) -> tuple[SpriteCatalogado, ...]
         raise ValueError(
             f"O banco precisa conter as três categorias de tamanho: {nomes}."
         )
-    if not any(sprite.fragmentado for sprite in sprites):
-        raise ValueError("O banco precisa incluir sprites de fragmentos de insetos.")
     return tuple(sprites)
 
 
@@ -574,6 +609,22 @@ def _texto_obrigatorio(registro: dict[str, object], campo: str, indice: int) -> 
     if not isinstance(valor, str) or not valor.strip():
         raise ValueError(f"O campo '{campo}' do sprite {indice} é obrigatório.")
     return valor.strip()
+
+
+def _numero_positivo_opcional(
+    registro: dict[str, object], campo: str, indice: int
+) -> float | None:
+    valor = registro.get(campo)
+    if valor is None:
+        return None
+    if (
+        isinstance(valor, bool)
+        or not isinstance(valor, (int, float))
+        or not math.isfinite(valor)
+        or valor <= 0
+    ):
+        raise ValueError(f"'{campo}' do sprite {indice} precisa ser um número positivo.")
+    return float(valor)
 
 
 def _calcular_caixa_placa(

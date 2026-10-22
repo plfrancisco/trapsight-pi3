@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -62,15 +63,44 @@ def test_manifesto_rejeita_png_sem_canal_alfa(
         load_sprite_catalog(catalogo)
 
 
-def test_manifesto_rejeita_banco_sem_fragmentos(
+def test_manifesto_aceita_banco_sem_fragmentos(
     tmp_path: Path,
     criar_catalogo_manifesto,
 ) -> None:
-    """Rejeita bancos sem nenhum sprite marcado como fragmentado."""
+    """Aceita bibliotecas de sprites reais sem recortes fragmentados."""
     catalogo = criar_catalogo_manifesto(
         tmp_path / "catalogo",
         incluir_fragmento=False,
     )
 
-    with pytest.raises(ValueError, match="fragmentos de insetos"):
-        load_sprite_catalog(catalogo)
+    sprites = load_sprite_catalog(catalogo)
+
+    assert len(sprites) == 3
+    assert not any(sprite.fragmentado for sprite in sprites)
+
+
+def test_manifesto_preserva_escala_fisica_opcional(
+    tmp_path: Path,
+    criar_catalogo_manifesto,
+) -> None:
+    """Carrega tamanho físico sem exigir esses campos em manifestos antigos."""
+    catalogo = criar_catalogo_manifesto(tmp_path / "catalogo")
+    caminho = catalogo / "manifest.json"
+    registros = json.loads(caminho.read_text(encoding="utf-8"))
+    registros["sprites"][0].update(
+        {
+            "tamanho_mm": 2.1,
+            "px_por_mm": 23.62,
+            "classe_origem": "Diptera",
+            "origem_escala": "medida",
+        }
+    )
+    caminho.write_text(json.dumps(registros), encoding="utf-8")
+
+    sprites = load_sprite_catalog(catalogo)
+
+    assert sprites[0].tamanho_mm == 2.1
+    assert sprites[0].px_por_mm == 23.62
+    assert sprites[0].classe_origem == "Diptera"
+    assert sprites[0].origem_escala == "medida"
+    assert sprites[1].tamanho_mm is None

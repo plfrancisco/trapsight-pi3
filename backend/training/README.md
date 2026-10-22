@@ -4,6 +4,38 @@ O gerador cria cenas de refis adesivos, máscaras semânticas e metadados a
 partir de um catálogo local de sprites PNG com transparência e licença
 registrada. Os artefatos gerados devem ficar fora do código-fonte versionado.
 
+## Importar bibliotecas reais
+
+O conversor reúne os sprites UMS e os sprites filtrados da Amazônia em uma
+nova pasta de catálogo fora do repositório. A escala UMS é calculada com a
+resolução efetiva do scan (`47,24 × escala` pixels/mm); a escala Amazônia é
+estimada pela distribuição UMS da ordem equivalente. As categorias pequeno,
+médio e grande são definidas pelos tercis dos tamanhos físicos UMS. Cada
+registro preserva a classe original, autoria, fonte, licença e se a escala foi
+medida ou estimada. O conversor falha se faltar procedência, licença ou PNG.
+
+```powershell
+cd backend
+uv run python -m training.importar_sprites_reais `
+  --ums-sprites "D:\dados\trapsight\sprites-ums" `
+  --ums-meta "D:\dados\trapsight\dataset-real-ums\meta.json" `
+  --amazonia-sprites "D:\dados\trapsight\sprites-amazonia" `
+  --amazonia-fonte "https://doi.org/10.6084/m9.figshare.28688198" `
+  --amazonia-licenca "CC BY 4.0" `
+  --amazonia-autor "Lucas F. Colares; Carlos A. Peres; Cristian S. Dambros" `
+  --saida "D:\dados\trapsight\sprites-reais" `
+  --semente 20261021
+```
+
+Atribuições declaradas: Ong & Lim (2025), *An annotated image dataset of urban
+insects for computer vision and deep learning*, Figshare,
+[DOI 10.6084/m9.figshare.28280792.v1](https://doi.org/10.6084/m9.figshare.28280792.v1),
+CC BY 4.0; Colares, Peres & Dambros (2025), *5-fold dataset for deep learning
+training using insect images from sticky traps in Central Amazon*, Figshare,
+[DOI 10.6084/m9.figshare.28688198](https://doi.org/10.6084/m9.figshare.28688198),
+CC BY 4.0. Os PNGs importados são cópias de trabalho fora do repositório; os
+arquivos originais permanecem intactos.
+
 ## Catálogo de sprites
 
 Prepare um diretório com `manifest.json` e os arquivos PNG listados nele. Cada

@@ -36,14 +36,27 @@ def _criar_sprites(diretorio: Path) -> tuple[SpriteCatalogado, ...]:
     return tuple(sprites)
 
 
-def test_pesos_padrao_separam_voadores_e_insetos_rasteiros() -> None:
-    """Os grupos voadores recebem 70% e os rasteiros recebem 30%."""
+def test_pesos_padrao_separam_voadores_e_demais_grupos() -> None:
+    """Os grupos voadores recebem 70% e os demais recebem 30%."""
     pesos = _normalizar_pesos_grupo(set(GRUPOS_INSETOS), PESOS_GRUPO_PADRAO)
-    peso_voadores = sum(pesos[grupo] for grupo in ("mosca", "mosquito", "mariposa"))
-    peso_rasteiros = sum(pesos[grupo] for grupo in ("formiga", "barata", "besouro"))
+    peso_voadores = sum(
+        pesos[grupo] for grupo in ("mosca", "mosquito", "mariposa", "vespa")
+    )
+    peso_demais = sum(
+        pesos[grupo]
+        for grupo in (
+            "formiga",
+            "barata",
+            "besouro",
+            "psocoptero",
+            "percevejo",
+            "cupim",
+            "outro",
+        )
+    )
 
     assert peso_voadores == pytest.approx(0.70)
-    assert peso_rasteiros == pytest.approx(0.30)
+    assert peso_demais == pytest.approx(0.30)
 
 
 def test_pesos_efetivos_ficam_nos_metadados_de_cada_imagem(
