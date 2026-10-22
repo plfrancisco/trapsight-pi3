@@ -25,6 +25,7 @@ _AMBIENTE_FICTICIO = {
     "DATABASE_URL": "postgresql://db-ficticio:5432/armadilhas",
     "MODEL_WEIGHTS_PATH": "/caminho-ficticio/pesos.pt",
     "MODEL_VERSION": "v0.1.0-dev",
+    "INFERENCE_MODE": "stub",
     "CORS_ORIGENS": ORIGEM_DE_TESTE,
     "ARGON2_MEMORIA_KIB": "19456",
     "ARGON2_ITERACOES": "2",

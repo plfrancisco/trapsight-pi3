@@ -10,6 +10,7 @@ _REQUIRED_ENVIRONMENT = {
     "DATABASE_URL": _FAKE_DATABASE_URL,
     "MODEL_WEIGHTS_PATH": "/caminho-ficticio/pesos.pt",
     "MODEL_VERSION": "v0.1.0-dev",
+    "INFERENCE_MODE": "stub",
     "UPLOADS_DIR": "/diretorio-ficticio/uploads",
     "CORS_ORIGENS": "http://localhost:5173",
 }
@@ -34,6 +35,7 @@ def test_app_exposes_docs_and_keeps_settings_at_initialization(
 
     assert response.status_code == 200
     assert app.state.settings.model_weights_path == "/caminho-ficticio/pesos.pt"
+    assert app.state.settings.inference_mode == "stub"
     assert app.state.settings.cors_origens == ["http://localhost:5173"]
     assert app.state.inferidor.__class__.__name__ == "InferidorStub"
 
@@ -89,7 +91,6 @@ def test_cors_accepts_list_with_spaces_and_rejects_other_origins(
     "variable",
     [
         "DATABASE_URL",
-        "MODEL_WEIGHTS_PATH",
         "MODEL_VERSION",
         "UPLOADS_DIR",
         "CORS_ORIGENS",
@@ -150,6 +151,37 @@ def test_threshold_defaults_are_ten_and_twenty(
 
     assert settings.limiar_atencao == 10
     assert settings.limiar_trocar == 20
+    assert settings.inference_mode == "stub"
+    assert settings.inference_threads == 1
+
+
+def test_model_weights_path_has_the_container_default(
+    fake_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Usa o checkpoint convencional quando nenhum caminho foi configurado."""
+    monkeypatch.delenv("MODEL_WEIGHTS_PATH")
+
+    assert Settings().model_weights_path == "/app/models/checkpoints/latest.pt"
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [("INFERENCE_MODE", "automatico"), ("INFERENCE_THREADS", "0")],
+)
+def test_inference_configuration_is_validated(
+    fake_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+    variable: str,
+    value: str,
+) -> None:
+    """Rejeita modos desconhecidos e limites de threads não positivos."""
+    monkeypatch.setenv(variable, value)
+
+    with pytest.raises(SettingsConfigurationError) as captured:
+        Settings()
+
+    assert variable in str(captured.value)
 
 
 @pytest.mark.parametrize(
