@@ -5,11 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 from training.coletar_inaturalist import diretorio_dados_configurado
 from training.dataset_sintetico import (
+    K_ESCALA_MAXIMO,
+    K_ESCALA_MINIMO,
     LIMITE_SPRITES_POR_AMOSTRA,
+    PX_POR_MM_PADRAO,
     RESOLUCAO_PADRAO,
     ConfiguracaoDataset,
     generate_dataset,
@@ -78,6 +82,24 @@ def criar_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--px-por-mm",
+        type=float,
+        default=PX_POR_MM_PADRAO,
+        help=f"Escala de referência da placa (padrão: {PX_POR_MM_PADRAO}).",
+    )
+    parser.add_argument(
+        "--k-escala-min",
+        type=float,
+        default=K_ESCALA_MINIMO,
+        help=f"Menor k visual (padrão: {K_ESCALA_MINIMO}).",
+    )
+    parser.add_argument(
+        "--k-escala-max",
+        type=float,
+        default=K_ESCALA_MAXIMO,
+        help=f"Maior k visual (padrão: {K_ESCALA_MAXIMO}).",
+    )
+    parser.add_argument(
         "--pesos-grupo",
         type=_ler_pesos_grupo,
         help=(
@@ -129,7 +151,11 @@ def main(argumentos: list[str] | None = None) -> int:
             resolucao=(opcoes.largura, opcoes.altura),
             limite_sprites=opcoes.limite_sprites,
             pesos_grupo=opcoes.pesos_grupo,
+            px_por_mm=opcoes.px_por_mm,
+            k_escala_min=opcoes.k_escala_min,
+            k_escala_max=opcoes.k_escala_max,
         )
+        inicio = time.perf_counter()
         registros = generate_dataset(configuracao, sprites)
     except (OSError, ValueError) as erro:
         parser.error(str(erro))
@@ -139,6 +165,11 @@ def main(argumentos: list[str] | None = None) -> int:
     print(f"Amostras: {len(registros)}")
     print(f"Sprites catalogados: {len(sprites)}")
     print(f"Semente global: {opcoes.semente}")
+    print(
+        "Alvos atingidos: "
+        f"{sum(registro['alvo_atingido'] is True for registro in registros)}"
+    )
+    print(f"Tempo por imagem: {(time.perf_counter() - inicio) / len(registros):.3f} s")
     return 0
 
 

@@ -291,10 +291,11 @@ validação.
 
 # 7. Pesos por grupo de inseto
 
-O gerador compõe cada imagem com pesos por grupo (padrão de 70% de voadores:
-mosca, mosquito e mariposa; 30% de rasteiros: formiga, barata e besouro) e os
-registra em `pesos_grupo`. O treino **não reponderiza** amostras por grupo: a
-composição já é decisão do gerador, alinhada ao equipamento de referência
+O gerador compõe cada imagem com pesos por grupo: 70% de voadores (mosca,
+mosquito, mariposa e vespa) e 30% dos demais grupos catalogados (formiga,
+barata, besouro, psocóptero, percevejo, cupim e outros). Os pesos efetivos são
+registrados em `pesos_grupo`. O treino **não reponderiza** amostras por grupo:
+a composição já é decisão do gerador, alinhada ao equipamento de referência
 (armadilha UV de voadores).
 
 Na avaliação, o erro é analisado por composição de grupo (por exemplo, por

@@ -7,6 +7,7 @@ import random
 from pathlib import Path
 
 import pytest
+from PIL import Image, ImageDraw
 
 import training.dataset_sintetico as modulo
 from training.dataset_sintetico import SpriteCatalogado, generate_sample
@@ -19,23 +20,30 @@ def test_convergencia_das_tres_faixas_de_cobertura(
     """Gera amostras estratificadas e registra a taxa de alvo atingido."""
     registros = gerar_dataset_teste(
         tmp_path / "dataset",
-        quantidade=90,
+        quantidade=30,
         semente=20261021,
     )
-    fracoes = {
-        faixa: sum(
-            registro["alvo_atingido"] is True
-            for registro in registros
-            if registro["faixa_cobertura_alvo"] == faixa
-        )
-        / sum(registro["faixa_cobertura_alvo"] == faixa for registro in registros)
+    contagens = {
+        faixa: sum(registro["faixa_cobertura_alvo"] == faixa for registro in registros)
         for faixa in ("ok", "atencao", "trocar")
     }
-    print(f"Frações de alvo atingido por faixa: {json.dumps(fracoes, sort_keys=True)}")
+    print(f"Amostras por faixa: {json.dumps(contagens, sort_keys=True)}")
 
-    assert all(fracao >= 0.8 for fracao in fracoes.values()), (
-        f"Frações de alvo atingido por faixa: {fracoes}"
+    assert contagens == {"ok": 10, "atencao": 10, "trocar": 10}
+    assert all(registro["alvo_atingido"] is True for registro in registros)
+    assert all(
+        abs(
+            float(registro["percentual_cobertura_real"])
+            - float(registro["percentual_cobertura_alvo"])
+        )
+        <= 0.5
+        for registro in registros
     )
+    assert all(
+        float(registro["percentual_cobertura_real"]) <= 35 for registro in registros
+    )
+    assert all(1.3 <= float(registro["k_escala"]) <= 3.0 for registro in registros)
+    assert all(float(registro["px_por_mm"]) > 0 for registro in registros)
 
 
 def test_distratores_nao_alteram_a_mascara(
@@ -66,3 +74,73 @@ def test_distratores_nao_alteram_a_mascara(
         amostra_com_distratores.mascara.tobytes()
         == amostra_sem_desenho.mascara.tobytes()
     )
+
+
+def test_mascara_coberta_e_uniao_dos_alphas_visiveis(
+    sprites_catalogados: tuple[SpriteCatalogado, ...],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Confere que os pixels positivos vêm apenas da união dos alfas opacos."""
+    sprite = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+    ImageDraw.Draw(sprite).ellipse((1, 1, 6, 6), fill=(32, 30, 24, 255))
+    uniao_capturada: list[Image.Image] = []
+    compor_original = modulo._compor_sprites
+
+    def transformar_fixo(*args, **kwargs):
+        return sprite.copy()
+
+    def compor_capturando(*args, **kwargs):
+        quantidade = compor_original(*args, **kwargs)
+        uniao_capturada.append(args[1].copy())
+        return quantidade
+
+    geometria = modulo.GeometriaPlaca((320, 240), (20, 20, 300, 157), 8, 280 / 450)
+    monkeypatch.setattr(modulo, "_transformar_sprite", transformar_fixo)
+    monkeypatch.setattr(modulo, "_compor_sprites", compor_capturando)
+    monkeypatch.setattr(
+        modulo, "create_plate_geometry", lambda *args, **kwargs: geometria
+    )
+    monkeypatch.setattr(
+        modulo,
+        "_finalizar_cena",
+        lambda cena, mascara, rng: (cena.convert("RGB"), mascara),
+    )
+
+    amostra = generate_sample(
+        sprites_catalogados,
+        percentual_alvo=2.0,
+        idade_simulada_dias=10,
+        idade_maxima_dias=90,
+        rng=random.Random(812),
+        resolucao=(320, 240),
+    )
+
+    mascaras_esperadas = uniao_capturada[0].point(lambda valor: 2 if valor > 127 else 1)
+    mascara_placa = amostra.mascara.crop(geometria.caixa)
+    assert mascara_placa.tobytes() == mascaras_esperadas.tobytes()
+
+
+def test_sombra_de_contato_fica_fora_da_mascara(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A sombra altera a imagem ao redor sem mudar a máscara do inseto."""
+    cena = Image.new("RGBA", (32, 32), (230, 210, 150, 255))
+    sprite = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+    ImageDraw.Draw(sprite).ellipse((2, 2, 5, 5), fill=(30, 20, 10, 255))
+    mascara = modulo._mascara_sprite(sprite)
+
+    modulo._compor_sombra_contato(cena, sprite, (10, 10), random.Random(14))
+
+    bbox = (10, 10, 18, 18)
+    sombra = cena.crop(bbox)
+    mudou_fora = False
+    for y in range(8):
+        for x in range(8):
+            if mascara.getpixel((x, y)) == 0 and sombra.getpixel((x, y)) != (
+                230,
+                210,
+                150,
+                255,
+            ):
+                mudou_fora = True
+    assert mudou_fora

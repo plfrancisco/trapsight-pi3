@@ -42,9 +42,8 @@ na seção 3.
 
 | Fonte | O que oferece | Uso |
 |---|---|---|
-| Roboflow Universe — datasets de armadilha adesiva agrícola (mosca-branca, pulgão, em cartão amarelo) | Insetos já fotografados **colados a uma superfície adesiva**, silhueta realista de inseto preso, alguns com máscara de segmentação pronta | Fonte primária — a pose de "inseto grudado" é o que mais se aproxima da nossa cena real |
-| iNaturalist (subconjunto CC) | Fotos de mosquitos e moscas isoladas, alta variedade de espécies e ângulos | Fonte secundária — precisa de remoção de fundo manual/automática |
-| Kaggle "Mosquito Alert" e datasets correlatos | Fotos de Aedes/Culex | Fonte secundária, mesmo tratamento |
+| UMS, Ong & Lim (2025), CC BY 4.0, DOI `10.6084/m9.figshare.28280792.v1` | 2.471 sprites PNG reais, escala conhecida de 23,62 px/mm e classes taxonômicas | Fonte principal; atribuição e metadados completos acompanham o catálogo externo |
+| Sprites Amazônia, CC BY 4.0, DOI `10.6084/m9.figshare.28688198` | 246 sprites macro reais, recortados e redimensionados | Fonte complementar; escala física desconhecida, tamanho estimado pela distribuição UMS do grupo equivalente |
 
 ## 3.2 Processamento dos sprites
 
@@ -68,6 +67,20 @@ Banco de sprites
 | Variedade mínima | Banco deve conter ao menos três categorias de tamanho — pequeno (drosófila/mosquito), médio (mosca comum), grande (mariposa/besouro) — conforme a taxonomia de `../model/modelo_spec.md`, seção 3.2 |
 | Grupos de inseto | O banco reúne todos os grupos relevantes em estabelecimentos brasileiros: moscas (doméstica, varejeira, drosófila), mosquitos (*Culex*, *Aedes*), formigas, baratas, mariposas e besouros pequenos. Cada sprite registra o `grupo` no manifesto, para ponderar a composição (voadores dominam o refil UV) e para analisar o erro por grupo |
 | Qualidade de recorte | Bordas do recorte devem ser nítidas; sprites com halo ou fundo residual visível são descartados, não corrigidos manualmente pixel a pixel |
+| Escala física | Cada item registra `tamanho_mm` ou `px_por_mm`, a categoria derivada do comprimento e se a escala é medida ou estimada |
+
+O refil mede 450 × 220 mm e ocupa aproximadamente 720 × 352 px em uma cena
+768 × 576 (cerca de 1,6 px/mm). O UMS foi extraído em `escala = 0,5` de scans
+de 1.200 dpi, equivalente a 23,62 px/mm; portanto, o maior lado do sprite em
+pixels dividido por 23,62 fornece seu tamanho estimado em milímetros. Para os
+sprites Amazônia, o tamanho é sorteado da distribuição UMS do grupo equivalente.
+O fator de aparência por amostra é `k ∈ [1,3; 3,0]`, log-uniforme, e o tamanho
+renderizado usa `mm × px_por_mm × k × U(0,85; 1,2)`.
+
+O conversor `backend/training/importar_sprites_reais.py` grava o catálogo em
+`D:\dados\trapsight\sprites-reais`; PNGs e metadados ficam fora do repositório.
+As cópias devem preservar autoria, fonte, licença CC BY 4.0 e os links DOI no
+manifesto.
 
 ## 3.4 Fragmentos
 
@@ -96,10 +109,10 @@ Implementa o requisito de variação agressiva de dominante de cor
 
 | Parâmetro | Faixa de variação |
 |---|---|
-| Dominante de cor | De forte viés violeta-azulado a branco corrigido (simulando diferentes balanços de branco de câmera) |
-| Gradiente de iluminação | Intensidade e direção variáveis, simulando fontes pontuais próximas (as três lâmpadas) |
-| Reflexo especular | Presente em subconjunto das amostras, posição e intensidade variáveis |
-| Sombra da moldura sobre a placa | Presente em subconjunto das amostras |
+| Dominante de cor | Faixa creme/amarelada plausível, envelhecendo de amarelo claro a creme escuro, sem matizes verdes ou violeta fortes |
+| Gradiente de iluminação | Intensidade e direção variáveis, hotspot UV e vinheta suaves |
+| Textura | Manchas, fibras e textura da cola discretas, sem contaminar o gabarito |
+| Sombra | Sombra suave da moldura e sombra curta de contato sob cada inseto |
 
 ## 4.3 Envelhecimento do refil
 
@@ -112,7 +125,7 @@ idade_simulada ~ Uniforme(0, IDADE_MAXIMA_DIAS)
 tom_amarelecimento = f(idade_simulada)       # progressão de cor
 luminancia_placa   = g(idade_simulada)       # progressão de brilho, decrescente
 
-percentual_cobertura ~ Uniforme(0, 100)      # AMOSTRADO INDEPENDENTEMENTE
+percentual_cobertura_alvo ~ uniforme dentro de 0–10, 10–20 ou 20–35%
 
 # nenhuma correlação entre idade_simulada e percentual_cobertura
 ```
@@ -173,10 +186,9 @@ metadado é sempre medido **na máscara final**, nunca estimado pela soma das
 
 Como sprites se sobrepõem, o número de sprites necessário para atingir um
 percentual alvo não é previsível de antemão. O algoritmo adiciona sprites
-iterativamente, medindo a área da máscara após cada inserção, até atingir a
-tolerância definida (± 2 pontos percentuais do alvo) ou um limite máximo de
-tentativas — evitando loop infinito em percentuais muito altos onde a
-sobreposição dificulta a convergência.
+iterativamente e mede a união após cada inserção até ficar a até 0,5 ponto
+percentual do alvo. A composição é limitada a 35% e registra `alvo_atingido`;
+amostras fora da tolerância devem ser rejeitadas na validação do conjunto.
 
 ---
 
@@ -188,9 +200,13 @@ Cada imagem gerada é acompanhada de um registro estruturado:
 |---|---|
 | `id` | Identificador único da amostra |
 | `semente` | Semente de geração — usada para a divisão dos conjuntos (`../model/avaliacao_spec.md`, seção 2.3) |
-| `percentual_cobertura_real` | Medido na máscara final, não no alvo solicitado |
+| `percentual_cobertura_alvo` | Alvo sorteado na faixa estratificada |
+| `percentual_cobertura_real` | Medido na máscara final, não estimado pela soma dos sprites |
+| `alvo_atingido` | Indica diferença absoluta de até 0,5 ponto percentual |
 | `idade_simulada_dias` | Conforme seção 4.3 |
 | `n_sprites` | Número de sprites utilizados |
+| `px_por_mm`, `k_escala` | Escala física observada da placa e fator de aparência sorteado |
+| `pesos_grupo` | Pesos efetivos de grupo usados na composição |
 | `distratores_presentes` | Lista dos tipos de distrator incluídos |
 | `dominante_cor` | Parâmetro de cor aplicado (seção 4.2) |
 

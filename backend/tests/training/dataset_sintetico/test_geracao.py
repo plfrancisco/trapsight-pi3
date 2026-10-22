@@ -25,12 +25,15 @@ def test_idade_e_cobertura_tem_correlacao_proxima_de_zero(
     ]
 
     assert abs(calcular_correlacao_pearson(idades, coberturas)) < 0.15
+    alvos = [float(registro["percentual_cobertura_alvo"]) for registro in registros]
     contagens_faixas = (
-        sum(cobertura < 40 for cobertura in coberturas),
-        sum(40 <= cobertura < 70 for cobertura in coberturas),
-        sum(cobertura >= 70 for cobertura in coberturas),
+        sum(alvo < 10 for alvo in alvos),
+        sum(10 <= alvo < 20 for alvo in alvos),
+        sum(20 <= alvo <= 35 for alvo in alvos),
     )
-    assert all(50 <= quantidade_faixa <= 70 for quantidade_faixa in contagens_faixas)
+    assert all(quantidade_faixa == 60 for quantidade_faixa in contagens_faixas)
+    assert all(registro["alvo_atingido"] is True for registro in registros)
+    assert max(coberturas) <= 35
 
 
 def test_percentual_registrado_e_calculado_a_partir_da_mascara(
