@@ -7,6 +7,7 @@ import math
 import threading
 from decimal import ROUND_HALF_UP, Decimal
 from io import BytesIO
+from logging import getLogger
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,7 @@ _CLASSES = ("fundo", "placa_limpa", "placa_coberta")
 _AREA_MINIMA_PLACA = 0.05
 _OPACIDADE_MASCARA = 102
 _MENSAGEM_IMAGEM_INVALIDA = "A imagem não pôde ser processada."
+logger = getLogger(__name__)
 
 
 class InferidorModelo:
@@ -254,8 +256,9 @@ class InferidorModelo:
             )
         except (FalhaInferencia, PlacaNaoDetectada):
             raise
-        except Exception:
-            raise FalhaInferencia(_MENSAGEM_IMAGEM_INVALIDA) from None
+        except Exception as erro:
+            logger.exception("Falha inesperada durante a inferência.")
+            raise FalhaInferencia(_MENSAGEM_IMAGEM_INVALIDA) from erro
 
     @staticmethod
     def _decodificar_imagem(imagem: bytes) -> Image.Image:
