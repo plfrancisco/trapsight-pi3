@@ -14,12 +14,12 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
-from tests.auth_helpers import autenticar_cliente
 from src.api.erros import CodigoErro
 from src.entities import Analise, StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
+from tests.auth_helpers import autenticar_cliente
 
 _AGORA = datetime(2026, 3, 21, 12, tzinfo=timezone.utc)
 _AMBIENTE_FICTICIO = {

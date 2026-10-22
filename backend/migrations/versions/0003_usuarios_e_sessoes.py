@@ -33,7 +33,9 @@ def upgrade() -> None:
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("nome", sa.String(), nullable=False),
         sa.Column("senha_hash", sa.String(), nullable=False),
-        sa.Column("ativo", sa.Boolean(), server_default=sa.text("true"), nullable=False),
+        sa.Column(
+            "ativo", sa.Boolean(), server_default=sa.text("true"), nullable=False
+        ),
         sa.Column("bloqueado_ate", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "senha_alterada_em",

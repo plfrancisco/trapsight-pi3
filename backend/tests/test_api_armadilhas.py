@@ -10,11 +10,11 @@ from sqlalchemy import Engine, event, select
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
-from tests.auth_helpers import autenticar_cliente
 from src.entities import ModeloArmadilha, StatusAnalise
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
+from tests.auth_helpers import autenticar_cliente
 
 _AGORA = datetime(2026, 3, 21, tzinfo=timezone.utc)
 _AMBIENTE_FICTICIO = {
@@ -431,8 +431,7 @@ def test_delete_remove_do_painel_e_preserva_refis_e_analises(
     assert resposta.status_code == 204
     assert resposta.content == b""
     assert all(
-        item["id"] != str(armadilha.id)
-        for item in client.get("/api/armadilhas").json()
+        item["id"] != str(armadilha.id) for item in client.get("/api/armadilhas").json()
     )
 
     detalhe = client.get(f"/api/armadilhas/{armadilha.id}")
@@ -443,9 +442,7 @@ def test_delete_remove_do_painel_e_preserva_refis_e_analises(
     ]
     assert detalhe.json()["refil_ativo"]["id"] == str(ativo.id)
 
-    historico = client.get(
-        f"/api/armadilhas/{armadilha.id}/analises?escopo=completo"
-    )
+    historico = client.get(f"/api/armadilhas/{armadilha.id}/analises?escopo=completo")
     assert historico.status_code == 200
     assert len(historico.json()) == 2
     assert {analise["refil_id"] for analise in historico.json()} == {
@@ -610,7 +607,9 @@ def test_openapi_registra_erros_declarados_para_rotas_de_armadilha(
     assert resposta_erro["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/RespostaErro"
     }
-    operacao_delete = response.json()["paths"]["/api/armadilhas/{armadilha_id}"]["delete"]
+    operacao_delete = response.json()["paths"]["/api/armadilhas/{armadilha_id}"][
+        "delete"
+    ]
     assert {"204", "404", "422", "500"}.issubset(operacao_delete["responses"])
 
 

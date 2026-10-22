@@ -12,15 +12,15 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_agora, get_session
+from src.entities import Armadilha, Refil, Sessao, Usuario
+from src.repositories.armadilha_repository import ArmadilhaRepository
+from src.repositories.refil_repository import RefilRepository
 from tests.auth_helpers import (
     aplicar_credenciais,
     autenticar_cliente,
     criar_sessao,
     criar_usuario,
 )
-from src.entities import Armadilha, Refil, Sessao, Usuario
-from src.repositories.armadilha_repository import ArmadilhaRepository
-from src.repositories.refil_repository import RefilRepository
 
 _AGORA = datetime(2026, 3, 21, tzinfo=timezone.utc)
 _AMBIENTE_FICTICIO = {

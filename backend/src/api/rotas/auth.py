@@ -24,12 +24,12 @@ from src.api.schemas.auth import (
 from src.api.sessao_http import apagar_cookie, definir_cookie
 from src.config.settings import Settings
 from src.repositories import SessaoRepository, UsuarioRepository
+from src.services.auditoria import registrar_evento
 from src.services.autenticacao import (
     CredenciaisInvalidas,
     LimiteDeTentativas,
     ServicoDeAutenticacao,
 )
-from src.services.auditoria import registrar_evento
 from src.services.senhas import SenhaFraca, ServicoDeSenhas
 from src.services.sessoes import ServicoDeSessoes
 

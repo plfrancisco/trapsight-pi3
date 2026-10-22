@@ -323,9 +323,7 @@ def _servir_recurso_analise(
         tipo_midia = "image/png"
 
     if settings.storage_backend == "database":
-        conteudo = (
-            analise.imagem_original if recurso == "imagem" else analise.mascara
-        )
+        conteudo = analise.imagem_original if recurso == "imagem" else analise.mascara
         if not conteudo:
             raise _erro_recurso_analise(analise_id, recurso)
         conteudo = bytes(conteudo)

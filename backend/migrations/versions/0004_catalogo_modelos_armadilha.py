@@ -23,7 +23,9 @@ def upgrade() -> None:
         sa.Column("atracao", sa.String(), nullable=True),
         sa.Column("refil_largura_mm", sa.Integer(), nullable=False),
         sa.Column("refil_altura_mm", sa.Integer(), nullable=False),
-        sa.Column("ativo", sa.Boolean(), server_default=sa.text("true"), nullable=False),
+        sa.Column(
+            "ativo", sa.Boolean(), server_default=sa.text("true"), nullable=False
+        ),
         sa.Column(
             "criado_em",
             sa.DateTime(timezone=True),
