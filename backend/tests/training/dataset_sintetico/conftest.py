@@ -24,10 +24,10 @@ def sprites_catalogados(tmp_path: Path) -> tuple[SpriteCatalogado, ...]:
     diretorio = tmp_path / "sprites"
     (diretorio / "insetos").mkdir(parents=True)
     registros = []
-    for categoria, nome, formato in (
-        ("pequeno", "pequeno.png", "elipse"),
-        ("medio", "medio.png", "poligono"),
-        ("grande", "grande.png", "retangulo"),
+    for categoria, nome, formato, tamanho_mm in (
+        ("pequeno", "pequeno.png", "elipse", 2.0),
+        ("medio", "medio.png", "poligono", 6.0),
+        ("grande", "grande.png", "retangulo", 11.0),
     ):
         caminho_relativo = f"insetos/{nome}"
         imagem = Image.new("RGBA", (64, 48), (0, 0, 0, 0))
@@ -51,6 +51,7 @@ def sprites_catalogados(tmp_path: Path) -> tuple[SpriteCatalogado, ...]:
                 "fonte": "conjunto-sintetico-de-teste",
                 "licenca": "CC0-1.0",
                 "fragmentado": categoria == "medio",
+                "tamanho_mm": tamanho_mm,
             }
         )
     (diretorio / "manifest.json").write_text(

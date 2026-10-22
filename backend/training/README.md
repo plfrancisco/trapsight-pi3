@@ -179,7 +179,12 @@ uv run python -m training.gerar_dataset `
   --saida "$env:TRAPSIGHT_TRAINING_DATA_DIR\dataset-sintetico" `
   --semente 20261021 `
   --idade-maxima-dias 90 `
-  --quantidade 3000
+  --quantidade 3000 `
+  --largura 768 `
+  --altura 576 `
+  --px-por-mm 1.6 `
+  --k-escala-min 1.3 `
+  --k-escala-max 3.0
 ```
 
 O valor `90` é apenas um exemplo de parâmetro operacional. A especificação
@@ -187,21 +192,24 @@ mantém `IDADE_MAXIMA_DIAS` pendente de calibração; substitua-o pelo limite
 aprovado antes de gerar o dataset de treinamento. A idade máxima é obrigatória
 na CLI para não transformar uma estimativa arbitrária em padrão do projeto.
 
-O gerador permite até 2400 tentativas de composição por imagem para que alvos
-altos não parem prematuramente. Esse número é um teto de segurança; a composição
-encerra quando a máscara fica dentro da tolerância de 2 pontos percentuais ou
-quando atinge esse limite de tentativas.
+O gerador usa sprites de insetos reais em escala física. Cada amostra sorteia
+`k` em distribuição log-uniforme entre 1,3 e 3,0; o tamanho renderizado é
+`tamanho_mm × px_por_mm × k × variação`, com variação entre 0,85 e 1,2.
+O valor `k` e o `px_por_mm` efetivo da placa são registrados no manifesto.
+O posicionamento usa um mapa de densidade com focos gaussianos, gradiente,
+reforço de borda e componente uniforme. A cena tem placa creme/amarelada,
+textura sutil, moldura escura, sombra de contato, iluminação, ruído e JPEG.
 
-Os pesos padrão distribuem 70% das seleções entre moscas, mosquitos e
-mariposas, e 30% entre formigas, baratas e besouros. Cada linha de amostra e
-a configuração global registram os pesos efetivos. Para alterá-los, informe
-um objeto JSON a --pesos-grupo.
+O alvo é sorteado em três faixas balanceadas: 0–10%, 10–20% e 20–35%.
+`percentual_cobertura_real` é medido na máscara final; cada amostra registra
+`alvo_atingido`, que indica erro absoluto de até 0,5 ponto percentual. Pixels
+de poeira, fibras e sombras ficam fora da classe coberta.
 
-O alvo de cobertura é sorteado uniformemente dentro de uma das três faixas, com
-um terço das amostras por faixa. Isso implementa a estratificação da seção 7.1;
-a distribuição marginal não é uniforme em `[0, 100]`, embora a seção 4.3 também
-peça amostragem uniforme nesse intervalo. As duas exigências são incompatíveis
-no mesmo dataset, então o gerador segue a proporção estratificada mais específica.
+Os pesos padrão destinam 70% das seleções a moscas, mosquitos, mariposas e
+vespas; os 30% restantes cobrem formigas, baratas, besouros, psocópteros,
+percevejos, cupins e grupos não classificados. Cada amostra e a configuração
+global registram os pesos efetivos. Para alterá-los, informe um objeto JSON a
+`--pesos-grupo`.
 
 As probabilidades dos distratores são mantidas na constante
 `FREQUENCIAS_DISTRATORES` do módulo do gerador.
@@ -214,8 +222,9 @@ ser nova ou estar vazia. O diretório contém:
 - `mascaras/amostra_NNNNNN.png`: rótulos 0 (fundo), 1 (placa limpa) e 2 (placa
   coberta);
 - `metadados.jsonl`: uma linha por imagem, incluindo semente individual,
-  cobertura medida na máscara, idade, quantidade de sprites, distratores,
-  dominante de cor e divisão treino/validação/teste;
+  cobertura-alvo e medida na máscara, `alvo_atingido`, idade, quantidade de
+  sprites, `px_por_mm`, `k_escala`, pesos por grupo, distratores, dominante de
+  cor e divisão treino/validação/teste;
 - `configuracao.json`: parâmetros globais usados na geração.
 
 ## Dados de demonstração

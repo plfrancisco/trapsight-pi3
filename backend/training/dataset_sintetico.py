@@ -7,6 +7,8 @@ e licença documentada no manifesto local.
 
 from __future__ import annotations
 
+import bisect
+import io
 import json
 import math
 import platform
@@ -16,23 +18,30 @@ from pathlib import Path
 from typing import Literal, cast
 
 import PIL
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
 CategoriaSprite = Literal["pequeno", "medio", "grande"]
 FaixaCobertura = Literal["ok", "atencao", "trocar"]
 
 VALORES_CLASSES = {"fundo": 0, "placa_limpa": 1, "placa_coberta": 2}
 FAIXAS_COBERTURA: tuple[tuple[FaixaCobertura, float, float], ...] = (
-    ("ok", 0.0, 40.0),
-    ("atencao", 40.0, 70.0),
-    ("trocar", 70.0, 100.0),
+    ("ok", 0.0, 10.0),
+    ("atencao", 10.0, 20.0),
+    ("trocar", 20.0, 35.0),
 )
 LARGURA_MODELO = 768
 ALTURA_MODELO = 576
-RESOLUCAO_PADRAO = (LARGURA_MODELO * 2, ALTURA_MODELO * 2)
-TOLERANCIA_COBERTURA_PP = 2.0
-LIMITE_SPRITES_POR_AMOSTRA = 2400
+RESOLUCAO_PADRAO = (LARGURA_MODELO, ALTURA_MODELO)
+TOLERANCIA_COBERTURA_PP = 0.5
+LIMITE_SPRITES_POR_AMOSTRA = 3000
 TENTATIVAS_POR_SPRITE = 10
+DIMENSOES_REFIL_MM = (450.0, 220.0)
+PX_POR_MM_PADRAO = 1.6
+K_ESCALA_MINIMO = 1.3
+K_ESCALA_MAXIMO = 3.0
+VARIACAO_ESCALA_MINIMA = 0.85
+VARIACAO_ESCALA_MAXIMA = 1.2
+GRADE_DENSIDADE_PADRAO = (24, 12)
 CATEGORIAS = ("pequeno", "medio", "grande")
 GRUPOS_INSETOS = (
     "mosca",
@@ -120,6 +129,10 @@ class ConfiguracaoDataset:
         quantidade: Número de amostras, estratificado nas três faixas.
         resolucao: Largura e altura de saída em pixels.
         limite_sprites: Máximo de tentativas de composição em uma amostra.
+        px_por_mm: Escala de referência da placa na resolução de saída.
+        k_escala_min: Limite inferior da escala visual do inseto.
+        k_escala_max: Limite superior da escala visual do inseto.
+        grade_densidade: Quantidade de células usadas para amostrar posições.
     """
 
     diretorio_saida: Path
@@ -129,6 +142,12 @@ class ConfiguracaoDataset:
     resolucao: tuple[int, int] = RESOLUCAO_PADRAO
     limite_sprites: int = LIMITE_SPRITES_POR_AMOSTRA
     pesos_grupo: dict[str, float] | None = None
+    px_por_mm: float = PX_POR_MM_PADRAO
+    k_escala_min: float = K_ESCALA_MINIMO
+    k_escala_max: float = K_ESCALA_MAXIMO
+    variacao_escala_minima: float = VARIACAO_ESCALA_MINIMA
+    variacao_escala_maxima: float = VARIACAO_ESCALA_MAXIMA
+    grade_densidade: tuple[int, int] = GRADE_DENSIDADE_PADRAO
 
     def __post_init__(self) -> None:
         if self.quantidade < 1:
@@ -137,6 +156,26 @@ class ConfiguracaoDataset:
             raise ValueError("A idade máxima precisa ser um número positivo.")
         if self.limite_sprites < 1:
             raise ValueError("O limite de sprites precisa ser maior que zero.")
+        if not math.isfinite(self.px_por_mm) or self.px_por_mm <= 0:
+            raise ValueError(
+                "A escala da placa em pixels por milímetro precisa ser positiva."
+            )
+        if (
+            not math.isfinite(self.k_escala_min)
+            or not math.isfinite(self.k_escala_max)
+            or self.k_escala_min <= 0
+            or self.k_escala_max < self.k_escala_min
+        ):
+            raise ValueError("A faixa de k precisa ser positiva e crescente.")
+        if (
+            not 0 < self.variacao_escala_minima <= self.variacao_escala_maxima
+            or self.variacao_escala_maxima > 3
+        ):
+            raise ValueError("A variação de escala precisa ser positiva e limitada.")
+        if min(self.grade_densidade) < 2:
+            raise ValueError(
+                "A grade de densidade precisa ter ao menos duas células por eixo."
+            )
         pesos = (
             dict(PESOS_GRUPO_PADRAO)
             if self.pesos_grupo is None
@@ -177,7 +216,9 @@ class AmostraSintetica:
         distratores_presentes: Tipos de distrator desenhados na imagem.
         dominante_cor: Descrição da dominante aplicada à cena.
         dominante_rgb: Cor RGB aplicada à superfície adesiva antes da luz.
-        alvo_atingido: Indica se a máscara ficou a até dois pontos do alvo.
+        alvo_atingido: Indica se a máscara ficou a até meio ponto do alvo.
+        px_por_mm: Escala física observada na placa composta.
+        k_escala: Fator de ampliação visual amostrado para a imagem.
     """
 
     imagem: Image.Image
@@ -188,6 +229,8 @@ class AmostraSintetica:
     dominante_cor: str
     dominante_rgb: tuple[int, int, int]
     alvo_atingido: bool
+    px_por_mm: float
+    k_escala: float
 
 
 @dataclass(frozen=True)
@@ -197,18 +240,21 @@ class GeometriaPlaca:
     resolucao: tuple[int, int]
     caixa: tuple[int, int, int, int]
     margem_moldura: int
+    px_por_mm: float
 
 
 def create_plate_geometry(
     resolucao: tuple[int, int],
     rng: random.Random,
+    px_por_mm: float = PX_POR_MM_PADRAO,
 ) -> GeometriaPlaca:
     """Sorteia a posição e as dimensões de uma placa para reutilização."""
     largura, altura = resolucao
     if largura < 100 or altura < 100:
         raise ValueError("Cada dimensão da resolução precisa ter ao menos 100 pixels.")
-    caixa, margem = _calcular_caixa_placa(largura, altura, rng)
-    return GeometriaPlaca(resolucao, caixa, margem)
+    caixa, margem = _calcular_caixa_placa(largura, altura, rng, px_por_mm)
+    px_por_mm_real = (caixa[2] - caixa[0]) / DIMENSOES_REFIL_MM[0]
+    return GeometriaPlaca(resolucao, caixa, margem, px_por_mm_real)
 
 
 def load_sprite_catalog(diretorio_sprites: Path) -> tuple[SpriteCatalogado, ...]:
@@ -391,6 +437,12 @@ def generate_sample(
     pesos_grupo: dict[str, float] | None = None,
     geometria_placa: GeometriaPlaca | None = None,
     rng_base: random.Random | None = None,
+    px_por_mm: float = PX_POR_MM_PADRAO,
+    k_escala_min: float = K_ESCALA_MINIMO,
+    k_escala_max: float = K_ESCALA_MAXIMO,
+    variacao_escala_minima: float = VARIACAO_ESCALA_MINIMA,
+    variacao_escala_maxima: float = VARIACAO_ESCALA_MAXIMA,
+    grade_densidade: tuple[int, int] = GRADE_DENSIDADE_PADRAO,
 ) -> AmostraSintetica:
     """Compõe uma cena e uma máscara de três classes com uma semente local.
 
@@ -428,7 +480,7 @@ def generate_sample(
         )
 
     if geometria_placa is None:
-        geometria_placa = create_plate_geometry(resolucao, rng)
+        geometria_placa = create_plate_geometry(resolucao, rng, px_por_mm)
     elif geometria_placa.resolucao != resolucao:
         raise ValueError("A geometria da placa precisa usar a resolução da cena.")
     caixa_placa = geometria_placa.caixa
@@ -446,6 +498,7 @@ def generate_sample(
     uniao = Image.new(
         "L", (caixa_placa[2] - caixa_placa[0], caixa_placa[3] - caixa_placa[1])
     )
+    k_escala = math.exp(rng.uniform(math.log(k_escala_min), math.log(k_escala_max)))
     quantidade_sprites = _compor_sprites(
         cena,
         uniao,
@@ -455,15 +508,18 @@ def generate_sample(
         rng,
         limite_sprites,
         pesos_grupo,
+        geometria_placa.px_por_mm,
+        k_escala,
+        variacao_escala_minima,
+        variacao_escala_maxima,
+        grade_densidade,
     )
     mascara.paste(VALORES_CLASSES["placa_coberta"], caixa_placa, uniao)
 
+    rng_finalizacao = random.Random(rng.getrandbits(64))
     distratores = _selecionar_distratores(rng)
     _desenhar_distratores(cena, caixa_placa, distratores, rng)
-    if rng.random() < 0.22:
-        cena = cena.filter(ImageFilter.GaussianBlur(radius=rng.uniform(0.25, 1.1)))
-    if rng.random() < 0.28:
-        cena = _aplicar_ruido_suave(cena, rng)
+    cena, mascara = _finalizar_cena(cena, mascara, rng_finalizacao)
 
     percentual_cobertura_real = calcular_percentual_cobertura(mascara)
     return AmostraSintetica(
@@ -475,7 +531,9 @@ def generate_sample(
         dominante_cor=dominante_cor,
         dominante_rgb=dominante_rgb,
         alvo_atingido=abs(percentual_cobertura_real - percentual_alvo)
-        <= TOLERANCIA_COBERTURA_PP,
+        <= TOLERANCIA_COBERTURA_PP + 1e-9,
+        px_por_mm=geometria_placa.px_por_mm,
+        k_escala=k_escala,
     )
 
 
@@ -534,6 +592,12 @@ def generate_dataset(
                 resolucao=configuracao.resolucao,
                 limite_sprites=configuracao.limite_sprites,
                 pesos_grupo=pesos_grupo,
+                px_por_mm=configuracao.px_por_mm,
+                k_escala_min=configuracao.k_escala_min,
+                k_escala_max=configuracao.k_escala_max,
+                variacao_escala_minima=configuracao.variacao_escala_minima,
+                variacao_escala_maxima=configuracao.variacao_escala_maxima,
+                grade_densidade=configuracao.grade_densidade,
             )
 
             identificador = f"amostra_{indice + 1:06d}"
@@ -551,12 +615,14 @@ def generate_dataset(
                 "faixa_cobertura_alvo": nome_faixa,
                 "percentual_cobertura_alvo": percentual_alvo,
                 "percentual_cobertura_real": amostra.percentual_cobertura_real,
+                "alvo_atingido": amostra.alvo_atingido,
                 "idade_simulada_dias": idade_simulada,
+                "px_por_mm": amostra.px_por_mm,
+                "k_escala": amostra.k_escala,
                 "n_sprites": amostra.n_sprites,
                 "distratores_presentes": amostra.distratores_presentes,
                 "dominante_cor": amostra.dominante_cor,
                 "dominante_rgb": list(amostra.dominante_rgb),
-                "alvo_atingido": amostra.alvo_atingido,
                 "mascara_classes": VALORES_CLASSES,
                 "pesos_grupo": pesos_grupo,
             }
@@ -573,6 +639,14 @@ def generate_dataset(
         "quantidade": configuracao.quantidade,
         "idade_maxima_dias": configuracao.idade_maxima_dias,
         "resolucao": list(configuracao.resolucao),
+        "dimensoes_refil_mm": list(DIMENSOES_REFIL_MM),
+        "px_por_mm_referencia": configuracao.px_por_mm,
+        "faixa_k_escala": [configuracao.k_escala_min, configuracao.k_escala_max],
+        "variacao_escala_inseto": [
+            configuracao.variacao_escala_minima,
+            configuracao.variacao_escala_maxima,
+        ],
+        "grade_densidade": list(configuracao.grade_densidade),
         "limite_sprites": configuracao.limite_sprites,
         "pesos_grupo": pesos_grupo,
         "tentativas_por_sprite": TENTATIVAS_POR_SPRITE,
@@ -589,12 +663,16 @@ def generate_dataset(
                 "licenca": sprite.licenca,
                 "especie": sprite.especie,
                 "fragmentado": sprite.fragmentado,
+                "tamanho_mm": sprite.tamanho_mm,
+                "px_por_mm": sprite.px_por_mm,
+                "classe_origem": sprite.classe_origem,
+                "origem_escala": sprite.origem_escala,
             }
             for sprite in sprites
         ],
         "proporcoes_conjuntos": {"treino": 0.70, "validacao": 0.15, "teste": 0.15},
         "classes_mascara": VALORES_CLASSES,
-        "versao_gerador": 1,
+        "versao_gerador": 2,
     }
     (saida / "configuracao.json").write_text(
         json.dumps(registro_execucao, ensure_ascii=False, sort_keys=True, indent=2)
@@ -623,7 +701,9 @@ def _numero_positivo_opcional(
         or not math.isfinite(valor)
         or valor <= 0
     ):
-        raise ValueError(f"'{campo}' do sprite {indice} precisa ser um número positivo.")
+        raise ValueError(
+            f"'{campo}' do sprite {indice} precisa ser um número positivo."
+        )
     return float(valor)
 
 
@@ -631,18 +711,35 @@ def _calcular_caixa_placa(
     largura: int,
     altura: int,
     rng: random.Random,
+    px_por_mm: float,
 ) -> tuple[tuple[int, int, int, int], int]:
-    largura_placa = int(largura * rng.uniform(0.56, 0.78))
-    altura_placa = int(largura_placa * 220 / 450)
-    altura_maxima = int(altura * 0.62)
-    if altura_placa > altura_maxima:
-        altura_placa = altura_maxima
-        largura_placa = int(altura_placa * 450 / 220)
-    margem_moldura = max(3, int(altura_placa * rng.uniform(0.06, 0.12)))
+    margem_x = max(2, int(largura * 0.02))
+    margem_y = max(2, int(altura * 0.035))
+    largura_placa = min(
+        round(DIMENSOES_REFIL_MM[0] * px_por_mm * rng.uniform(0.95, 1.0)),
+        largura - margem_x * 2,
+        round(altura * 0.62 * DIMENSOES_REFIL_MM[0] / DIMENSOES_REFIL_MM[1]),
+    )
+    altura_placa = round(largura_placa * DIMENSOES_REFIL_MM[1] / DIMENSOES_REFIL_MM[0])
+    margem_moldura = max(2, int(altura_placa * rng.uniform(0.035, 0.065)))
     largura_externa = largura_placa + margem_moldura * 2
     altura_externa = altura_placa + margem_moldura * 2
-    margem_x = max(1, int(largura * 0.025))
-    margem_y = max(1, int(altura * 0.025))
+    max_largura_externa = largura - margem_x * 2
+    if largura_externa > max_largura_externa:
+        largura_placa = max_largura_externa - margem_moldura * 2
+        altura_placa = round(
+            largura_placa * DIMENSOES_REFIL_MM[1] / DIMENSOES_REFIL_MM[0]
+        )
+        largura_externa = largura_placa + margem_moldura * 2
+        altura_externa = altura_placa + margem_moldura * 2
+    max_altura_externa = altura - margem_y * 2
+    if altura_externa > max_altura_externa:
+        altura_placa = max_altura_externa - margem_moldura * 2
+        largura_placa = round(
+            altura_placa * DIMENSOES_REFIL_MM[0] / DIMENSOES_REFIL_MM[1]
+        )
+        largura_externa = largura_placa + margem_moldura * 2
+        altura_externa = altura_placa + margem_moldura * 2
     externo_x = rng.randint(
         margem_x, max(margem_x, largura - largura_externa - margem_x)
     )
@@ -668,62 +765,45 @@ def _criar_cena(
 ) -> tuple[Image.Image, Image.Image, str, tuple[int, int, int]]:
     largura_placa = caixa_placa[2] - caixa_placa[0]
     altura_placa = caixa_placa[3] - caixa_placa[1]
-    violeta = rng.random() < 0.62
-    forca_violeta = rng.uniform(0.38, 0.95) if violeta else rng.uniform(0.0, 0.18)
-    cor_nova = (247.0, 246.0, 235.0)
-    cor_envelhecida = (190.0, 165.0, 94.0)
-    cor_base = tuple(
-        round(nova * (1 - idade_relativa) + velha * idade_relativa)
+    cor_nova = (247.0, 237.0, 194.0)
+    cor_envelhecida = (211.0, 177.0, 111.0)
+    cor_base = [
+        nova * (1 - idade_relativa) + velha * idade_relativa
         for nova, velha in zip(cor_nova, cor_envelhecida, strict=True)
+    ]
+    cor_base[0] += rng.uniform(-5, 5)
+    cor_base[1] += rng.uniform(-7, 7)
+    cor_base[2] += rng.uniform(-8, 8)
+    dominante_rgb = (
+        max(0, min(255, round(cor_base[0]))),
+        max(0, min(255, round(min(cor_base[1], cor_base[0] - 5)))),
+        max(0, min(255, round(min(cor_base[2], cor_base[1] - 7)))),
     )
-    cor_tinta = (132.0, 142.0, 207.0)
-    dominante_rgb = tuple(
-        max(0, min(255, round(base * (1 - forca_violeta) + tinta * forca_violeta)))
-        for base, tinta in zip(cor_base, cor_tinta, strict=True)
-    )
-    nome_dominante = "violeta_azulada" if violeta else "branco_corrigido"
+    nome_dominante = "creme_envelhecido" if idade_relativa > 0.55 else "creme_amarelado"
 
-    ambiente = (174, 175, 189) if violeta else (219, 218, 213)
-    cena = Image.new("RGB", (largura, altura), ambiente)
-    luz = _criar_campo_luz(largura, altura, rng)
-    cena = ImageChops.multiply(cena, luz.convert("RGB"))
-    cena = cena.convert("RGBA")
-
+    cena = Image.new("RGBA", (largura, altura), (211, 212, 205, 255))
     caixa_moldura = (
         caixa_placa[0] - margem_moldura,
         caixa_placa[1] - margem_moldura,
         caixa_placa[2] + margem_moldura,
         caixa_placa[3] + margem_moldura,
     )
-    sombra_presente = rng.random() < 0.42
-    if sombra_presente:
-        sombra = Image.new("RGBA", (largura, altura), (0, 0, 0, 0))
-        desenho_sombra = ImageDraw.Draw(sombra)
-        deslocamento = max(2, int(altura_placa * 0.025))
-        caixa_sombra = (
-            caixa_moldura[0] + deslocamento,
-            caixa_moldura[1] + deslocamento,
-            caixa_moldura[2] + deslocamento,
-            caixa_moldura[3] + deslocamento,
-        )
-        desenho_sombra.rounded_rectangle(
-            (
-                caixa_sombra[0],
-                caixa_sombra[1],
-                caixa_sombra[2] - 1,
-                caixa_sombra[3] - 1,
-            ),
-            radius=max(2, margem_moldura // 3),
-            fill=(18, 22, 36, rng.randint(32, 78)),
-        )
-        cena.alpha_composite(
-            sombra.filter(ImageFilter.GaussianBlur(max(1, margem_moldura / 2)))
-        )
-
     desenho = ImageDraw.Draw(cena)
-    cor_moldura = rng.choice(
-        ((224, 224, 218, 255), (206, 209, 208, 255), (238, 236, 226, 255))
+    deslocamento_sombra = max(1, round(margem_moldura * 0.35))
+    camada_sombra = Image.new("RGBA", cena.size, (0, 0, 0, 0))
+    ImageDraw.Draw(camada_sombra).rectangle(
+        (
+            caixa_moldura[0] + deslocamento_sombra,
+            caixa_moldura[1] + deslocamento_sombra,
+            caixa_moldura[2] - 1 + deslocamento_sombra,
+            caixa_moldura[3] - 1 + deslocamento_sombra,
+        ),
+        fill=(31, 35, 31, rng.randint(30, 64)),
     )
+    cena.alpha_composite(
+        camada_sombra.filter(ImageFilter.GaussianBlur(max(1, margem_moldura * 0.55)))
+    )
+    desenho = ImageDraw.Draw(cena)
     desenho.rounded_rectangle(
         (
             caixa_moldura[0],
@@ -731,10 +811,22 @@ def _criar_cena(
             caixa_moldura[2] - 1,
             caixa_moldura[3] - 1,
         ),
-        radius=max(2, margem_moldura // 3),
-        fill=cor_moldura,
-        outline=(116, 119, 126, 255),
-        width=max(1, margem_moldura // 12),
+        radius=max(2, margem_moldura // 4),
+        fill=(42, 49, 45, 255),
+        outline=(28, 35, 32, 255),
+        width=max(1, margem_moldura // 16),
+    )
+    recuo_moldura = max(1, margem_moldura // 6)
+    desenho.rectangle(
+        (
+            caixa_moldura[0] + recuo_moldura,
+            caixa_moldura[1] + recuo_moldura,
+            caixa_moldura[2] - recuo_moldura - 1,
+            caixa_moldura[3] - recuo_moldura - 1,
+        ),
+        fill=(224, 221, 204, 255),
+        outline=(179, 178, 160, 255),
+        width=max(1, margem_moldura // 20),
     )
     caixa_placa_inclusiva = (
         caixa_placa[0],
@@ -742,28 +834,42 @@ def _criar_cena(
         caixa_placa[2] - 1,
         caixa_placa[3] - 1,
     )
-    desenho.rectangle(caixa_placa_inclusiva, fill=(*dominante_rgb, 255))
+    camada_placa = Image.new(
+        "RGBA", (largura_placa, altura_placa), (*dominante_rgb, 255)
+    )
+    textura = Image.new("RGBA", camada_placa.size, (0, 0, 0, 0))
+    desenho_textura = ImageDraw.Draw(textura)
+    for _ in range(rng.randint(8, 18)):
+        x = rng.randrange(largura_placa)
+        y = rng.randrange(altura_placa)
+        raio_x = rng.randint(max(2, largura_placa // 100), max(3, largura_placa // 26))
+        raio_y = rng.randint(max(2, altura_placa // 80), max(3, altura_placa // 24))
+        desenho_textura.ellipse(
+            (x - raio_x, y - raio_y, x + raio_x, y + raio_y),
+            fill=(151, 115, 53, rng.randint(3, 13)),
+        )
+    for _ in range(max(24, largura_placa // 8)):
+        x = rng.randrange(largura_placa)
+        y = rng.randrange(altura_placa)
+        comprimento = rng.randint(2, max(3, largura_placa // 18))
+        desenho_textura.line(
+            (x, y, min(largura_placa - 1, x + comprimento), y + rng.choice((-1, 0, 1))),
+            fill=(119, 107, 76, rng.randint(4, 16)),
+            width=1,
+        )
+    for _ in range(max(40, (largura_placa * altura_placa) // 1400)):
+        x = rng.randrange(largura_placa)
+        y = rng.randrange(altura_placa)
+        tom = rng.randint(128, 200)
+        desenho_textura.point((x, y), fill=(tom, max(0, tom - 20), max(0, tom - 54), 6))
+    camada_placa.alpha_composite(textura.filter(ImageFilter.GaussianBlur(radius=0.4)))
+    cena.alpha_composite(camada_placa, dest=(caixa_placa[0], caixa_placa[1]))
 
     mascara = Image.new("L", (largura, altura), VALORES_CLASSES["fundo"])
     ImageDraw.Draw(mascara).rectangle(
         caixa_placa_inclusiva,
         fill=VALORES_CLASSES["placa_limpa"],
     )
-
-    if sombra_presente:
-        camada_sombra_placa = Image.new(
-            "RGBA", (largura_placa, altura_placa), (0, 0, 0, 0)
-        )
-        desenho_sombra_placa = ImageDraw.Draw(camada_sombra_placa)
-        faixa = max(2, int(altura_placa * rng.uniform(0.025, 0.07)))
-        desenho_sombra_placa.rectangle(
-            (0, 0, largura_placa - 1, faixa - 1),
-            fill=(40, 41, 53, rng.randint(25, 68)),
-        )
-        sombra_suave = camada_sombra_placa.filter(
-            ImageFilter.GaussianBlur(max(1, faixa / 2))
-        )
-        cena.alpha_composite(sombra_suave, dest=(caixa_placa[0], caixa_placa[1]))
 
     if rng.random() < 0.32:
         reflexo = Image.new("RGBA", (largura_placa, altura_placa), (0, 0, 0, 0))
@@ -793,26 +899,98 @@ def _criar_cena(
 
 
 def _criar_campo_luz(largura: int, altura: int, rng: random.Random) -> Image.Image:
-    largura_baixa = min(48, max(8, largura // 24))
-    altura_baixa = min(36, max(8, altura // 24))
+    largura_baixa = min(64, max(8, largura // 16))
+    altura_baixa = min(48, max(8, altura // 16))
     angulo = rng.uniform(0, math.tau)
     direcao_x = math.cos(angulo)
     direcao_y = math.sin(angulo)
+    nivel_base = rng.uniform(0.88, 0.96)
+    ruido_direcional = rng.uniform(0.025, 0.085)
+    hotspot_x, hotspot_y = rng.uniform(0.2, 0.8), rng.uniform(0.2, 0.8)
+    raio_hotspot = rng.uniform(0.18, 0.42)
+    intensidade_uv = rng.uniform(0.0, 0.12)
     grade: list[int] = []
-    ruido_direcional = rng.uniform(0.14, 0.32)
-    nivel_base = rng.uniform(0.72, 0.86)
     for y in range(altura_baixa):
         for x in range(largura_baixa):
             px = x / max(1, largura_baixa - 1) - 0.5
             py = y / max(1, altura_baixa - 1) - 0.5
             variacao = px * direcao_x + py * direcao_y
+            u = x / max(1, largura_baixa - 1)
+            v = y / max(1, altura_baixa - 1)
+            distancia = ((u - hotspot_x) ** 2 + (v - hotspot_y) ** 2) ** 0.5
+            uv = intensidade_uv * math.exp(-((distancia / raio_hotspot) ** 2))
+            raio = math.sqrt(px * px + py * py)
+            vinheta = max(0.72, 1 - max(0, raio - 0.22) * rng.uniform(0.02, 0.06))
             valor = (
-                nivel_base + variacao * ruido_direcional + rng.uniform(-0.035, 0.035)
+                nivel_base
+                + variacao * ruido_direcional
+                + uv
+                - (1 - vinheta)
+                + rng.uniform(-0.012, 0.012)
             )
-            grade.append(max(148, min(255, round(valor * 255))))
+            grade.append(max(200, min(255, round(valor * 255))))
     campo = Image.new("L", (largura_baixa, altura_baixa))
     campo.putdata(grade)
     return campo.resize((largura, altura), Image.Resampling.BILINEAR)
+
+
+def _finalizar_cena(
+    cena: Image.Image,
+    mascara: Image.Image,
+    rng: random.Random,
+) -> tuple[Image.Image, Image.Image]:
+    """Aplica captura, luz, pequena perspectiva, ruído e compressão à cena."""
+    luz = _criar_campo_luz(*cena.size, rng).convert("RGB")
+    cena_rgb = ImageChops.multiply(cena.convert("RGB"), luz)
+    g = rng.uniform(-0.000012, 0.000012)
+    h = rng.uniform(-0.000012, 0.000012)
+    parametros = (
+        1.0,
+        rng.uniform(-0.0015, 0.0015),
+        rng.uniform(-1.2, 1.2),
+        rng.uniform(-0.0015, 0.0015),
+        1.0,
+        rng.uniform(-1.2, 1.2),
+        g,
+        h,
+    )
+    cena_rgb = cena_rgb.transform(
+        cena_rgb.size,
+        Image.Transform.PERSPECTIVE,
+        parametros,
+        resample=Image.Resampling.BICUBIC,
+        fillcolor=(211, 212, 205),
+    )
+    mascara = mascara.transform(
+        mascara.size,
+        Image.Transform.PERSPECTIVE,
+        parametros,
+        resample=Image.Resampling.NEAREST,
+        fillcolor=VALORES_CLASSES["fundo"],
+    )
+    angulo = rng.uniform(-1.1, 1.1)
+    cena_rgb = cena_rgb.rotate(
+        angulo,
+        resample=Image.Resampling.BICUBIC,
+        expand=False,
+        fillcolor=(211, 212, 205),
+    )
+    mascara = mascara.rotate(
+        angulo,
+        resample=Image.Resampling.NEAREST,
+        expand=False,
+        fillcolor=VALORES_CLASSES["fundo"],
+    )
+    if rng.random() < 0.24:
+        cena_rgb = cena_rgb.filter(ImageFilter.GaussianBlur(rng.uniform(0.25, 0.7)))
+    if rng.random() < 0.7:
+        cena_rgb = _aplicar_ruido_suave(cena_rgb.convert("RGBA"), rng).convert("RGB")
+    buffer = io.BytesIO()
+    cena_rgb.save(buffer, format="JPEG", quality=rng.randint(86, 96), optimize=False)
+    buffer.seek(0)
+    with Image.open(buffer) as comprimida:
+        cena_rgb = comprimida.convert("RGB")
+    return cena_rgb, mascara
 
 
 def _compor_sprites(
@@ -824,6 +1002,11 @@ def _compor_sprites(
     rng: random.Random,
     limite_sprites: int,
     pesos_grupo: dict[str, float] | None = None,
+    px_por_mm: float = PX_POR_MM_PADRAO,
+    k_escala: float = 2.0,
+    variacao_escala_minima: float = VARIACAO_ESCALA_MINIMA,
+    variacao_escala_maxima: float = VARIACAO_ESCALA_MAXIMA,
+    grade_densidade: tuple[int, int] = GRADE_DENSIDADE_PADRAO,
 ) -> int:
     largura_placa, altura_placa = uniao.size
     area_placa = largura_placa * altura_placa
@@ -838,11 +1021,24 @@ def _compor_sprites(
         set(por_grupo),
         pesos_grupo or PESOS_GRUPO_PADRAO,
     )
+    densidade, acumulados, soma_densidade = _criar_mapa_densidade(
+        largura_placa,
+        altura_placa,
+        grade_densidade,
+        rng,
+    )
+    tolerancia_pixels = max(1, math.ceil(area_placa * TOLERANCIA_COBERTURA_PP / 100.0))
+    alvo_pixels = round(area_placa * percentual_alvo / 100.0)
+    cobertura_maxima_pixels = math.floor(area_placa * 35.0 / 100.0)
+    alvo_composicao = min(
+        cobertura_maxima_pixels,
+        alvo_pixels + max(1, round(area_placa * 0.25 / 100.0)),
+    )
+    margem_parada = max(1, round(area_placa * 0.12 / 100.0))
 
     for _ in range(limite_sprites):
-        percentual_atual = pixels_cobertos * 100.0 / area_placa
-        restante = percentual_alvo - percentual_atual
-        if restante <= TOLERANCIA_COBERTURA_PP * 0.75:
+        restante_pixels = alvo_composicao - pixels_cobertos
+        if restante_pixels <= margem_parada:
             break
         grupo = rng.choices(
             tuple(pesos_ativos),
@@ -858,7 +1054,8 @@ def _compor_sprites(
         categorias_disponiveis = tuple(
             categoria for categoria, candidatos in por_categoria.items() if candidatos
         )
-        categoria = _escolher_categoria(restante, rng, categorias_disponiveis)
+        restante_pp = restante_pixels * 100.0 / area_placa
+        categoria = _escolher_categoria(restante_pp, rng, categorias_disponiveis)
         fragmentos = tuple(
             sprite for sprite in por_categoria[categoria] if sprite.fragmentado
         )
@@ -866,30 +1063,34 @@ def _compor_sprites(
             sprite = rng.choice(fragmentos)
         else:
             sprite = rng.choice(por_categoria[categoria])
-        limite_area = FRACOES_AREA_SPRITES[categoria][1]
-        fracao_desejada = min(
-            restante / 100.0 * rng.uniform(0.35, 0.72),
-            limite_area,
-        )
         sprite_rgba = _transformar_sprite(
             sprite,
-            max(1, round(area_placa * fracao_desejada)),
+            px_por_mm,
+            k_escala,
+            rng.uniform(variacao_escala_minima, variacao_escala_maxima),
             largura_placa,
             altura_placa,
             rng,
         )
-        silhueta = sprite_rgba.getchannel("A").point(
-            lambda valor: 255 if valor >= 128 else 0
-        )
+        silhueta = _mascara_sprite(sprite_rgba)
         if silhueta.getbbox() is None:
             continue
+        area_sprite = silhueta.histogram()[255]
+        cobertura_nova_minima = max(1, round(area_sprite * 0.2))
 
         melhor_caixa: tuple[int, int, int, int] | None = None
         melhor_regiao: Image.Image | None = None
         melhor_cobertura_nova = 0
         for _ in range(TENTATIVAS_POR_SPRITE):
-            x_local = rng.randint(0, max(0, largura_placa - silhueta.width))
-            y_local = rng.randint(0, max(0, altura_placa - silhueta.height))
+            x_local, y_local = _amostrar_posicao_densa(
+                acumulados,
+                soma_densidade,
+                densidade,
+                largura_placa,
+                altura_placa,
+                silhueta.size,
+                rng,
+            )
             caixa_local = (
                 x_local,
                 y_local,
@@ -902,16 +1103,83 @@ def _compor_sprites(
                 ImageChops.invert(regiao_existente),
             )
             novos = pixels_novos.histogram()[255]
-            if novos == 0:
+            if novos < cobertura_nova_minima:
                 continue
-            percentual_novo = (pixels_cobertos + novos) * 100.0 / area_placa
             if (
-                percentual_novo <= percentual_alvo + TOLERANCIA_COBERTURA_PP
+                pixels_cobertos + novos
+                <= min(alvo_pixels + tolerancia_pixels, cobertura_maxima_pixels)
                 and novos > melhor_cobertura_nova
             ):
                 melhor_caixa = caixa_local
                 melhor_regiao = regiao_existente
                 melhor_cobertura_nova = novos
+
+        if melhor_caixa is None and restante_pixels > margem_parada:
+            for _ in range(TENTATIVAS_POR_SPRITE * 2):
+                x_local = rng.randint(0, max(0, largura_placa - silhueta.width))
+                y_local = rng.randint(0, max(0, altura_placa - silhueta.height))
+                caixa_local = (
+                    x_local,
+                    y_local,
+                    x_local + silhueta.width,
+                    y_local + silhueta.height,
+                )
+                regiao_existente = uniao.crop(caixa_local)
+                pixels_novos = ImageChops.multiply(
+                    silhueta,
+                    ImageChops.invert(regiao_existente),
+                )
+                novos = pixels_novos.histogram()[255]
+                if (
+                    novos >= cobertura_nova_minima
+                    and novos > melhor_cobertura_nova
+                    and pixels_cobertos + novos
+                    <= min(alvo_pixels + tolerancia_pixels, cobertura_maxima_pixels)
+                ):
+                    melhor_caixa = caixa_local
+                    melhor_regiao = regiao_existente
+                    melhor_cobertura_nova = novos
+
+        if melhor_caixa is None and restante_pixels > margem_parada:
+            area_atual_sprite = silhueta.histogram()[255]
+            area_permitida = restante_pixels + tolerancia_pixels
+            fator = min(0.92, math.sqrt(area_permitida / max(1, area_atual_sprite)))
+            if fator >= 0.2:
+                sprite_rgba = _redimensionar_sprite(sprite_rgba, fator)
+                silhueta = _mascara_sprite(sprite_rgba)
+                area_sprite = silhueta.histogram()[255]
+                cobertura_nova_minima = max(1, round(area_sprite * 0.2))
+                for _ in range(TENTATIVAS_POR_SPRITE):
+                    x_local, y_local = _amostrar_posicao_densa(
+                        acumulados,
+                        soma_densidade,
+                        densidade,
+                        largura_placa,
+                        altura_placa,
+                        silhueta.size,
+                        rng,
+                    )
+                    caixa_local = (
+                        x_local,
+                        y_local,
+                        x_local + silhueta.width,
+                        y_local + silhueta.height,
+                    )
+                    regiao_existente = uniao.crop(caixa_local)
+                    pixels_novos = ImageChops.multiply(
+                        silhueta,
+                        ImageChops.invert(regiao_existente),
+                    )
+                    novos = pixels_novos.histogram()[255]
+                    if (
+                        novos >= cobertura_nova_minima
+                        and novos > melhor_cobertura_nova
+                        and pixels_cobertos + novos
+                        <= min(alvo_pixels + tolerancia_pixels, cobertura_maxima_pixels)
+                    ):
+                        melhor_caixa = caixa_local
+                        melhor_regiao = regiao_existente
+                        melhor_cobertura_nova = novos
 
         if melhor_caixa is None or melhor_regiao is None:
             continue
@@ -920,14 +1188,121 @@ def _compor_sprites(
             ImageChops.lighter(melhor_regiao, silhueta),
             melhor_caixa,
         )
-        cena.alpha_composite(
-            sprite_rgba,
-            dest=(caixa_placa[0] + melhor_caixa[0], caixa_placa[1] + melhor_caixa[1]),
+        posicao_global = (
+            caixa_placa[0] + melhor_caixa[0],
+            caixa_placa[1] + melhor_caixa[1],
         )
+        _compor_sombra_contato(cena, sprite_rgba, posicao_global, rng)
+        cena.alpha_composite(sprite_rgba, dest=posicao_global)
         pixels_cobertos += melhor_cobertura_nova
         inseridos += 1
 
     return inseridos
+
+
+def _criar_mapa_densidade(
+    largura: int,
+    altura: int,
+    dimensoes: tuple[int, int],
+    rng: random.Random,
+) -> tuple[tuple[int, int], tuple[float, ...], float]:
+    """Mistura pontos uniformes, focos, gradiente e reforço de borda."""
+    colunas, linhas = dimensoes
+    focos = [
+        (
+            rng.uniform(0.12, 0.88),
+            rng.uniform(0.12, 0.88),
+            rng.uniform(0.18, 0.52),
+            rng.uniform(0.08, 0.2),
+            rng.uniform(0.08, 0.2),
+        )
+        for _ in range(rng.randint(1, 4))
+    ]
+    angulo = rng.uniform(0, math.tau)
+    direcao_x, direcao_y = math.cos(angulo), math.sin(angulo)
+    forca_gradiente = rng.uniform(0.15, 0.75)
+    forca_borda = rng.uniform(0.08, 0.55)
+    peso_uniforme = rng.uniform(0.12, 0.42)
+    pesos: list[float] = []
+    for linha in range(linhas):
+        y = (linha + 0.5) / linhas
+        for coluna in range(colunas):
+            x = (coluna + 0.5) / colunas
+            agrupamento = sum(
+                peso
+                * math.exp(
+                    -(
+                        (x - centro_x) ** 2 / (2 * sigma_x**2)
+                        + (y - centro_y) ** 2 / (2 * sigma_y**2)
+                    )
+                )
+                for centro_x, centro_y, peso, sigma_x, sigma_y in focos
+            )
+            direcao = ((x - 0.5) * direcao_x + (y - 0.5) * direcao_y) * 2
+            gradiente = max(0.25, 1 + direcao * forca_gradiente)
+            distancia_borda = min(x, 1 - x, y, 1 - y)
+            borda = 1 + forca_borda * math.exp(-distancia_borda * 12)
+            pesos.append((peso_uniforme + agrupamento) * gradiente * borda)
+    acumulados: list[float] = []
+    soma = 0.0
+    for peso in pesos:
+        soma += peso
+        acumulados.append(soma)
+    return (colunas, linhas), tuple(acumulados), soma
+
+
+def _amostrar_posicao_densa(
+    acumulados: tuple[float, ...],
+    soma_densidade: float,
+    dimensoes: tuple[int, int],
+    largura: int,
+    altura: int,
+    tamanho: tuple[int, int],
+    rng: random.Random,
+) -> tuple[int, int]:
+    colunas, linhas = dimensoes
+    indice = bisect.bisect_left(acumulados, rng.random() * soma_densidade)
+    indice = min(indice, len(acumulados) - 1)
+    coluna, linha = indice % colunas, indice // colunas
+    largura_objeto, altura_objeto = tamanho
+    max_x = max(0, largura - largura_objeto)
+    max_y = max(0, altura - altura_objeto)
+    x0 = min(max_x, round(coluna * largura / colunas))
+    x1 = min(max_x, round((coluna + 1) * largura / colunas))
+    y0 = min(max_y, round(linha * altura / linhas))
+    y1 = min(max_y, round((linha + 1) * altura / linhas))
+    return rng.randint(x0, max(x0, x1)), rng.randint(y0, max(y0, y1))
+
+
+def _mascara_sprite(sprite: Image.Image) -> Image.Image:
+    return sprite.getchannel("A").point(lambda valor: 255 if valor > 127 else 0)
+
+
+def _redimensionar_sprite(sprite: Image.Image, fator: float) -> Image.Image:
+    largura = max(1, round(sprite.width * fator))
+    altura = max(1, round(sprite.height * fator))
+    return sprite.resize((largura, altura), Image.Resampling.LANCZOS)
+
+
+def _compor_sombra_contato(
+    cena: Image.Image,
+    sprite: Image.Image,
+    destino: tuple[int, int],
+    rng: random.Random,
+) -> None:
+    alfa = sprite.getchannel("A").filter(ImageFilter.GaussianBlur(0.8))
+    opacidade = rng.uniform(0.18, 0.32)
+    alfa = alfa.point(lambda valor: round(valor * opacidade))
+    sombra = Image.new("RGBA", sprite.size, (28, 28, 24, 0))
+    sombra.putalpha(alfa)
+    dx, dy = rng.choice((1, 2)), rng.choice((1, 2))
+    sombra = sombra.transform(
+        sombra.size,
+        Image.Transform.AFFINE,
+        (1, 0, -dx, 0, 1, -dy),
+        resample=Image.Resampling.BILINEAR,
+    )
+    cena.alpha_composite(sombra, dest=destino)
 
 
 def _escolher_categoria(
@@ -935,12 +1310,12 @@ def _escolher_categoria(
     rng: random.Random,
     disponiveis: tuple[str, ...] = CATEGORIAS,
 ) -> CategoriaSprite:
-    if restante_pp > 18:
-        pesos = (0.12, 0.28, 0.60)
-    elif restante_pp > 6:
-        pesos = (0.25, 0.55, 0.20)
+    if restante_pp > 7:
+        pesos = (0.20, 0.45, 0.35)
+    elif restante_pp > 1.2:
+        pesos = (0.48, 0.40, 0.12)
     else:
-        pesos = (0.75, 0.23, 0.02)
+        pesos = (0.84, 0.16, 0.0)
     pesos_disponiveis = tuple(
         peso
         for categoria, peso in zip(CATEGORIAS, pesos, strict=True)
@@ -975,45 +1350,48 @@ def _normalizar_pesos_grupo(
 
 def _transformar_sprite(
     sprite: SpriteCatalogado,
-    area_desejada: int,
+    px_por_mm: float,
+    k_escala: float,
+    variacao_escala: float,
     largura_placa: int,
     altura_placa: int,
     rng: random.Random,
 ) -> Image.Image:
     imagem = sprite.imagem
-    pixels_alfa = sum(
-        imagem.getchannel("A")
-        .point(lambda valor: 255 if valor >= 128 else 0)
-        .histogram()[1:]
-    )
-    escala = math.sqrt(area_desejada / max(1, pixels_alfa))
-    dimensao_maxima = max(
-        2, round(altura_placa * LIMITE_ALTURA_SPRITES[sprite.categoria])
-    )
-    escala = min(
-        escala,
-        dimensao_maxima / max(imagem.size),
-        largura_placa / imagem.width,
-        altura_placa / imagem.height,
-    )
-    largura = max(1, round(imagem.width * escala))
-    altura = max(1, round(imagem.height * escala))
-    imagem = imagem.resize((largura, altura), Image.Resampling.LANCZOS)
+    alfa = imagem.getchannel("A")
+    if max(imagem.size) >= 8:
+        alfa = alfa.filter(ImageFilter.MinFilter(3))
+    alfa = alfa.filter(ImageFilter.GaussianBlur(0.25))
+    imagem = imagem.copy()
+    imagem.putalpha(alfa)
     imagem = imagem.rotate(
-        rng.uniform(0, 360), resample=Image.Resampling.BICUBIC, expand=True
+        rng.uniform(-180, 180),
+        resample=Image.Resampling.BICUBIC,
+        expand=True,
     )
+    tamanho_mm = (
+        sprite.tamanho_mm
+        or {
+            "pequeno": 1.3,
+            "medio": 2.4,
+            "grande": 4.2,
+        }[sprite.categoria]
+    )
+    dimensao_maxima = max(1, round(tamanho_mm * px_por_mm * k_escala * variacao_escala))
     fator = min(
-        1.0,
         dimensao_maxima / max(imagem.size),
         largura_placa / imagem.width,
         altura_placa / imagem.height,
     )
-    if fator < 1.0:
-        imagem = imagem.resize(
-            (max(1, round(imagem.width * fator)), max(1, round(imagem.height * fator))),
-            Image.Resampling.LANCZOS,
-        )
-    return imagem
+    largura = max(1, round(imagem.width * fator))
+    altura = max(1, round(imagem.height * fator))
+    imagem = imagem.resize((largura, altura), Image.Resampling.LANCZOS)
+    brilho = ImageEnhance.Brightness(imagem.convert("RGB")).enhance(
+        rng.uniform(0.76, 1.22)
+    )
+    resultado = brilho.convert("RGBA")
+    resultado.putalpha(imagem.getchannel("A"))
+    return resultado
 
 
 def _selecionar_distratores(rng: random.Random) -> list[str]:
