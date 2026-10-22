@@ -16,7 +16,7 @@ const analise: Analise = {
 }
 
 describe('ResultadoAnalise', () => {
-  it('exibe o resultado da API e reserva espaço acessível para as duas imagens', () => {
+  it('exibe o resultado da API e a imagem original', () => {
     render(<ResultadoAnalise analise={analise} />)
 
     expect(screen.getByText('64,30%')).toBeVisible()
@@ -28,9 +28,7 @@ describe('ResultadoAnalise', () => {
       }),
     ).toHaveAttribute('width', '640')
     expect(
-      screen.getByRole('img', {
-        name: 'Imagem da armadilha com a máscara de segmentação sobreposta',
-      }),
-    ).toHaveAttribute('height', '480')
+      screen.queryByRole('img', { name: /máscara de segmentação/i }),
+    ).not.toBeInTheDocument()
   })
 })

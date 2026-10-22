@@ -1,13 +1,13 @@
 import { formatPercentual } from '../lib/formatacao'
 import type { Analise } from '../services/tipos'
-import { urlImagemAnalise, urlMascaraAnalise } from '../services/midia'
+import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
 
 interface ResultadoAnaliseProps {
   analise: Analise
 }
 
-/** Apresenta lado a lado a imagem enviada e a máscara salva pela API. */
+/** Apresenta os dados do processamento e a foto original enviada para análise. */
 export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
   return (
     <section
@@ -43,31 +43,17 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
         </dd>
       </dl>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-5">
         <figure className="min-w-0">
           <figcaption className="mb-2 text-sm font-semibold text-slate-900">
             Imagem original
           </figcaption>
-          <div className="aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <div className="aspect-[4/3] max-h-[36rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
             <img
               alt="Imagem original enviada para análise da armadilha"
               className="size-full object-contain"
               height={480}
               src={urlImagemAnalise(analise.id)}
-              width={640}
-            />
-          </div>
-        </figure>
-        <figure className="min-w-0">
-          <figcaption className="mb-2 text-sm font-semibold text-slate-900">
-            Máscara da análise
-          </figcaption>
-          <div className="aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-            <img
-              alt="Imagem da armadilha com a máscara de segmentação sobreposta"
-              className="size-full object-contain"
-              height={480}
-              src={urlMascaraAnalise(analise.id)}
               width={640}
             />
           </div>
