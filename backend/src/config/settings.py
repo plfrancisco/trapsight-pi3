@@ -66,8 +66,8 @@ class Settings(BaseSettings):
     uploads_dir: str
     storage_backend: Literal["filesystem", "database"] = "filesystem"
     cors_origens: Annotated[list[str], NoDecode]
-    limiar_atencao: int = 40
-    limiar_trocar: int = 70
+    limiar_atencao: int = 10
+    limiar_trocar: int = 20
     ambiente: Ambiente = "desenvolvimento"
     # None significa "decidir pelo ambiente": só desenvolvimento aceita cookie sem Secure.
     cookie_secure: bool | None = None

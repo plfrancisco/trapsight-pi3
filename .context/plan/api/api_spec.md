@@ -137,8 +137,8 @@ dispensa CORS no uso normal (`login.md`, 4.2).
 | `MODEL_VERSION` | `v0.1.0-dev` | Sim |
 | `UPLOADS_DIR` | `/app/data/uploads` | Sim |
 | `CORS_ORIGENS` | `http://localhost:5173` | Sim |
-| `LIMIAR_ATENCAO` | `40` | Não — padrão 40 |
-| `LIMIAR_TROCAR` | `70` | Não — padrão 70 |
+| `LIMIAR_ATENCAO` | `10` | Não — padrão 10 |
+| `LIMIAR_TROCAR` | `20` | Não — padrão 20 |
 | `AMBIENTE` | `producao` | Sim — `desenvolvimento`, `homologacao` ou `producao`; em `producao` a documentação interativa (`/docs`, `/redoc`, `/openapi.json`) é desativada |
 | `COOKIE_SECURE` | `true` | Não — padrão `true`; `false` só com `AMBIENTE=desenvolvimento` |
 | `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | Não — padrão 1800 (30 min) |

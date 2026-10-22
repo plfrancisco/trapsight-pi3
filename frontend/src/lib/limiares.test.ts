@@ -3,7 +3,7 @@ import { LIMIAR_ATENCAO, LIMIAR_TROCAR } from './limiares'
 
 describe('limiares de apresentação', () => {
   it('espelha os valores configurados no backend', () => {
-    expect(LIMIAR_ATENCAO).toBe(40)
-    expect(LIMIAR_TROCAR).toBe(70)
+    expect(LIMIAR_ATENCAO).toBe(10)
+    expect(LIMIAR_TROCAR).toBe(20)
   })
 })

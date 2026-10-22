@@ -209,13 +209,18 @@ faixa de cobertura, alinhadas aos limiares de status
 
 | Faixa | Proporção alvo do dataset |
 |---|---|
-| 0–40% (`ok`) | 1/3 |
-| 40–70% (`atencao`) | 1/3 |
-| 70–100% (`trocar`) | 1/3 |
+| 0–10% (`ok`) | 1/3 |
+| 10–20% (`atencao`) | 1/3 |
+| 20–35% (`trocar`) | 1/3 |
 
 Distribuição uniforme entre faixas, não proporcional a uma distribuição real
 assumida — o objetivo é garantir exemplos suficientes nas fronteiras de
-decisão (40% e 70%), onde o erro do modelo tem maior consequência prática.
+decisão (10% e 20%), onde o erro do modelo tem maior consequência prática.
+
+A cobertura máxima gerada é **35%**. Em cartões reais de armadilhas UV a
+cobertura raramente passa de 30% (`../foundation/project_overview.md`,
+seção 7.2), e placas acima disso são fisicamente raras e já estão muito além
+do ponto de troca.
 
 ## 7.2 Volume
 

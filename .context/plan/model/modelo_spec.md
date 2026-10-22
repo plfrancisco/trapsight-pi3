@@ -274,9 +274,9 @@ Aplicada sobre `percentual_coberto`, conforme
 `../foundation/project_overview.md`, seção 7.2:
 
 ```text
-percentual < 40           → "ok"
-40 <= percentual <= 70    → "atencao"
-percentual > 70           → "trocar"
+percentual < 10           → "ok"
+10 <= percentual <= 20    → "atencao"
+percentual > 20           → "trocar"
 ```
 
 Os limiares são constantes de configuração, não valores fixos no código —

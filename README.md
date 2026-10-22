@@ -26,9 +26,9 @@ flowchart LR
     C --> D[Máscara de 3 classes<br/>fundo · placa limpa · placa coberta]
     D --> E[% de área coberta]
     E --> F{Status}
-    F -->|abaixo de 40%| G[ok]
-    F -->|40% a 70%| H[atenção]
-    F -->|acima de 70%| I[trocar]
+    F -->|abaixo de 10%| G[ok]
+    F -->|10% a 20%| H[atenção]
+    F -->|acima de 20%| I[trocar]
 ```
 
 Além da leitura pontual, o sistema guarda o histórico de cada armadilha e **projeta quantos dias faltam para a saturação**, permitindo planejar a visita em vez de reagir a ela.

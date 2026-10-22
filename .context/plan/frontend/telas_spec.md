@@ -220,7 +220,7 @@ Resolve para o limiar:  dias_previstos = (LIMIAR_TROCAR − b) / a
 dias_ate_saturar = dias_previstos − dias_decorridos
 ```
 
-Onde `LIMIAR_TROCAR` é 70, conforme
+Onde `LIMIAR_TROCAR` é 20, conforme
 `../foundation/project_overview.md`, seção 7.2.
 
 ## 5.1 Por que regressão e não dois pontos

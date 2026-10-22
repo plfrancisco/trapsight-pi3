@@ -103,8 +103,8 @@ são reportadas — a segunda valida a primeira.
 
 | Métrica | Alvo | Mínimo aceitável |
 |---|---|---|
-| Erro percentual — teste sintético | ≤ 3 pp | ≤ 5 pp |
-| Erro percentual — teste real | ≤ 5 pp | ≤ 10 pp |
+| Erro percentual — teste sintético | ≤ 1,0 pp | ≤ 2,0 pp |
+| Erro percentual — teste real | ≤ 2,0 pp | ≤ 3,0 pp |
 | Dice `placa_coberta` — teste sintético | ≥ 0,90 | ≥ 0,85 |
 | Dice `placa_coberta` — teste real | ≥ 0,80 | ≥ 0,75 |
 | Acurácia do status — teste real | ≥ 90% | ≥ 85% |
@@ -128,6 +128,17 @@ A regressão sobre múltiplos pontos, e não sobre apenas o primeiro e o último
 é parte da mitigação: erros individuais em direções opostas se compensam. As
 duas medidas atuam em conjunto — precisão do modelo e robustez do cálculo — e
 nenhuma delas isoladamente seria suficiente.
+
+## 4.2.1 Revisão após a recalibração dos limiares
+
+Os limites de erro foram reduzidos quando os limiares de status passaram de
+40% e 70% para 10% e 20% (`../foundation/project_overview.md`, seção 7.2).
+Com limiares espaçados em 10 pontos percentuais, um erro de 3 pp já empurra
+uma armadilha para a faixa errada com frequência, e o erro de 5 a 10 pp
+originalmente aceito tornaria o status inútil. Os novos valores mantêm a
+razão entre o erro tolerado e o espaçamento dos limiares. Os critérios de
+Dice permanecem e devem ser revisados após o primeiro treino, porque a
+cobertura baixa e os insetos pequenos tendem a reduzi-lo.
 
 ## 4.3 Erro crítico
 

@@ -55,8 +55,8 @@ tenham representação**.
 |---|---|
 | Refil instalado | 32 dias atrás |
 | Análises | 11, a cada 3 dias |
-| Percentual atual | Aproximadamente 78% |
-| Cruzou o limiar de 70% | 3 dias atrás |
+| Percentual atual | Aproximadamente 24% |
+| Cruzou o limiar de 20% | 3 dias atrás |
 
 Produz alerta ativo há 3 dias no painel do dashboard.
 
@@ -66,11 +66,12 @@ Produz alerta ativo há 3 dias no painel do dashboard.
 |---|---|
 | Refil instalado | 20 dias atrás |
 | Análises | 7, a cada 3 dias |
-| Percentual atual | Aproximadamente 55% |
-| Taxa | Constante, cerca de 2,75 pp por dia |
+| Percentual atual | Aproximadamente 14% |
+| Taxa | Constante, cerca de 0,8 pp por dia |
 
-Com taxa constante, a projeção resulta em aproximadamente 5 dias até
-saturar — valor verificável manualmente durante a demonstração.
+Com taxa constante, a projeção resulta em aproximadamente 7 dias até
+chegar ao limiar de troca (20%) — valor verificável manualmente durante a
+demonstração.
 
 ## 3.3 `ARM-003` — Refil novo
 
@@ -78,7 +79,7 @@ saturar — valor verificável manualmente durante a demonstração.
 |---|---|
 | Refil instalado | 6 dias atrás |
 | Análises | 2 |
-| Percentual atual | Aproximadamente 12% |
+| Percentual atual | Aproximadamente 3% |
 
 Estado saudável com projeção já disponível, por haver duas análises.
 
@@ -93,6 +94,10 @@ Estado saudável com projeção já disponível, por haver duas análises.
 É a armadilha usada para demonstrar o timelapse em modo de histórico
 completo. A curva sobe até a troca, cai bruscamente e volta a subir,
 evidenciando os ciclos.
+
+Os ciclos anteriores terminam perto do limiar de troca (cerca de 18% a 21%) e
+o refil ativo, aos 15 dias, está por volta de 7%, com taxas médias parecidas
+entre os ciclos (cerca de 0,5 pp por dia).
 
 Os refis anteriores devem ter durações diferentes — refis idênticos sugeririam
 dados fabricados de forma pouco cuidadosa.

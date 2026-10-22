@@ -10,8 +10,8 @@ from typing import Any
 CLASSES = ("fundo", "placa_limpa", "placa_coberta")
 INDICE_PLACA_LIMPA = 1
 INDICE_PLACA_COBERTA = 2
-LIMIAR_ATENCAO = 40.0
-LIMIAR_TROCAR = 70.0
+LIMIAR_ATENCAO = 10.0
+LIMIAR_TROCAR = 20.0
 CONFIGURACAO_PADRAO = Path(__file__).with_name("configuracao_padrao.json")
 
 

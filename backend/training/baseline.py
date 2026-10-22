@@ -17,8 +17,8 @@ from PIL import Image, UnidentifiedImageError
 VERSAO_CALIBRACAO = 1
 LIMIAR_V_MINIMO = 0
 LIMIAR_V_MAXIMO = 255
-LIMIAR_ATENCAO = 40.0
-LIMIAR_TROCAR = 70.0
+LIMIAR_ATENCAO = 10.0
+LIMIAR_TROCAR = 20.0
 DIVISOES_VALIDAS = {"treino", "validacao", "teste"}
 ARQUIVO_CALIBRACAO_PADRAO = Path(__file__).with_name("baseline_calibracao.json")
 

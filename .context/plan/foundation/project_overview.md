@@ -144,14 +144,24 @@ consequências técnicas em `../model/modelo_spec.md`, seção 3.
 ## 7.2 Classificação do status
 
 Com base no percentual de área coberta, classificar em três faixas. Os
-limiares abaixo são sugestões iniciais e devem ser calibrados com dados
-reais.
+limiares abaixo são pontos de partida e devem ser validados com a empresa
+parceira e calibrados com dados reais.
 
-| Valor | Exibição | Significado | Limiar sugerido |
+| Valor | Exibição | Significado | Limiar inicial |
 |---|---|---|---|
-| `ok` | OK | Armadilha funcional, sem necessidade de troca | < 40% coberta |
-| `atencao` | Atenção | Armadilha se aproximando da saturação | 40% – 70% coberta |
-| `trocar` | Trocar | Armadilha saturada, eficácia comprometida | > 70% coberta |
+| `ok` | OK | Armadilha em condição higiênica aceitável | < 10% coberta |
+| `atencao` | Atenção | Armadilha se aproximando do ponto de troca | 10% – 20% coberta |
+| `trocar` | Trocar | Armadilha além do ponto de troca | > 20% coberta |
+
+**Por que estes valores.** A troca é decidida por critério **higiênico**, não
+pela capacidade da cola: um refil não precisa estar cheio para estar vencido.
+Uma primeira calibração previa 40% e 70%, tratando a troca como saturação da
+superfície, e esses valores se mostraram irreais. No conjunto público de 69
+cartões de armadilhas UV de depósitos e mercados de alimentos (Ong et al.,
+2025, CC BY 4.0), a cobertura mediana, medida pela área das caixas de
+anotação, foi de cerca de 5,6%, o cartão mais cheio chegou a 27% e nenhum
+passou de 40%. O cartão de 27% já deveria ter sido trocado. Os limiares de
+10% e 20% são uma hipótese a confirmar com o parceiro (`EXT02`).
 
 **Grafia:** o valor técnico é `atencao`, sem acento — é assim que trafega na
 API e é persistido no banco. A forma acentuada existe apenas na exibição, e é
