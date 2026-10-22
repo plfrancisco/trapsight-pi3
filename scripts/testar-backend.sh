@@ -50,4 +50,4 @@ MSYS_NO_PATHCONV=1 docker run --rm --network "$REDE" \
   -e MODEL_WEIGHTS_PATH=/tmp/pesos.pt -e MODEL_VERSION=v0.1.0-dev \
   -e UPLOADS_DIR=/tmp/uploads -e CORS_ORIGENS=http://localhost:5173 \
   ghcr.io/astral-sh/uv:python3.12-bookworm-slim \
-  sh -c "uv sync --quiet --locked >/dev/null 2>&1; uv run --quiet alembic upgrade head; $COMANDO"
+  sh -c "uv sync --quiet --locked --group baseline >/dev/null 2>&1; uv run --quiet alembic upgrade head; $COMANDO"
