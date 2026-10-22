@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    LargeBinary,
     Numeric,
     String,
     Uuid,
@@ -63,6 +64,12 @@ class Analise(UUIDTimestampMixin, Base):
     percentual_coberto: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
     caminho_imagem: Mapped[str] = mapped_column(String, nullable=False)
+    imagem_original: Mapped[bytes | None] = mapped_column(
+        LargeBinary, nullable=True, deferred=True
+    )
+    mascara: Mapped[bytes | None] = mapped_column(
+        LargeBinary, nullable=True, deferred=True
+    )
     modelo_versao: Mapped[str] = mapped_column(String, nullable=False)
 
     refil: Mapped[Refil] = relationship(

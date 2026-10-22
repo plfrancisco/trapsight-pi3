@@ -1,9 +1,10 @@
 """Endpoints de envio e consulta individual de análises de imagem."""
 
 import asyncio
+import hashlib
 import logging
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+from email.utils import format_datetime, parsedate_to_datetime
 from pathlib import Path
 from stat import S_ISREG
 from typing import Annotated, Literal
@@ -128,21 +129,31 @@ async def criar_analise(
         )
 
     analise_id = uuid4()
+    armazenar_no_banco = settings.storage_backend == "database"
+    imagem_original: bytes | None = None
+    mascara: bytes | None = None
     try:
-        caminho_imagem = await asyncio.to_thread(
-            armazenamento.gravar_imagem_original,
-            settings.uploads_dir,
-            analise_id,
-            imagem_validada.conteudo,
-            imagem_validada.extensao,
-        )
+        if armazenar_no_banco:
+            caminho_imagem = f"{analise_id}/original.{imagem_validada.extensao}"
+        else:
+            caminho_imagem = await asyncio.to_thread(
+                armazenamento.gravar_imagem_original,
+                settings.uploads_dir,
+                analise_id,
+                imagem_validada.conteudo,
+                imagem_validada.extensao,
+            )
         resultado = await _executar_inferencia(inferidor, imagem_validada.conteudo)
-        await asyncio.to_thread(
-            armazenamento.gravar_mascara,
-            settings.uploads_dir,
-            analise_id,
-            resultado.mascara,
-        )
+        if armazenar_no_banco:
+            imagem_original = imagem_validada.conteudo
+            mascara = resultado.mascara
+        else:
+            await asyncio.to_thread(
+                armazenamento.gravar_mascara,
+                settings.uploads_dir,
+                analise_id,
+                resultado.mascara,
+            )
         resposta = await asyncio.to_thread(
             _persistir_analise,
             session,
@@ -152,17 +163,20 @@ async def criar_analise(
             agora,
             resultado,
             caminho_imagem,
+            imagem_original,
+            mascara,
         )
     except BaseException:
         # Cancelamentos também precisam reverter a linha e a mídia já gravada.
         try:
             await asyncio.to_thread(session.rollback)
         finally:
-            await asyncio.to_thread(
-                armazenamento.remover_arquivos_analise,
-                settings.uploads_dir,
-                analise_id,
-            )
+            if not armazenar_no_banco:
+                await asyncio.to_thread(
+                    armazenamento.remover_arquivos_analise,
+                    settings.uploads_dir,
+                    analise_id,
+                )
         raise
 
     return resposta
@@ -308,6 +322,40 @@ def _servir_recurso_analise(
         caminho_salvo = f"{analise_id}/mascara.png"
         tipo_midia = "image/png"
 
+    if settings.storage_backend == "database":
+        conteudo = (
+            analise.imagem_original if recurso == "imagem" else analise.mascara
+        )
+        if not conteudo:
+            raise _erro_recurso_analise(analise_id, recurso)
+        conteudo = bytes(conteudo)
+        instante = analise.analisado_em
+        if instante.tzinfo is None:
+            instante = instante.replace(tzinfo=timezone.utc)
+        resposta = Response(
+            content=conteudo,
+            media_type=tipo_midia,
+            headers={
+                "Cache-Control": "private, max-age=31536000, immutable",
+                "Content-Disposition": "inline",
+                "ETag": f'"{hashlib.sha256(conteudo).hexdigest()}"',
+                "Last-Modified": format_datetime(
+                    instante.astimezone(timezone.utc), usegmt=True
+                ),
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+        if _requisicao_nao_modificada(request, resposta):
+            return Response(
+                status_code=304,
+                headers={
+                    nome: valor
+                    for nome, valor in resposta.headers.items()
+                    if nome.lower() != "content-length"
+                },
+            )
+        return resposta
+
     try:
         caminho = armazenamento.resolver_caminho_arquivo(
             settings.uploads_dir,
@@ -354,7 +402,7 @@ def _erro_recurso_analise(
     )
 
 
-def _requisicao_nao_modificada(request: Request, resposta: FileResponse) -> bool:
+def _requisicao_nao_modificada(request: Request, resposta: Response) -> bool:
     """Aplica validadores GET para evitar reenviar um arquivo imutável."""
     etag_atual = resposta.headers["etag"]
     etag_solicitado = request.headers.get("if-none-match")
@@ -410,7 +458,7 @@ def _buscar_armadilha_e_refil(
     armadilha_id: UUID,
 ) -> tuple[Armadilha | None, Refil | None]:
     """Executa as consultas SQL síncronas da análise na mesma thread de trabalho."""
-    armadilha = ArmadilhaRepository(session).get_by_id(armadilha_id)
+    armadilha = ArmadilhaRepository(session).get_by_id_ativo(armadilha_id)
     refil = (
         None
         if armadilha is None
@@ -427,6 +475,8 @@ def _persistir_analise(
     agora: datetime,
     resultado: ResultadoInferencia,
     caminho_imagem: str,
+    imagem_original: bytes | None = None,
+    mascara: bytes | None = None,
 ) -> AnaliseSaida:
     """Grava e confirma a análise sem executar I/O de banco no event loop."""
     analise = AnaliseRepository(session).create(
@@ -437,6 +487,8 @@ def _persistir_analise(
         status=resultado.status,
         caminho_imagem=caminho_imagem,
         modelo_versao=resultado.modelo_versao,
+        imagem_original=imagem_original,
+        mascara=mascara,
     )
     resposta = _montar_saida(analise, armadilha_id)
     session.commit()

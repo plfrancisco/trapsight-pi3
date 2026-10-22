@@ -41,6 +41,8 @@ class AnaliseRepository:
         status: StatusAnalise,
         caminho_imagem: str,
         modelo_versao: str,
+        imagem_original: bytes | None = None,
+        mascara: bytes | None = None,
         analise_id: UUID | None = None,
     ) -> Analise:
         """Cria uma análise com o resultado já calculado pela camada de aplicação.
@@ -67,6 +69,8 @@ class AnaliseRepository:
             percentual_coberto=percentual_coberto,
             status=StatusAnalise(status).value,
             caminho_imagem=caminho_imagem,
+            imagem_original=imagem_original,
+            mascara=mascara,
             modelo_versao=modelo_versao,
         )
         self._session.add(analise)

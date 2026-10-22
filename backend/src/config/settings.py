@@ -21,6 +21,7 @@ _ENVIRONMENT_NAMES = {
     "model_weights_path": "MODEL_WEIGHTS_PATH",
     "model_version": "MODEL_VERSION",
     "uploads_dir": "UPLOADS_DIR",
+    "storage_backend": "STORAGE_BACKEND",
     "cors_origens": "CORS_ORIGENS",
     "limiar_atencao": "LIMIAR_ATENCAO",
     "limiar_trocar": "LIMIAR_TROCAR",
@@ -63,6 +64,7 @@ class Settings(BaseSettings):
     model_weights_path: str
     model_version: str
     uploads_dir: str
+    storage_backend: Literal["filesystem", "database"] = "filesystem"
     cors_origens: Annotated[list[str], NoDecode]
     limiar_atencao: int = 40
     limiar_trocar: int = 70

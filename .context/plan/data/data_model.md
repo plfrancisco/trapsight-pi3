@@ -226,6 +226,7 @@ Resultado de uma inferência do modelo sobre uma imagem.
 | `percentual_coberto` | `numeric(5,2)` | 0,00 a 100,00 |
 | `status` | `varchar` | `ok`, `atencao` ou `trocar` |
 | `caminho_imagem` | `varchar` | Caminho relativo do arquivo, não o binário |
+| `imagem_original`, `mascara` | `bytea` | Nulos no armazenamento em disco. Preenchidos somente com `STORAGE_BACKEND=database` (hospedagem sem disco durável) |
 | `modelo_versao` | `varchar` | Versão do modelo no formato `semver+hash` — ver seção 7.2 |
 
 ## 6.5 `usuario`
@@ -307,8 +308,11 @@ como o StickFly K-45 (migração `0004`).
 
 ## 7.1 Armazenamento de imagens
 
-As imagens **não** são armazenadas no banco. O campo `caminho_imagem` guarda
-uma referência relativa a um diretório do sistema de arquivos.
+Por padrão, as imagens **não** são armazenadas no banco. O campo
+`caminho_imagem` guarda uma referência relativa a um diretório do sistema de
+arquivos. Em hospedagem sem disco durável (função serverless), a variável
+`STORAGE_BACKEND=database` grava a imagem e a máscara nas colunas
+`imagem_original` e `mascara`; o valor padrão é `filesystem`.
 
 Armazenar binários em PostgreSQL incha o banco, complica o backup e degrada a
 performance de consultas que não precisam da imagem — que é a maioria.
