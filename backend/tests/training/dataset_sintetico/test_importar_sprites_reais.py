@@ -37,9 +37,7 @@ def fontes_reais_teste(tmp_path: Path) -> dict[str, Path]:
                 "area_px": tamanho * (tamanho // 2),
             }
         )
-    (raiz_ums / "meta.json").write_text(
-        json.dumps(registros_ums), encoding="utf-8"
-    )
+    (raiz_ums / "meta.json").write_text(json.dumps(registros_ums), encoding="utf-8")
 
     imagem_amazonia = Image.new("RGBA", (32, 24), (0, 0, 0, 0))
     ImageDraw.Draw(imagem_amazonia).ellipse((2, 2, 30, 22), fill=(40, 35, 30, 255))
