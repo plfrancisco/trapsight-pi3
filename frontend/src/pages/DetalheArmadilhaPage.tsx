@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useParams } from 'react-router'
 import ArmadilhaNaoEncontrada from '../components/ArmadilhaNaoEncontrada'
 import Botao from '../components/Botao'
@@ -10,15 +10,13 @@ import LinkBotao from '../components/LinkBotao'
 import MensagemErro from '../components/MensagemErro'
 import ResumoArmadilha from '../components/ResumoArmadilha'
 import ResumoRefil from '../components/ResumoRefil'
+import Timelapse from '../components/Timelapse'
 import TrocaRefil from '../components/TrocaRefil'
 import { useCarregamento } from '../hooks/useCarregamento'
 import { isArmadilhaAusente } from '../lib/armadilha'
-import { buildResumoCobertura, buildSerieCobertura } from '../lib/cobertura'
 import { ApiError } from '../services/erros'
 import { listAnalises } from '../services/analises'
 import { getArmadilha } from '../services/armadilhas'
-
-const EvolucaoGrafico = lazy(() => import('../components/EvolucaoGrafico'))
 
 /** Carrega e apresenta o estado atual e o histórico do ciclo ativo.
  * @returns Detalhe da armadilha, estados de consulta, série e ações de refil.
@@ -26,11 +24,18 @@ const EvolucaoGrafico = lazy(() => import('../components/EvolucaoGrafico'))
 export default function DetalheArmadilhaPage() {
   const armadilhaId = useParams().id ?? ''
   const carregarDetalhe = useCallback(
-    (signal: AbortSignal) =>
-      Promise.all([
-        getArmadilha(armadilhaId, signal),
-        listAnalises(armadilhaId, { escopo: 'refil_ativo', limite: 1000 }, signal),
-      ]).then(([armadilha, analises]) => ({ armadilha, analises })),
+    async (signal: AbortSignal) => {
+      const armadilha = await getArmadilha(armadilhaId, signal)
+      const analises = await listAnalises(
+        armadilhaId,
+        {
+          escopo: armadilha.removida_em ? 'completo' : 'refil_ativo',
+          limite: 1000,
+        },
+        signal,
+      )
+      return { armadilha, analises }
+    },
     [armadilhaId],
   )
   const { dados, erro, carregando, recarregar } = useCarregamento(carregarDetalhe)
@@ -61,8 +66,6 @@ export default function DetalheArmadilhaPage() {
   if (dados === null) return null
 
   const { armadilha, analises } = dados
-  const serie = buildSerieCobertura(analises)
-  const resumo = buildResumoCobertura(analises)
 
   return (
     <div className="space-y-8">
@@ -84,40 +87,50 @@ export default function DetalheArmadilhaPage() {
         />
         <ListaRefisAnteriores refis={armadilha.refis_anteriores} />
       </div>
-      <TrocaRefil
-        onConcluir={recarregar}
-        armadilhaId={armadilha.id}
-        temRefilAtivo={armadilha.refil_ativo !== null}
-      />
-      <section aria-labelledby="titulo-evolucao">
-        <div className="mb-4">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Refil ativo
-          </p>
-          <h2
-            className="mt-1 text-2xl font-semibold tracking-tight text-slate-950"
-            id="titulo-evolucao"
-          >
-            Evolução da cobertura
-          </h2>
-        </div>
-        {analises.length === 0 ? (
+      {!armadilha.removida_em ? (
+        <TrocaRefil
+          onConcluir={recarregar}
+          armadilhaId={armadilha.id}
+          temRefilAtivo={armadilha.refil_ativo !== null}
+        />
+      ) : null}
+      {analises.length === 0 ? (
+        <section aria-labelledby="titulo-evolucao">
+          <div className="mb-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+              Refil ativo
+            </p>
+            <h2
+              className="mt-1 text-2xl font-semibold tracking-tight text-slate-950"
+              id="titulo-evolucao"
+            >
+              Evolução da cobertura
+            </h2>
+          </div>
           <EstadoVazio
-            acao={
+            acao={armadilha.removida_em ? undefined : (
               <LinkBotao to="/analises/nova" variante="primario">
                 Enviar a primeira imagem
               </LinkBotao>
-            }
-            descricao="Envie uma imagem para iniciar o histórico de cobertura deste ciclo."
-            titulo="Nenhuma análise neste refil"
+            )}
+            descricao={armadilha.removida_em
+              ? 'Esta armadilha não possui análises registradas.'
+              : 'Envie uma imagem para iniciar o histórico de cobertura deste ciclo.'}
+            titulo={armadilha.removida_em ? 'Nenhuma análise no histórico' : 'Nenhuma análise neste refil'}
           />
-        ) : (
-          <Suspense fallback={<div aria-live="polite" className="h-80" role="status">Carregando gráfico…</div>}>
-            <EvolucaoGrafico resumo={resumo} serie={serie} />
-          </Suspense>
-        )}
-      </section>
-      <ListaAnalises analises={analises} />
+        </section>
+      ) : !armadilha.removida_em ? (
+        <Timelapse
+          key={armadilha.id}
+          armadilhaId={armadilha.id}
+          analisesAtivas={analises}
+          refisAnteriores={armadilha.refis_anteriores}
+        />
+      ) : null}
+      <ListaAnalises
+        analises={analises}
+        historicoCompleto={Boolean(armadilha.removida_em)}
+      />
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { memo, useCallback, useRef } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -17,6 +18,13 @@ interface EvolucaoGraficoProps {
   serie: PontoCobertura[]
   resumo: string
   marcador?: number
+  marcasDeTroca?: number[]
+  onMarcadorChange?: (instante: number) => void
+  onInteracaoManual?: () => void
+}
+
+interface EstadoInteracaoGrafico {
+  activeLabel: string | number | undefined
 }
 
 function formatEixoData(instante: number): string {
@@ -34,41 +42,106 @@ function formatTooltipData(instante: number): string {
  * @param props Série já transformada, rótulo acessível e marcador em milissegundos.
  * @returns Gráfico responsivo de cobertura no ciclo ativo.
  */
-export default function EvolucaoGrafico({
+function EvolucaoGrafico({
   serie,
   resumo,
   marcador,
+  marcasDeTroca = [],
+  onMarcadorChange,
+  onInteracaoManual,
 }: EvolucaoGraficoProps) {
+  const arrastando = useRef(false)
   const dominioInstante: [number | 'dataMin', number | 'dataMax'] =
     serie.length === 1
       ? [serie[0].instante - 60_000, serie[0].instante + 60_000]
       : ['dataMin', 'dataMax']
 
+  const enviarInstanteAtivo = useCallback(
+    ({ activeLabel }: EstadoInteracaoGrafico) => {
+      const instante =
+        typeof activeLabel === 'number'
+          ? activeLabel
+          : typeof activeLabel === 'string' && activeLabel.trim() !== ''
+            ? Number(activeLabel)
+            : Number.NaN
+      if (Number.isFinite(instante)) onMarcadorChange?.(instante)
+    },
+    [onMarcadorChange],
+  )
+
+  const iniciarArrasto = useCallback(
+    (estado: EstadoInteracaoGrafico) => {
+      arrastando.current = true
+      onInteracaoManual?.()
+      enviarInstanteAtivo(estado)
+    },
+    [enviarInstanteAtivo, onInteracaoManual],
+  )
+
+  const moverArrasto = useCallback(
+    (estado: EstadoInteracaoGrafico) => {
+      if (arrastando.current) enviarInstanteAtivo(estado)
+    },
+    [enviarInstanteAtivo],
+  )
+
+  const finalizarArrasto = useCallback(() => {
+    arrastando.current = false
+  }, [])
+
+  const selecionarPonto = useCallback(
+    (estado: EstadoInteracaoGrafico) => {
+      onInteracaoManual?.()
+      enviarInstanteAtivo(estado)
+    },
+    [enviarInstanteAtivo, onInteracaoManual],
+  )
+
   return (
     <div
       aria-label={resumo}
-      className="h-80 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="surface-panel h-80 w-full touch-pan-y rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
       role="img"
     >
       <ResponsiveContainer height="100%" width="100%">
-        <LineChart data={serie} margin={{ top: 20, right: 16, bottom: 8, left: 0 }}>
-          <CartesianGrid stroke="#E2E8F0" strokeDasharray="4 4" />
+        <LineChart
+          data={serie}
+          margin={{ top: 20, right: 16, bottom: 8, left: 0 }}
+          onClick={selecionarPonto}
+          onMouseDown={iniciarArrasto}
+          onMouseLeave={finalizarArrasto}
+          onMouseMove={moverArrasto}
+          onMouseUp={finalizarArrasto}
+          onTouchEnd={finalizarArrasto}
+          onTouchMove={moverArrasto}
+          onTouchStart={iniciarArrasto}
+        >
+          <CartesianGrid stroke="var(--app-line)" strokeDasharray="4 4" />
           <XAxis
             dataKey="instante"
             domain={dominioInstante}
             scale="time"
             tickFormatter={formatEixoData}
-            tick={{ fill: '#334155', fontSize: 12 }}
+            tick={{ fill: 'var(--app-muted)', fontSize: 12 }}
             type="number"
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fill: '#334155', fontSize: 12 }}
+            tick={{ fill: 'var(--app-muted)', fontSize: 12 }}
             tickFormatter={(valor: number) => `${valor}%`}
           />
           <Tooltip
+            contentStyle={{
+              border: '1px solid var(--app-line)',
+              borderRadius: 14,
+              color: 'var(--app-text)',
+              background: 'var(--app-surface)',
+              boxShadow: 'var(--app-shadow-control)',
+            }}
             formatter={(valor) => [formatPercentual(Number(valor)), 'Cobertura']}
             labelFormatter={(valor) => formatTooltipData(Number(valor))}
+            labelStyle={{ color: 'var(--app-muted)' }}
+            itemStyle={{ color: 'var(--app-primary-strong)' }}
           />
           <ReferenceLine
             label={{
@@ -94,6 +167,21 @@ export default function EvolucaoGrafico({
             strokeDasharray="6 4"
             y={LIMIAR_TROCAR}
           />
+          {marcasDeTroca.map((instante, indice) => (
+            <ReferenceLine
+              key={`troca-${indice}-${instante}`}
+              label={{
+                value: 'Troca',
+                position: 'insideTop',
+                fill: PALETA_STATUS.trocar.texto,
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+              stroke={PALETA_STATUS.trocar.linha}
+              strokeDasharray="3 3"
+              x={instante}
+            />
+          ))}
           {marcador === undefined ? null : (
             <ReferenceLine stroke={PALETA_STATUS.ok.linha} x={marcador} />
           )}
@@ -116,3 +204,5 @@ export default function EvolucaoGrafico({
     </div>
   )
 }
+
+export default memo(EvolucaoGrafico)

@@ -155,24 +155,24 @@ describe('DetalheArmadilhaPage', () => {
 
     expect(await screen.findByText('Nenhuma análise neste refil')).toBeVisible()
     expect(screen.queryByRole('img', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Escopo temporal' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Enviar a primeira imagem' })).toHaveAttribute(
       'href',
       '/analises/nova',
     )
   })
 
-  it('exibe ponto e lista de miniatura para uma medição real', async () => {
+  it('exibe a imagem única e a miniatura para uma medição real', async () => {
     mockDetalhe([buildAnalise('a-1', '2026-10-16T08:00:00Z', 42.5)])
     renderDetalhe()
-    await vi.dynamicImportSettled()
 
     expect(
-      await screen.findByRole('img', {
-        name: 'Evolução da cobertura: 1 medição, de 42,50% a 42,50%',
-      }),
+      await screen.findByRole('img', { name: /Imagem da armadilha registrada em/ }),
     ).toBeVisible()
-    expect(screen.getByText('Cobertura: 42,50%')).toBeVisible()
-    expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: /^Quadro / })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Cobertura: 42,50%')).not.toHaveLength(0)
+    expect(screen.getAllByRole('img', { name: /Imagem original da análise/ })).toHaveLength(1)
+    expect(screen.queryByRole('img', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
   })
 
   it('mostra a ação para iniciar um refil sem apresentar percentuais ausentes', async () => {
@@ -212,7 +212,7 @@ describe('DetalheArmadilhaPage', () => {
 
     await waitFor(() => expect(getArmadilha).toHaveBeenCalledTimes(2))
     expect(screen.getByRole('heading', { name: 'ARM-001', level: 1 })).toBeVisible()
-    expect(screen.getByText('Cobertura: 42,50%')).toBeVisible()
+    expect(screen.getAllByText('Cobertura: 42,50%')).not.toHaveLength(0)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })
