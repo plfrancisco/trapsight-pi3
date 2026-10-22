@@ -86,3 +86,6 @@ security/reports/
 # Material baixado do Classroom e arquivos de trabalho locais
 material_classroom/
 scratch_ml02a/
+
+# Diretórios temporários de ferramentas de trabalho
+.tmp-*/
