@@ -247,6 +247,30 @@ def test_imagem_invalida_preserva_mensagem_generica(
     assert erro.value.__cause__ is None
 
 
+def test_falha_no_forward_preserva_causa_e_mensagem_generica(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    torch_module: Any,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Registra a falha técnica sem alterar a mensagem exposta ao cliente."""
+    _configurar_construtor(monkeypatch, torch_module)
+    inferidor = _inferidor(_checkpoint(torch_module, tmp_path / "mini.pt"))
+    causa = RuntimeError("falha interna do modelo")
+
+    def falhar(_entrada: Any) -> Any:
+        raise causa
+
+    monkeypatch.setattr(inferidor._modelo, "forward", falhar)
+    with caplog.at_level("ERROR", logger="src.inference.modelo"):
+        with pytest.raises(FalhaInferencia) as erro:
+            inferidor.inferir(_imagem_png())
+
+    assert str(erro.value) == "A imagem não pôde ser processada."
+    assert erro.value.__cause__ is causa
+    assert caplog.records[-1].message == "Falha inesperada durante a inferência."
+
+
 def test_fabrica_recusa_pesos_invalidos_ao_criar_aplicacao(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
