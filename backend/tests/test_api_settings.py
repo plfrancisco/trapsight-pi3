@@ -142,14 +142,14 @@ def test_cors_rejects_wildcard_and_empty_values(
     assert _FAKE_DATABASE_URL not in str(captured.value)
 
 
-def test_threshold_defaults_are_forty_and_seventy(
+def test_threshold_defaults_are_ten_and_twenty(
     fake_environment: None,
 ) -> None:
     """Usa os limiares previstos quando não há valores no ambiente."""
     settings = Settings()
 
-    assert settings.limiar_atencao == 40
-    assert settings.limiar_trocar == 70
+    assert settings.limiar_atencao == 10
+    assert settings.limiar_trocar == 20
 
 
 @pytest.mark.parametrize(

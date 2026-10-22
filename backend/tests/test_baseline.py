@@ -52,10 +52,10 @@ def _criar_dataset(raiz: Path) -> None:
         101,
     )
 
-    imagem_teste = np.full((3, 3, 3), 230, dtype=np.uint8)
+    imagem_teste = np.full((10, 10, 3), 230, dtype=np.uint8)
     imagem_teste[0, 0] = 50
     imagem_teste[0, 1] = 20
-    mascara_teste = np.ones((3, 3), dtype=np.uint8)
+    mascara_teste = np.ones((10, 10), dtype=np.uint8)
     mascara_teste[0, 0] = 2
     teste = _gravar_amostra(
         raiz,
