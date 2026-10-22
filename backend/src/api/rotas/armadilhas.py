@@ -264,6 +264,27 @@ def atualizar_armadilha(
     return resposta
 
 
+@router.delete(
+    "/{armadilha_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=respostas_de_erro(
+        CodigoErro.ARMADILHA_NAO_ENCONTRADA,
+        CodigoErro.VALIDACAO_FALHOU,
+        CodigoErro.ERRO_INTERNO,
+    ),
+)
+def remover_armadilha(
+    armadilha_id: UUID,
+    session: Annotated[Session, Depends(get_session)],
+    agora: Annotated[datetime, Depends(get_agora)],
+) -> None:
+    """Remove do painel e preserva a armadilha e seus dados históricos."""
+    removida = ArmadilhaRepository(session).remover(armadilha_id, agora)
+    if removida is None:
+        raise _erro_armadilha_nao_encontrada(armadilha_id)
+    session.commit()
+
+
 @router.post(
     "/{armadilha_id}/refis",
     response_model=RefilTrocaSaida,
@@ -391,6 +412,7 @@ def _montar_detalhe(
         modelo_id=armadilha.modelo_id,
         localizacao=armadilha.localizacao,
         data_instalacao=armadilha.data_instalacao,
+        removida_em=armadilha.removida_em,
         refil_ativo=_montar_refil_ativo(refil_ativo, agora),
         refis_anteriores=[
             RefilAnteriorSaida(

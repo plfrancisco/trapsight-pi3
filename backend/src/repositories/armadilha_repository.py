@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Final
 from uuid import UUID
 
@@ -79,6 +79,14 @@ class ArmadilhaRepository:
         """
         return self._session.get(Armadilha, armadilha_id)
 
+    def get_by_id_ativo(self, armadilha_id: UUID) -> Armadilha | None:
+        """Busca uma armadilha disponível para novas operações."""
+        statement = select(Armadilha).where(
+            Armadilha.id == armadilha_id,
+            Armadilha.removida_em.is_(None),
+        )
+        return self._session.scalars(statement).one_or_none()
+
     def get_by_id_for_update(self, armadilha_id: UUID) -> Armadilha | None:
         """Busca e bloqueia a linha da armadilha até o fim da transação.
 
@@ -89,7 +97,9 @@ class ArmadilhaRepository:
             A armadilha bloqueada ou None se não existir.
         """
         statement = (
-            select(Armadilha).where(Armadilha.id == armadilha_id).with_for_update()
+            select(Armadilha)
+            .where(Armadilha.id == armadilha_id, Armadilha.removida_em.is_(None))
+            .with_for_update()
         )
         return self._session.scalars(statement).one_or_none()
 
@@ -111,7 +121,11 @@ class ArmadilhaRepository:
         Returns:
             Todas as armadilhas visíveis na transação atual.
         """
-        statement = select(Armadilha).order_by(Armadilha.identificador)
+        statement = (
+            select(Armadilha)
+            .where(Armadilha.removida_em.is_(None))
+            .order_by(Armadilha.identificador)
+        )
         return list(self._session.scalars(statement))
 
     def update(
@@ -138,7 +152,7 @@ class ArmadilhaRepository:
         Raises:
             IdentificadorDuplicado: se o novo código já estiver cadastrado.
         """
-        armadilha = self.get_by_id(armadilha_id)
+        armadilha = self.get_by_id_ativo(armadilha_id)
         if armadilha is None:
             return None
 
@@ -158,6 +172,15 @@ class ArmadilhaRepository:
 
         if changed:
             self._flush_or_raise_duplicate()
+        return armadilha
+
+    def remover(self, armadilha_id: UUID, removida_em: datetime) -> Armadilha | None:
+        """Marca a armadilha como removida sem apagar análises nem refis."""
+        armadilha = self.get_by_id_for_update(armadilha_id)
+        if armadilha is None:
+            return None
+        armadilha.removida_em = removida_em
+        self._session.flush()
         return armadilha
 
     def _flush_or_raise_duplicate(self) -> None:

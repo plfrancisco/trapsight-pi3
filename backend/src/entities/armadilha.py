@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint, Uuid
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.entities.base import Base, UUIDTimestampMixin
@@ -32,6 +32,9 @@ class Armadilha(UUIDTimestampMixin, Base):
     )
     localizacao: Mapped[str | None] = mapped_column(String, nullable=True)
     data_instalacao: Mapped[date | None] = mapped_column(nullable=True)
+    removida_em: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     refis: Mapped[list[Refil]] = relationship(
         back_populates="armadilha",

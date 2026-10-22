@@ -137,6 +137,7 @@ class ArmadilhaDetalhe(BaseModel):
     modelo_id: UUID | None
     localizacao: str | None
     data_instalacao: date | None
+    removida_em: datetime | None = None
     refil_ativo: RefilAtivoSaida | None
     refis_anteriores: list[RefilAnteriorSaida]
     percentual_atual: Decimal | None

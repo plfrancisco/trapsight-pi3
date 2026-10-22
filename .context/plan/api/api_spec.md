@@ -192,6 +192,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | `POST` | `/api/armadilhas` | Cadastro |
 | `GET` | `/api/armadilhas/{id}` | Detalhe |
 | `PATCH` | `/api/armadilhas/{id}` | Cadastro (edição) |
+| `DELETE` | `/api/armadilhas/{id}` | Detalhe (remoção) |
 | `POST` | `/api/armadilhas/{id}/refis` | Detalhe (troca de refil) |
 | `GET` | `/api/armadilhas/{id}/analises` | Detalhe (gráfico e histórico) |
 | `POST` | `/api/analises` | Nova análise |
@@ -377,6 +378,16 @@ Atualização parcial. Aceita `identificador`, `modelo_id` e `localizacao`.
 `modelo_id` segue a regra da seção 4.2; enviar `null` desvincula o modelo.
 
 `data_instalacao` não é editável — alterá-la invalidaria o histórico.
+
+## 4.5 `DELETE /api/armadilhas/{id}`
+
+Remove a armadilha do painel por **remoção lógica**: grava `removida_em` e
+preserva refis, análises e imagens, que sustentam o histórico. Uma armadilha
+removida deixa de aparecer na listagem e não aceita novas operações
+(edição, troca de refil, análise), e o identificador continua reservado.
+
+**Resposta `204`:** sem corpo. **Erros:** `404 ARMADILHA_NAO_ENCONTRADA` se
+a armadilha não existir ou já tiver sido removida.
 
 ---
 

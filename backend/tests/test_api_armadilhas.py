@@ -89,6 +89,22 @@ def test_listar_armadilhas_sem_registros(client: TestClient) -> None:
     assert response.json() == []
 
 
+def test_preflight_cors_permite_excluir_armadilha(client: TestClient) -> None:
+    response = client.options(
+        "/api/armadilhas/00000000-0000-0000-0000-000000000001",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "DELETE",
+            "Access-Control-Request-Headers": "x-csrf-token",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "DELETE" in response.headers["access-control-allow-methods"]
+    assert "x-csrf-token" in response.headers["access-control-allow-headers"].lower()
+
+
 def test_listar_armadilhas_consolida_campos_nulos_estados_e_ordem(
     client: TestClient,
     session: Session,
@@ -375,6 +391,135 @@ def test_get_detalhe_inclui_historico_e_duracao_dos_refis(
     assert detalhe["status"] == "atencao"
 
 
+def test_delete_remove_do_painel_e_preserva_refis_e_analises(
+    client: TestClient,
+    session: Session,
+) -> None:
+    armadilha = ArmadilhaRepository(session).create(
+        identificador=f"ARM-REMOVER-{uuid4().hex[:10]}",
+        localizacao="Recebimento",
+        data_instalacao=date(2026, 2, 1),
+    )
+    repositorio_refil = RefilRepository(session)
+    anterior = repositorio_refil.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 2, 1),
+        data_troca=date(2026, 2, 28),
+    )
+    ativo = repositorio_refil.create(
+        armadilha_id=armadilha.id,
+        data_instalacao=date(2026, 3, 1),
+    )
+    _adicionar_analise(
+        session,
+        anterior.id,
+        datetime(2026, 2, 10, tzinfo=timezone.utc),
+        "25.00",
+        StatusAnalise.OK,
+    )
+    _adicionar_analise(
+        session,
+        ativo.id,
+        datetime(2026, 3, 10, tzinfo=timezone.utc),
+        "45.00",
+        StatusAnalise.ATENCAO,
+    )
+    session.commit()
+
+    resposta = client.delete(f"/api/armadilhas/{armadilha.id}")
+
+    assert resposta.status_code == 204
+    assert resposta.content == b""
+    assert all(
+        item["id"] != str(armadilha.id)
+        for item in client.get("/api/armadilhas").json()
+    )
+
+    detalhe = client.get(f"/api/armadilhas/{armadilha.id}")
+    assert detalhe.status_code == 200
+    assert detalhe.json()["removida_em"] == "2026-03-21T00:00:00Z"
+    assert [refil["id"] for refil in detalhe.json()["refis_anteriores"]] == [
+        str(anterior.id)
+    ]
+    assert detalhe.json()["refil_ativo"]["id"] == str(ativo.id)
+
+    historico = client.get(
+        f"/api/armadilhas/{armadilha.id}/analises?escopo=completo"
+    )
+    assert historico.status_code == 200
+    assert len(historico.json()) == 2
+    assert {analise["refil_id"] for analise in historico.json()} == {
+        str(anterior.id),
+        str(ativo.id),
+    }
+
+
+def test_armadilha_removida_recusa_edicao_refil_e_nova_remocao(
+    client: TestClient,
+    session: Session,
+) -> None:
+    armadilha = ArmadilhaRepository(session).create(
+        identificador=f"ARM-REMOVIDA-{uuid4().hex[:10]}"
+    )
+    session.commit()
+    removida = client.delete(f"/api/armadilhas/{armadilha.id}")
+    edicao = client.patch(
+        f"/api/armadilhas/{armadilha.id}", json={"localizacao": "Novo local"}
+    )
+    troca = client.post(
+        f"/api/armadilhas/{armadilha.id}/refis",
+        json={"data_instalacao": "2026-03-21"},
+    )
+    remover_novamente = client.delete(f"/api/armadilhas/{armadilha.id}")
+
+    assert removida.status_code == 204
+    _assert_erro(edicao, 404, "ARMADILHA_NAO_ENCONTRADA")
+    _assert_erro(troca, 404, "ARMADILHA_NAO_ENCONTRADA")
+    _assert_erro(remover_novamente, 404, "ARMADILHA_NAO_ENCONTRADA")
+
+
+def test_fluxo_crud_armadilha_grava_atualiza_consulta_e_remove(
+    client: TestClient,
+) -> None:
+    identificador = f"ARM-FLUXO-{uuid4().hex[:8]}"
+    modelo_id = client.get("/api/modelos-armadilha").json()[0]["id"]
+
+    criada = client.post(
+        "/api/armadilhas",
+        json={
+            "identificador": identificador,
+            "modelo_id": modelo_id,
+            "localizacao": "Recebimento",
+            "data_instalacao": "2026-03-01",
+            "criar_refil_inicial": True,
+        },
+    )
+
+    assert criada.status_code == 201
+    armadilha_id = criada.json()["id"]
+    assert criada.json()["identificador"] == identificador
+    assert criada.json()["refil_ativo"] is not None
+
+    consulta = client.get(f"/api/armadilhas/{armadilha_id}")
+    atualizada = client.patch(
+        f"/api/armadilhas/{armadilha_id}",
+        json={"localizacao": "Expedição"},
+    )
+    assert consulta.status_code == 200
+    assert consulta.json()["modelo_id"] == modelo_id
+    assert atualizada.status_code == 200
+    assert atualizada.json()["localizacao"] == "Expedição"
+
+    removida = client.delete(f"/api/armadilhas/{armadilha_id}")
+    painel = client.get("/api/armadilhas")
+    detalhe_historico = client.get(f"/api/armadilhas/{armadilha_id}")
+    assert removida.status_code == 204
+    assert all(item["id"] != armadilha_id for item in painel.json())
+    assert detalhe_historico.status_code == 200
+    assert detalhe_historico.json()["removida_em"] is not None
+    assert detalhe_historico.json()["refil_ativo"] is not None
+
+
 def test_get_nao_encontrada_e_uuid_invalido_usam_erros_padrao(
     client: TestClient,
 ) -> None:
@@ -465,6 +610,8 @@ def test_openapi_registra_erros_declarados_para_rotas_de_armadilha(
     assert resposta_erro["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/RespostaErro"
     }
+    operacao_delete = response.json()["paths"]["/api/armadilhas/{armadilha_id}"]["delete"]
+    assert {"204", "404", "422", "500"}.issubset(operacao_delete["responses"])
 
 
 def _modelo_stickfly(session: Session) -> str:

@@ -191,6 +191,7 @@ Unidade física instalada em um estabelecimento.
 | `modelo_id` | `uuid` | FK opcional para `modelo_armadilha.id`, `ON DELETE RESTRICT`. A API recebe só este campo e deriva `modelo` do catálogo |
 | `localizacao` | `varchar` | Descrição do ponto de instalação |
 | `data_instalacao` | `date` | |
+| `removida_em` | `timestamptz` | Nulo enquanto a armadilha está ativa. Preenchido pela remoção lógica; o histórico (refis, análises, imagens) permanece |
 | `criado_em` | `timestamptz` | Default `now()` |
 
 ## 6.3 `refil`
