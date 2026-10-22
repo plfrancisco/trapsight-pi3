@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Sequence
+from typing import Literal, Sequence
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import select
@@ -95,6 +95,7 @@ class ManifestoSeed:
     armadilhas: dict[str, UUID]
     refis: dict[UUID, UUID]
     analises: dict[UUID, UUID]
+    storage_backend: Literal["filesystem", "database"]
 
 
 @dataclass
@@ -284,7 +285,10 @@ def carregar_sprites_do_ambiente() -> tuple[SpriteCatalogado, ...]:
             "training.preparar_sprites no diretório externo indicado por "
             "TRAPSIGHT_TRAINING_DATA_DIR."
         )
-    raiz_repositorio = Path(__file__).resolve().parents[2]
+    raiz_backend = Path(__file__).resolve().parents[1]
+    raiz_repositorio = raiz_backend.parent
+    if raiz_repositorio == raiz_repositorio.parent:
+        raiz_repositorio = raiz_backend
     if diretorio.is_relative_to(raiz_repositorio):
         raise ErroSeedDemo(
             "TRAPSIGHT_TRAINING_DATA_DIR deve apontar para um banco fora do repositório."
@@ -306,6 +310,7 @@ def criar_seed_demo(
     limiar_atencao: Decimal = Decimal("40"),
     limiar_trocar: Decimal = Decimal("70"),
     resolucao: tuple[int, int] = RESOLUCAO_DEMO,
+    storage_backend: Literal["filesystem", "database"] = "filesystem",
 ) -> ResultadoSeedDemo:
     """Cria os seis cenários e suas mídias na transação atual.
 
@@ -330,6 +335,9 @@ def criar_seed_demo(
             "0004_catalogo_modelos_armadilha antes de executar o seed."
         )
 
+    if storage_backend not in ("filesystem", "database"):
+        raise ErroSeedDemo("STORAGE_BACKEND deve ser filesystem ou database.")
+
     base = _criar_ids(cenarios_seed())
     manifesto_previo = _ler_manifesto(diretorio_uploads)
     _validar_propriedade_no_banco(session, manifesto_previo, base)
@@ -340,8 +348,9 @@ def criar_seed_demo(
         instante_criacao,
         diretorio_uploads,
         resolucao,
+        storage_backend,
     )
-    manifesto_novo = _montar_manifesto(base, hoje, percentuais)
+    manifesto_novo = _montar_manifesto(base, hoje, percentuais, storage_backend)
     (staging / NOME_MANIFESTO).write_text(
         json.dumps(manifesto_novo, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",
@@ -353,6 +362,7 @@ def criar_seed_demo(
             staging,
             manifesto_previo,
             manifesto_novo,
+            storage_backend,
         )
         _substituir_registros(
             session,
@@ -364,6 +374,7 @@ def criar_seed_demo(
             modelo_versao,
             limiar_atencao,
             limiar_trocar,
+            storage_backend,
         )
     except Exception:
         if "operacao_arquivos" in locals():
@@ -434,10 +445,12 @@ def _ler_manifesto(diretorio_uploads: str | Path) -> ManifestoSeed | None:
         analises = {
             UUID(chave): UUID(valor) for chave, valor in dados["analises"].items()
         }
+        storage_backend = dados.get("storage_backend", "filesystem")
         if (
             dados.get("formato") != 1
             or set(armadilhas) != set(IDENTIFICADORES)
             or len(set(armadilhas.values())) != len(armadilhas)
+            or storage_backend not in ("filesystem", "database")
         ):
             raise ValueError("estrutura inesperada")
     except (
@@ -454,8 +467,13 @@ def _ler_manifesto(diretorio_uploads: str | Path) -> ManifestoSeed | None:
     for analise_id in analises:
         diretorio = raiz / str(analise_id)
         if diretorio.exists():
+            if storage_backend == "database":
+                raise ErroSeedDemo(
+                    "O manifesto informa armazenamento database, mas existe uma "
+                    f"pasta de mídia não reconhecida: {diretorio}."
+                )
             _validar_diretorio_analise(diretorio)
-    return ManifestoSeed(armadilhas, refis, analises)
+    return ManifestoSeed(armadilhas, refis, analises, storage_backend)
 
 
 def _validar_propriedade_no_banco(
@@ -586,6 +604,7 @@ def _gerar_midias(
     instante_criacao: datetime,
     diretorio_uploads: str | Path,
     resolucao: tuple[int, int],
+    storage_backend: Literal["filesystem", "database"],
 ) -> tuple[Path, list[dict[str, object]], list[RegistroPercentual]]:
     """Gera cenas convergidas e seus pares de arquivos em uma pasta temporária."""
     uploads = Path(diretorio_uploads).resolve()
@@ -631,8 +650,10 @@ def _gerar_midias(
             )
             diretorio_analise = staging / str(analise_id)
             diretorio_analise.mkdir()
-            amostra.imagem.save(diretorio_analise / "original.png", format="PNG")
-            amostra.mascara.save(diretorio_analise / "mascara.png", format="PNG")
+            caminho_imagem = diretorio_analise / "original.png"
+            caminho_mascara = diretorio_analise / "mascara.png"
+            amostra.imagem.save(caminho_imagem, format="PNG")
+            amostra.mascara.save(caminho_mascara, format="PNG")
             data_refil = hoje + timedelta(days=refil_spec.inicio_dias)
             analisado_em = datetime.combine(
                 data_refil + timedelta(days=leitura.dia_de_uso),
@@ -646,6 +667,16 @@ def _gerar_midias(
                     "analisado_em": analisado_em,
                     "percentual_coberto": percentual_decimal,
                     "caminho_imagem": f"{analise_id}/original.png",
+                    "imagem_original": (
+                        caminho_imagem.read_bytes()
+                        if storage_backend == "database"
+                        else None
+                    ),
+                    "mascara": (
+                        caminho_mascara.read_bytes()
+                        if storage_backend == "database"
+                        else None
+                    ),
                 }
             )
             percentuais.append(
@@ -671,6 +702,7 @@ def _montar_manifesto(
     ids: dict[str, object],
     hoje: date,
     percentuais: list[RegistroPercentual],
+    storage_backend: Literal["filesystem", "database"],
 ) -> dict[str, object]:
     """Monta o manifesto de propriedade e o resumo das mídias geradas."""
     return {
@@ -678,6 +710,7 @@ def _montar_manifesto(
         "semente": SEMENTE_DEMO,
         "data_execucao": hoje.isoformat(),
         "modelo_codigo": CODIGO_MODELO,
+        "storage_backend": storage_backend,
         "pesos_grupo": dict(sorted(PESOS_GRUPO_PADRAO.items())),
         "armadilhas": {chave: str(valor) for chave, valor in ids["armadilhas"].items()},
         "refis": {str(chave): str(valor[0]) for chave, valor in ids["refis"].items()},
@@ -701,6 +734,7 @@ def _instalar_midias(
     staging: Path,
     manifesto_previo: ManifestoSeed | None,
     manifesto_novo: dict[str, object],
+    storage_backend: Literal["filesystem", "database"],
 ) -> OperacaoArquivos:
     """Troca somente pastas de análises pertencentes a uma execução anterior."""
     uploads = Path(diretorio_uploads).resolve()
@@ -728,14 +762,16 @@ def _instalar_midias(
             if origem.exists():
                 _validar_diretorio_analise(origem)
                 origem.replace(backup / str(analise_id))
-        for analise_id in novos:
-            destino = uploads / str(analise_id)
-            if destino.exists():
-                raise ErroSeedDemo(
-                    f"O diretório de upload já existe e não pertence ao seed: {destino}."
-                )
-            (staging / str(analise_id)).replace(destino)
-            operacao.diretorios_instalados.append(analise_id)
+        if storage_backend == "filesystem":
+            for analise_id in novos:
+                destino = uploads / str(analise_id)
+                if destino.exists():
+                    raise ErroSeedDemo(
+                        "O diretório de upload já existe e não pertence ao seed: "
+                        f"{destino}."
+                    )
+                (staging / str(analise_id)).replace(destino)
+                operacao.diretorios_instalados.append(analise_id)
         (staging / NOME_MANIFESTO).replace(manifesto)
         operacao.manifesto_instalado = True
     except Exception:
@@ -770,6 +806,7 @@ def _substituir_registros(
     modelo_versao: str,
     limiar_atencao: Decimal,
     limiar_trocar: Decimal,
+    storage_backend: Literal["filesystem", "database"],
 ) -> None:
     """Substitui somente linhas listadas no manifesto de propriedade anterior."""
     if manifesto_previo is not None:
@@ -835,6 +872,10 @@ def _substituir_registros(
                 percentual_coberto=percentual,
                 status=status.value,
                 caminho_imagem=dados["caminho_imagem"],
+                imagem_original=(
+                    dados["imagem_original"] if storage_backend == "database" else None
+                ),
+                mascara=dados["mascara"] if storage_backend == "database" else None,
                 modelo_versao=modelo_versao,
                 criado_em=instante_criacao,
             )
@@ -909,11 +950,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.confirmar_ambiente,
         )
         print(f"Destino do banco: {destino}")
-        if settings.storage_backend != "filesystem":
-            raise ErroSeedDemo(
-                "O seed grava as mídias em UPLOADS_DIR; configure "
-                "STORAGE_BACKEND=filesystem."
-            )
         sprites = carregar_sprites_do_ambiente()
         engine = create_database_engine(settings.database_url.get_secret_value())
         with create_session_factory(engine)() as session:
@@ -925,6 +961,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     modelo_versao=_modelo_versao(settings),
                     limiar_atencao=Decimal(settings.limiar_atencao),
                     limiar_trocar=Decimal(settings.limiar_trocar),
+                    storage_backend=settings.storage_backend,
                 )
                 session.commit()
             except Exception:

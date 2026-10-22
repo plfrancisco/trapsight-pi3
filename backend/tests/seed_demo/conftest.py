@@ -82,12 +82,16 @@ def data_seed(monkeypatch: pytest.MonkeyPatch) -> date:
 def executar_seed(tmp_path: Path, sprites_seed: tuple[SpriteCatalogado, ...]):
     """Cria os registros com arquivos isolados no diretório temporário."""
 
-    def executar(session: Session):
+    def executar(
+        session: Session,
+        storage_backend: str = "filesystem",
+    ):
         return seed_demo.criar_seed_demo(
             session,
             diretorio_uploads=tmp_path / "uploads",
             sprites=sprites_seed,
             resolucao=(320, 240),
+            storage_backend=storage_backend,
         )
 
     return executar

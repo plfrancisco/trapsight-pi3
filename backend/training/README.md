@@ -199,12 +199,15 @@ $env:TRAPSIGHT_TRAINING_DATA_DIR = "D:\dados\trapsight\treino"
 uv run python -m src.seed_demo
 ```
 
-O comando grava as imagens e máscaras em `UPLOADS_DIR`, registra o percentual
-medido na máscara e imprime o alvo e o valor persistido de cada análise. O
-manifesto `.seed_demo_manifest.json` identifica os registros e arquivos que
-podem ser substituídos por uma reexecução. Outros registros e arquivos são
-preservados. Fora do desenvolvimento local, a execução exige a confirmação
-explícita `--confirmar-ambiente`; o destino é exibido sem credenciais.
+O comando registra o percentual medido na máscara e imprime o alvo e o valor
+persistido de cada análise. Com `STORAGE_BACKEND=filesystem`, imagens e máscaras
+ficam em `UPLOADS_DIR`. Com `STORAGE_BACKEND=database`, os PNGs ficam nas colunas
+`imagem_original` e `mascara`, e `caminho_imagem` guarda o identificador lógico
+da imagem. O manifesto `.seed_demo_manifest.json` identifica os registros e
+arquivos que podem ser substituídos por uma reexecução. Outros registros e
+arquivos são preservados. Fora do desenvolvimento local, a execução exige a
+confirmação explícita `--confirmar-ambiente`; o destino é exibido sem
+credenciais.
 
 ## Verificações
 
