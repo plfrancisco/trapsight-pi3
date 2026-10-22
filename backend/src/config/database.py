@@ -74,6 +74,12 @@ def create_database_engine(database_url: str | URL | None = None) -> Engine:
     return create_engine(
         url,
         pool_pre_ping=True,
+        pool_size=1,
+        max_overflow=0,
+        pool_timeout=10,
+        pool_recycle=300,
+        # Supavisor transaction mode cannot reuse prepared statements safely.
+        connect_args={"prepare_threshold": None},
         hide_parameters=True,
     )
 

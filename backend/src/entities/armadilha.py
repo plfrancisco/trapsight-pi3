@@ -29,6 +29,7 @@ class Armadilha(UUIDTimestampMixin, Base):
         Uuid(as_uuid=True),
         ForeignKey("modelo_armadilha.id", ondelete="RESTRICT"),
         nullable=True,
+        index=True,
     )
     localizacao: Mapped[str | None] = mapped_column(String, nullable=True)
     data_instalacao: Mapped[date | None] = mapped_column(nullable=True)
