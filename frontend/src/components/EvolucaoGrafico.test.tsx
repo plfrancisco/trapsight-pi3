@@ -12,7 +12,7 @@ describe('EvolucaoGrafico', () => {
     )
 
     expect(
-      screen.getByRole('img', {
+      screen.getByRole('group', {
         name: 'Evolução da cobertura: 1 medição, de 42,00% a 42,00%',
       }),
     ).toBeVisible()
@@ -27,24 +27,22 @@ describe('EvolucaoGrafico', () => {
       />,
     )
 
-    expect(screen.getByRole('img')).toHaveAttribute(
+    expect(screen.getByRole('group')).toHaveAttribute(
       'aria-label',
       'Evolução da cobertura: 1 medição, de 42,00% a 42,00%',
     )
   })
 
-  it('aceita eventos de seleção e marcas de troca mantendo a descrição acessível', () => {
+  it('aceita seleção e mantém a descrição acessível', () => {
     render(
       <EvolucaoGrafico
-        marcasDeTroca={[Date.parse('2026-09-01T00:00:00Z')]}
         marcador={Date.parse('2026-10-16T08:00:00Z')}
-        onInteracaoManual={vi.fn()}
         onMarcadorChange={vi.fn()}
         resumo="Evolução completa da cobertura"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'Evolução completa da cobertura' })).toBeVisible()
+    expect(screen.getByRole('group', { name: 'Evolução completa da cobertura' })).toBeVisible()
   })
 })

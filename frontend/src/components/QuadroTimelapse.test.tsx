@@ -16,36 +16,22 @@ const analise: Analise = {
 }
 
 describe('QuadroTimelapse', () => {
-  it('exibe os dados, as imagens e a leitura acessível do quadro', () => {
+  it('exibe os dados, a imagem original e a leitura acessível do quadro', () => {
     render(
-      <QuadroTimelapse analise={analise} indice={1} quantidade={3} reproduzindo={false} />,
+      <QuadroTimelapse analise={analise} indice={1} quantidade={3} />,
     )
 
-    expect(screen.getByRole('heading', { name: 'Quadro 2 de 3' })).toBeVisible()
-    expect(screen.getByText('Cobertura: 42,50%')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Análise 02' })).toBeVisible()
+    expect(screen.getByText('42,50%')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
       'src',
       'http://localhost:8000/api/analises/analise-1/imagem',
     )
-    expect(screen.getByRole('img', { name: /Máscara da análise/ })).toHaveAttribute(
-      'src',
-      'http://localhost:8000/api/analises/analise-1/mascara',
-    )
+    expect(screen.queryByRole('img', { name: /Máscara da análise/ })).not.toBeInTheDocument()
     expect(screen.getByText(/Quadro 2 de 3/, { selector: 'p' })).toHaveAttribute(
       'aria-live',
       'polite',
-    )
-  })
-
-  it('desativa anúncios do quadro enquanto a reprodução avança', () => {
-    render(
-      <QuadroTimelapse analise={analise} indice={0} quantidade={2} reproduzindo />,
-    )
-
-    expect(screen.getByText(/Quadro 1 de 2/, { selector: 'p' })).toHaveAttribute(
-      'aria-live',
-      'off',
     )
   })
 })

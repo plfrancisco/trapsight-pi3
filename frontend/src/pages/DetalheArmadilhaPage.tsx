@@ -122,9 +122,8 @@ export default function DetalheArmadilhaPage() {
       ) : !armadilha.removida_em ? (
         <Timelapse
           key={armadilha.id}
-          armadilhaId={armadilha.id}
           analisesAtivas={analises}
-          refisAnteriores={armadilha.refis_anteriores}
+          diasAteSaturar={armadilha.dias_ate_saturar}
         />
       ) : null}
       <ListaAnalises
