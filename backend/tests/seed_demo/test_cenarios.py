@@ -153,6 +153,65 @@ def test_datas_sao_relativas_ao_relogio_mockado(
     assert alerta_desde.date() == data_seed - timedelta(days=3)
 
 
+def test_armadilha_001_suaviza_a_leitura_antes_do_alerta(
+    session: Session,
+    executar_seed,
+) -> None:
+    """Limita o crescimento entre a nona e a décima leitura."""
+    resultado = executar_seed(session)
+    resultado.confirmar_arquivos()
+
+    armadilha = _armadilha(session, "ARM-001")
+    leituras = list(
+        session.scalars(
+            select(Analise)
+            .join(Refil, Analise.refil_id == Refil.id)
+            .where(Refil.armadilha_id == armadilha.id)
+            .order_by(Analise.analisado_em)
+        )
+    )
+
+    salto = leituras[9].percentual_coberto - leituras[8].percentual_coberto
+    assert Decimal("0") < salto <= Decimal("10")
+
+
+def test_armadilha_004_cresce_na_taxa_historica_com_variacao(
+    session: Session,
+    executar_seed,
+) -> None:
+    """Mantém a curva ativa perto da taxa anterior e do alvo final definido."""
+    resultado = executar_seed(session)
+    resultado.confirmar_arquivos()
+
+    armadilha = _armadilha(session, "ARM-004")
+    refil_ativo = session.scalars(
+        select(Refil).where(
+            Refil.armadilha_id == armadilha.id,
+            Refil.data_troca.is_(None),
+        )
+    ).one()
+    leituras = list(
+        session.scalars(
+            select(Analise)
+            .where(Analise.refil_id == refil_ativo.id)
+            .order_by(Analise.analisado_em)
+        )
+    )
+
+    assert len(leituras) == 5
+    assert Decimal("25") <= leituras[-1].percentual_coberto <= Decimal("30")
+    dias = (leituras[-1].analisado_em - leituras[0].analisado_em).days
+    taxa_media = (
+        leituras[-1].percentual_coberto - leituras[0].percentual_coberto
+    ) / Decimal(dias)
+    assert Decimal("1.3") <= taxa_media <= Decimal("1.9")
+    taxas_por_intervalo = [
+        (seguinte.percentual_coberto - anterior.percentual_coberto) / Decimal(3)
+        for anterior, seguinte in zip(leituras, leituras[1:], strict=False)
+    ]
+    assert max(taxas_por_intervalo) - min(taxas_por_intervalo) >= Decimal("0.3")
+
+
 def test_projecao_armadilha_002_fica_em_torno_de_cinco_dias(
     session: Session,
     executar_seed,

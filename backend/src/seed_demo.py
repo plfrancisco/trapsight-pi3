@@ -179,7 +179,7 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                         LeituraSpec(dia, percentual)
                         for dia, percentual in zip(
                             range(2, 33, 3),
-                            (10, 16, 22, 28, 34, 40, 46, 52, 58, 72.5, 78),
+                            (10, 17, 24, 31, 38, 45, 52, 58, 64, 72.5, 78),
                             strict=True,
                         )
                     ),
@@ -239,10 +239,10 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                     None,
                     (
                         LeituraSpec(3, 8),
-                        LeituraSpec(6, 20),
-                        LeituraSpec(9, 34),
-                        LeituraSpec(12, 48),
-                        LeituraSpec(15, 62),
+                        LeituraSpec(6, 12),
+                        LeituraSpec(9, 18),
+                        LeituraSpec(12, 22),
+                        LeituraSpec(15, 27),
                     ),
                 ),
             ),
