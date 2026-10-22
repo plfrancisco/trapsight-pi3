@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Uma execução por branch: um push novo cancela a anterior ainda em andamento.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (lint, formatação e testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: armadilhas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d armadilhas_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/armadilhas_test
+      MODEL_WEIGHTS_PATH: /tmp/pesos.pt
+      MODEL_VERSION: v0.1.0-ci
+      UPLOADS_DIR: /tmp/uploads
+      CORS_ORIGENS: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Instala as dependências do lock
+        run: uv sync --locked --group baseline
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Formatação
+        run: uv run ruff format --check src tests
+      - name: Migrações
+        run: uv run alembic upgrade head
+      - name: Testes
+        run: uv run pytest -q
+
+  frontend:
+    name: Frontend (tipos, lint e testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instala as dependências do lock
+        run: npm ci
+      - name: Tipos e build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Testes
+        run: npm test
+
+  migracoes-producao:
+    name: Migrações com o papel de produção
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sobe o Postgres descartável e aplica, desce e reaplica as migrações
+        run: bash scripts/verificar-migracoes-producao.sh

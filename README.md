@@ -80,7 +80,7 @@ Os três serviços (frontend, API e banco) sobem juntos com Docker Compose. O tr
 | Banco de dados | PostgreSQL                                                              |
 | Frontend       | React, TypeScript, Vite, Tailwind CSS, Recharts                         |
 | Infraestrutura | Docker, Docker Compose, Caddy (proxy reverso com HTTPS automático), Vercel (frontend), Supabase (banco) |
-| Qualidade      | Ruff, pytest, ESLint                                                    |
+| Qualidade      | Ruff, pytest, ESLint, GitHub Actions                                    |
 
 ## Status
 
@@ -119,7 +119,7 @@ docker compose up --build
 
 **Publicação online:** o protótipo está hospedado com o frontend na Vercel e o banco no Supabase, e o acesso exige login. O repositório também traz um Compose de produção (`docker-compose.prod.yml`) em que só o proxy (portas 80 e 443) fica público, usado nos testes de segurança locais. O desenho está em [`.context/plan/foundation/login.md`](.context/plan/foundation/login.md) e a suíte de testes de segurança em [`security/`](security/README.md).
 
-Para desenvolver o backend fora do Docker, instale o [`uv`](https://docs.astral.sh/uv/) e use `uv sync`, `uv run ruff check .` e `uv run pytest` na pasta `backend/`. Os testes de integração precisam de um PostgreSQL com as migrations aplicadas (`uv run alembic upgrade head`). Com o banco do Compose ativo (`docker compose up -d db`), `scripts/testar-backend.sh` roda os testes em um banco separado dentro dele, sem subir outro PostgreSQL.
+Para desenvolver o backend fora do Docker, instale o [`uv`](https://docs.astral.sh/uv/) e use `uv sync`, `uv run ruff check .` e `uv run pytest` na pasta `backend/`. Os testes de integração precisam de um PostgreSQL com as migrations aplicadas (`uv run alembic upgrade head`). Com o banco do Compose ativo (`docker compose up -d db`), `scripts/testar-backend.sh` roda os testes em um banco separado dentro dele, sem subir outro PostgreSQL. O CI do GitHub Actions roda lint, formatação e testes do backend e do frontend, além da verificação das migrações com o papel de produção, a cada push e pull request.
 
 ## Documentação
 
