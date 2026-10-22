@@ -33,8 +33,24 @@ dev = [
 ]
 treino = [
     "rembg[cpu]>=2.0",
+    "albumentations>=2.0",
+    "opencv-python-headless>=4.10,<5",
+    "segmentation-models-pytorch>=0.5",
+    "torch>=2.7",
+    "torchmetrics>=1.6",
+    "torchvision>=0.22",
 ]
 baseline = ["opencv-python-headless>=4.10,<5"]
+
+# No Windows o PyTorch vem do índice com CUDA; nas demais plataformas, do PyPI.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'win32'" }]
+torchvision = [{ index = "pytorch-cu128", marker = "sys_platform == 'win32'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
