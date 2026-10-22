@@ -1,0 +1,10 @@
+{
+  "dice_treino": 0.80507881,
+  "hash_conjunto_treino_sha256": "1b6c67fca2a2d404e068be2436c5c8c44f0add0107e339934cd08a43cb5c0d6b",
+  "limiar_v": 166,
+  "metodo": "limiar_global_hsv_v",
+  "quantidade_amostras_treino": 2100,
+  "regra": "V < limiar_v dentro da placa",
+  "semente_global": 20261021,
+  "versao": 1
+}

@@ -211,8 +211,8 @@ explícita `--confirmar-ambiente`; o destino é exibido sem credenciais.
 Execute os testes e o lint a partir do diretório `backend`:
 
 ```powershell
-uv run pytest
-uv run ruff check training tests
+uv run --group dev --group baseline pytest
+uv run --group dev ruff check training tests
 ```
 
 ## Baseline OpenCV

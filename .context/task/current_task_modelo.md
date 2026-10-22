@@ -97,13 +97,17 @@ tokens de IA.
 
 ## ML03 — Baseline OpenCV
 
-- [ ] Segmentação por limiar de luminosidade (canal V do HSV)
-- [ ] Limiar calibrado sobre o conjunto de treino, não escolhido
+- [x] Segmentação por limiar de luminosidade (canal V do HSV)
+- [x] Limiar calibrado sobre o conjunto de treino, não escolhido
       arbitrariamente
-- [ ] **Não implementar limiar adaptativo**
+- [x] **Não implementar limiar adaptativo**
 
 **Especificação:** `../plan/model/modelo_spec.md`, seção 9.
 **Dependências:** ML02 e ML02A (precisa de imagens para calibrar).
+
+**Calibração:** `../../backend/training/baseline_calibracao.json`; teste:
+450 amostras, Dice 0,80553837, IoU 0,67439452, erro absoluto médio
+11,00708889 pp, acurácia de status 0,71777778.
 
 **Nota:** o baseline existe para representar a abordagem clássica ingênua.
 Torná-lo adaptativo aproximaria seu comportamento do modelo treinado e
