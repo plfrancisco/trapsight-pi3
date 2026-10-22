@@ -14,6 +14,7 @@ Instale as dependências opcionais usadas para executar os testes do modelo com:
 uv sync --group inference
 ```
 
-A inferência mantém a orientação dos pixels gravados e ignora a orientação EXIF.
-O pipeline de treino não aplica a transformação EXIF; manter a mesma convenção
-evita que o modelo receba imagens em uma orientação diferente da vista no treino.
+A entrada do modelo mantém a orientação dos pixels gravados e ignora a
+orientação EXIF, conforme a convenção do pipeline de treino. A máscara composta
+aplica a orientação EXIF antes de ser salva, para coincidir com a imagem
+original exibida pelo navegador.

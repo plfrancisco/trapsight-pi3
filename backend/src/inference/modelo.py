@@ -10,7 +10,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from src.inference.contrato import (
     LIMITE_PIXELS_IMAGEM,
@@ -268,7 +268,10 @@ class InferidorModelo:
                 if largura * altura > LIMITE_PIXELS_IMAGEM:
                     raise FalhaInferencia(_MENSAGEM_IMAGEM_INVALIDA)
                 arquivo.load()
-                return arquivo.convert("RGB")
+                original = arquivo.convert("RGB")
+                if "exif" in arquivo.info:
+                    original.info["exif"] = arquivo.info["exif"]
+                return original
         except (Image.DecompressionBombError, OSError, ValueError):
             raise FalhaInferencia(_MENSAGEM_IMAGEM_INVALIDA) from None
 
@@ -301,6 +304,9 @@ class InferidorModelo:
         sobreposicao = Image.new("RGBA", original.size, (255, 0, 255, 0))
         sobreposicao.putalpha(alfa)
         resultado = Image.alpha_composite(original.convert("RGBA"), sobreposicao)
+        if "exif" in original.info:
+            resultado.info["exif"] = original.info["exif"]
+        resultado = ImageOps.exif_transpose(resultado)
         buffer = BytesIO()
         resultado.save(buffer, format="PNG", optimize=False)
         return buffer.getvalue()

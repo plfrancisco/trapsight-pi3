@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageOps
 
 from src.entities.status import StatusAnalise
 from src.inference.contrato import FalhaInferencia, PlacaNaoDetectada
@@ -97,6 +97,21 @@ def _imagem_png(tamanho: tuple[int, int] = (64, 48)) -> bytes:
     return buffer.getvalue()
 
 
+def _imagem_jpeg_com_orientacao_exif(
+    tamanho: tuple[int, int] = (64, 48),
+) -> bytes:
+    """Cria um JPEG cuja orientação declarada troca largura e altura."""
+    exif = Image.Exif()
+    exif[274] = 6
+    buffer = BytesIO()
+    Image.new("RGB", tamanho, (255, 255, 255)).save(
+        buffer,
+        format="JPEG",
+        exif=exif,
+    )
+    return buffer.getvalue()
+
+
 def _inferidor(caminho: Path) -> InferidorModelo:
     """Configura um inferidor com limiares reduzidos para teste."""
     return InferidorModelo(
@@ -131,6 +146,27 @@ def test_checkpoint_produz_percentual_hash_mascara_original_e_resultado_determin
         assert mascara.size == (64, 48)
         assert mascara.convert("RGB").getpixel((4, 20)) == (255, 153, 255)
         assert mascara.convert("RGB").getpixel((60, 20)) == (255, 255, 255)
+
+
+def test_mascara_aplica_orientacao_exif_da_imagem_original(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    torch_module: Any,
+) -> None:
+    """Salva a máscara nas dimensões exibidas pelo navegador para EXIF 6."""
+    _configurar_construtor(monkeypatch, torch_module)
+    caminho = _checkpoint(torch_module, tmp_path / "mini.pt")
+    inferidor = _inferidor(caminho)
+    imagem = _imagem_jpeg_com_orientacao_exif()
+
+    resultado = inferidor.inferir(imagem)
+
+    with Image.open(BytesIO(imagem)) as original:
+        tamanho_exibido = ImageOps.exif_transpose(original).size
+        assert original.size == (64, 48)
+    with Image.open(BytesIO(resultado.mascara)) as mascara:
+        assert mascara.format == "PNG"
+        assert mascara.size == tamanho_exibido == (48, 64)
 
 
 @pytest.mark.parametrize(
