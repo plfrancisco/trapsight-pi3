@@ -214,3 +214,33 @@ Execute os testes e o lint a partir do diretório `backend`:
 uv run pytest
 uv run ruff check training tests
 ```
+
+## Baseline OpenCV
+
+O baseline usa um único limiar global no canal V do HSV. A calibração varre os
+limiares de 0 a 255 e seleciona o que maximiza o Dice somente nas amostras de
+`treino`. O arquivo `training/baseline_calibracao.json` registra o limiar, a
+semente global e o SHA-256 das imagens e máscaras de treino; mantenha esse
+arquivo versionado junto com a avaliação correspondente.
+
+No dataset sintético, a máscara de classes delimita a placa para representar a
+entrada pré-recortada pressuposta pelo baseline. Dentro dela, o baseline conta
+como cobertura cada pixel com `V < limiar_v`. Essa regra não muda por imagem e
+conta sujeira escura como cobertura, limitação esperada do método.
+
+Na pasta `backend`, execute:
+
+```powershell
+uv run --group baseline python -m training.baseline calibrar `
+  --dataset "D:\dados\trapsight\dataset-sintetico"
+
+uv run --group baseline python -m training.baseline avaliar `
+  --dataset "D:\dados\trapsight\dataset-sintetico" `
+  --split teste
+```
+
+A avaliação exige que a semente e o hash do conjunto de treino coincidam com o
+arquivo de calibração. O JSON de métricas é gravado no diretório do dataset como
+`metricas_baseline_teste.json`; ele inclui Dice, IoU, erro absoluto médio do
+percentual em pontos percentuais e acurácia do status. A calibração não lê
+amostras de validação ou teste.
