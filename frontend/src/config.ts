@@ -1,8 +1,4 @@
-const apiUrl = import.meta.env.VITE_API_URL?.trim()
-
-if (!apiUrl) {
-  throw new Error('A variável pública VITE_API_URL é obrigatória.')
-}
+const apiUrl = import.meta.env.VITE_API_URL?.trim() || '/api'
 
 /** Endereço público usado pelo frontend para localizar a API. */
 export const API_URL = apiUrl
@@ -21,4 +17,8 @@ export const API_BASE = new URL(
  * login e protege as rotas da interface): quem impõe a autenticação é sempre o
  * backend. Desligada, serve para testar a interface isolada.
  */
-export const AUTENTICACAO_ATIVA = import.meta.env.VITE_AUTENTICACAO_ATIVA === 'true'
+const autenticacaoConfigurada = import.meta.env.VITE_AUTENTICACAO_ATIVA
+export const AUTENTICACAO_ATIVA =
+  autenticacaoConfigurada === undefined
+    ? import.meta.env.PROD
+    : autenticacaoConfigurada === 'true'
