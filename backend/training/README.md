@@ -186,6 +186,26 @@ ser nova ou estar vazia. O diretório contém:
   dominante de cor e divisão treino/validação/teste;
 - `configuracao.json`: parâmetros globais usados na geração.
 
+## Dados de demonstração
+
+O seed do backend cria seis armadilhas e seus ciclos de refil com análises e
+mídias sintéticas. Execute-o explicitamente a partir de `backend`, depois de
+configurar o PostgreSQL de desenvolvimento, `UPLOADS_DIR` e o banco de sprites
+externo:
+
+```powershell
+cd backend
+$env:TRAPSIGHT_TRAINING_DATA_DIR = "D:\dados\trapsight\treino"
+uv run python -m src.seed_demo
+```
+
+O comando grava as imagens e máscaras em `UPLOADS_DIR`, registra o percentual
+medido na máscara e imprime o alvo e o valor persistido de cada análise. O
+manifesto `.seed_demo_manifest.json` identifica os registros e arquivos que
+podem ser substituídos por uma reexecução. Outros registros e arquivos são
+preservados. Fora do desenvolvimento local, a execução exige a confirmação
+explícita `--confirmar-ambiente`; o destino é exibido sem credenciais.
+
 ## Verificações
 
 Execute os testes e o lint a partir do diretório `backend`:

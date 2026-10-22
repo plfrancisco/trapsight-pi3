@@ -165,6 +165,27 @@ class AmostraSintetica:
     alvo_atingido: bool
 
 
+@dataclass(frozen=True)
+class GeometriaPlaca:
+    """Dimensões fixas da placa adesiva dentro de uma cena."""
+
+    resolucao: tuple[int, int]
+    caixa: tuple[int, int, int, int]
+    margem_moldura: int
+
+
+def create_plate_geometry(
+    resolucao: tuple[int, int],
+    rng: random.Random,
+) -> GeometriaPlaca:
+    """Sorteia a posição e as dimensões de uma placa para reutilização."""
+    largura, altura = resolucao
+    if largura < 100 or altura < 100:
+        raise ValueError("Cada dimensão da resolução precisa ter ao menos 100 pixels.")
+    caixa, margem = _calcular_caixa_placa(largura, altura, rng)
+    return GeometriaPlaca(resolucao, caixa, margem)
+
+
 def load_sprite_catalog(diretorio_sprites: Path) -> tuple[SpriteCatalogado, ...]:
     """Carrega e valida o manifesto e os sprites PNG associados.
 
@@ -333,6 +354,8 @@ def generate_sample(
     resolucao: tuple[int, int] = RESOLUCAO_PADRAO,
     limite_sprites: int = LIMITE_SPRITES_POR_AMOSTRA,
     pesos_grupo: dict[str, float] | None = None,
+    geometria_placa: GeometriaPlaca | None = None,
+    rng_base: random.Random | None = None,
 ) -> AmostraSintetica:
     """Compõe uma cena e uma máscara de três classes com uma semente local.
 
@@ -345,6 +368,8 @@ def generate_sample(
         resolucao: Largura e altura da cena em pixels.
         limite_sprites: Máximo de tentativas para limitar a composição.
         pesos_grupo: Pesos normalizados usados para selecionar os grupos.
+        geometria_placa: Posição e dimensões compartilhadas entre cenas.
+        rng_base: Gerador separado para repetir fundo, luz e moldura.
 
     Returns:
         Cena RGB, máscara L e metadados derivados da máscara final.
@@ -367,15 +392,21 @@ def generate_sample(
             "Cada dimensão precisa ter ao menos 100 pixels e o limite de sprites precisa ser positivo."
         )
 
-    caixa_placa, margem_moldura = _calcular_caixa_placa(largura, altura, rng)
+    if geometria_placa is None:
+        geometria_placa = create_plate_geometry(resolucao, rng)
+    elif geometria_placa.resolucao != resolucao:
+        raise ValueError("A geometria da placa precisa usar a resolução da cena.")
+    caixa_placa = geometria_placa.caixa
+    margem_moldura = geometria_placa.margem_moldura
     idade_relativa = idade_simulada_dias / idade_maxima_dias
+    rng_cena = rng if rng_base is None else rng_base
     cena, mascara, dominante_cor, dominante_rgb = _criar_cena(
         largura,
         altura,
         caixa_placa,
         margem_moldura,
         idade_relativa,
-        rng,
+        rng_cena,
     )
     uniao = Image.new(
         "L", (caixa_placa[2] - caixa_placa[0], caixa_placa[3] - caixa_placa[1])

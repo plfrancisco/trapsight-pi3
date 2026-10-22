@@ -1,7 +1,7 @@
 # CURRENT TASK — DADOS DE DEMONSTRAÇÃO — Projeto Integrador
 
 **Versão:** 1.0
-**Status:** ATIVA
+**Status:** CONCLUÍDA
 **Escopo:** script de seed com os seis cenários de demonstração
 
 ---
@@ -26,14 +26,14 @@ imagens.
 
 ## SEED01 — Script de seed
 
-- [ ] Seis armadilhas (`ARM-001` a `ARM-006`) cobrindo os estados descritos
+- [x] Seis armadilhas (`ARM-001` a `ARM-006`) cobrindo os estados descritos
       na especificação: em alerta, projeção com taxa constante, refil novo,
       histórico com dois refis anteriores, sem análises, sem refil ativo
-- [ ] Determinístico (semente fixa), idempotente
-- [ ] Datas relativas à execução, nunca absolutas
-- [ ] Reexecução remove apenas os dados criados pelo próprio seed antes de
+- [x] Determinístico (semente fixa), idempotente
+- [x] Datas relativas à execução, nunca absolutas
+- [x] Reexecução remove apenas os dados criados pelo próprio seed antes de
       recriar
-- [ ] Imagens geradas correspondem ao percentual registrado em cada análise
+- [x] Imagens geradas correspondem ao percentual registrado em cada análise
 
 **Especificação:** `../plan/data/seed_demo.md`.
 **Dependências:** `completed/current_task_banco.md` (DB01), `current_task_modelo.md`
