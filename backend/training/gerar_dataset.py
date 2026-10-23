@@ -30,11 +30,16 @@ def criar_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Gera imagens sintéticas, máscaras e metadados do TrapSight."
     )
-    parser.add_argument(
+    origem = parser.add_mutually_exclusive_group(required=True)
+    origem.add_argument(
         "--sprites",
         type=Path,
-        required=True,
-        help="Diretório do banco local com manifest.json e sprites PNG.",
+        help="Catálogo legado com manifest.json e sprites PNG.",
+    )
+    origem.add_argument(
+        "--placas-reais",
+        type=Path,
+        help="Diretório com imagens/, mascaras/ e placas UMS reais.",
     )
     parser.add_argument(
         "--saida",
@@ -80,6 +85,30 @@ def criar_parser() -> argparse.ArgumentParser:
             "Máximo de tentativas de composição por imagem "
             f"(padrão: {LIMITE_SPRITES_POR_AMOSTRA})."
         ),
+    )
+    parser.add_argument(
+        "--proporcao-bases-reais",
+        type=float,
+        default=0.5,
+        help="Fração de bases reais na recomposição (padrão: 0.5).",
+    )
+    parser.add_argument(
+        "--intensidade-aglomeracao",
+        type=float,
+        default=0.70,
+        help="Fração da área nova concentrada em grupos (padrão: 0.70).",
+    )
+    parser.add_argument(
+        "--limite-reuso-recorte",
+        type=int,
+        default=2,
+        help="Máximo de vezes que um recorte aparece na mesma amostra.",
+    )
+    parser.add_argument(
+        "--proporcao-placas-avaliacao",
+        type=float,
+        default=0.2,
+        help="Fração de placas isolada para avaliação (padrão: 0.2).",
     )
     parser.add_argument(
         "--px-por-mm",
@@ -138,11 +167,16 @@ def main(argumentos: list[str] | None = None) -> int:
     opcoes = parser.parse_args(argumentos)
     try:
         dados_externos = diretorio_dados_configurado()
-        if not opcoes.sprites.resolve().is_relative_to(dados_externos):
-            raise ValueError("O banco precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR.")
         if not opcoes.saida.resolve().is_relative_to(dados_externos):
             raise ValueError("A saída precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR.")
-        sprites = load_sprite_catalog(opcoes.sprites)
+        if opcoes.sprites is not None:
+            if not opcoes.sprites.resolve().is_relative_to(dados_externos):
+                raise ValueError(
+                    "O banco de sprites precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR."
+                )
+            sprites = load_sprite_catalog(opcoes.sprites)
+        else:
+            sprites = ()
         configuracao = ConfiguracaoDataset(
             diretorio_saida=opcoes.saida,
             semente=opcoes.semente,
@@ -154,6 +188,11 @@ def main(argumentos: list[str] | None = None) -> int:
             px_por_mm=opcoes.px_por_mm,
             k_escala_min=opcoes.k_escala_min,
             k_escala_max=opcoes.k_escala_max,
+            diretorio_placas_reais=opcoes.placas_reais,
+            proporcao_bases_reais=opcoes.proporcao_bases_reais,
+            intensidade_aglomeracao=opcoes.intensidade_aglomeracao,
+            limite_reuso_recorte=opcoes.limite_reuso_recorte,
+            proporcao_placas_avaliacao=opcoes.proporcao_placas_avaliacao,
         )
         inicio = time.perf_counter()
         registros = generate_dataset(configuracao, sprites)
@@ -163,7 +202,10 @@ def main(argumentos: list[str] | None = None) -> int:
 
     print(f"Dataset gerado: {opcoes.saida.resolve()}")
     print(f"Amostras: {len(registros)}")
-    print(f"Sprites catalogados: {len(sprites)}")
+    if opcoes.sprites is not None:
+        print(f"Sprites catalogados: {len(sprites)}")
+    else:
+        print(f"Placas reais: {opcoes.placas_reais.resolve()}")
     print(f"Semente global: {opcoes.semente}")
     print(
         "Alvos atingidos: "
