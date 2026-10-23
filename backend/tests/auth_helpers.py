@@ -85,6 +85,7 @@ def aplicar_credenciais(client: TestClient, credenciais: CredenciaisDeTeste) -> 
         credenciais: sessão a usar.
     """
     app = client.app
+    client.cookies.clear()
     client.cookies.set(nome_do_cookie(app.state.settings), credenciais.token)
     client.headers["X-CSRF-Token"] = credenciais.csrf_token
     client.headers["Origin"] = ORIGEM_DE_TESTE
