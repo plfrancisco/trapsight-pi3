@@ -39,7 +39,6 @@ jobs:
       MODEL_VERSION: v0.1.0-ci
       UPLOADS_DIR: /tmp/uploads
       CORS_ORIGENS: http://localhost:5173
-      UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
