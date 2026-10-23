@@ -420,6 +420,7 @@ def test_troca_de_senha_revoga_outras_sessoes_e_emite_nova(
     assert novo != token_antigo
     client.headers["X-CSRF-Token"] = resposta.json()["csrf_token"]
     assert client.get("/api/auth/me").status_code == 200
+    client.cookies.clear()
     client.cookies.set("trapsight_sessao", outra.token)
     assert client.get("/api/auth/me").status_code == 401
     client.cookies.set("trapsight_sessao", token_antigo)
