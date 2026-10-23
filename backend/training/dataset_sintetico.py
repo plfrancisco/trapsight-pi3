@@ -13,6 +13,7 @@ import json
 import math
 import platform
 import random
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
@@ -81,6 +82,36 @@ FREQUENCIAS_DISTRATORES = (
     ("pelos", 0.18),
     ("respingos", 0.28),
 )
+FAIXAS_COBERTURA_RECOMPOSICAO: tuple[tuple[FaixaCobertura, float, float], ...] = (
+    ("ok", 0.0, 10.0),
+    ("atencao", 10.0, 20.0),
+    ("trocar", 20.0, 70.0),
+)
+NOMES_BASES_REAIS = (
+    "senai_tebrau_sb__resized_w_uv_tebrau_160824_c172.png",
+    "senai_tebrau_sb__resized_w_uv_tebrau_160824_b171.png",
+    "senai_tebrau_sb__resized_w_uv_tebrau_160824_a167.png",
+    "luzi_sb__resized_w_uv_luzi_150824_b310.png",
+    "senai_tebrau_sb__resized_w_uv_tebrau_160824_a164.png",
+    "pontian_sb_b102-c124__resized_w_uv_pontian_170824_b117.png",
+)
+AREA_MINIMA_RECORTE_REAL = 25
+PROPORCAO_MAXIMA_RECORTE_REAL = 4.0
+EROSAO_PLACA_PX = 26
+LIMIAR_PIXEL_ESCURO = 110
+AREA_COMPONENTE_AGLOMERADO = 500
+LADO_MAXIMO_RECORTE_DISPERSO = 14
+EFICIENCIA_AREA_AGLOMERADA = 0.25
+EFICIENCIA_AREA_DISPERSA = 0.9
+FRACAO_RAIO_FOCO_LARGURA = 0.14
+FRACAO_RAIO_FOCO_ALTURA = 0.18
+FRACAO_MARGEM_DISPERSAO = 0.5
+DIVISOR_ESPACAMENTO_DISPERSO = 6
+NUMERO_MINIMO_FOCOS = 4
+NUMERO_MAXIMO_FOCOS = 7
+AMOSTRAS_DESCRITORES_VISUAIS = 60
+TOLERANCIA_RECOMPOSICAO_PP = 1.0
+COMPONENTES_ESCUROS_REFERENCIA = 5144
 
 
 @dataclass(frozen=True)
@@ -133,6 +164,11 @@ class ConfiguracaoDataset:
         k_escala_min: Limite inferior da escala visual do inseto.
         k_escala_max: Limite superior da escala visual do inseto.
         grade_densidade: Quantidade de células usadas para amostrar posições.
+        diretorio_placas_reais: Diretório com imagens e máscaras reais.
+        proporcao_bases_reais: Fração das amostras com base real.
+        intensidade_aglomeracao: Fração da área nova concentrada em grupos.
+        limite_reuso_recorte: Máximo de ocorrências por recorte em uma amostra.
+        proporcao_placas_avaliacao: Fração das placas reservada à avaliação.
     """
 
     diretorio_saida: Path
@@ -148,6 +184,11 @@ class ConfiguracaoDataset:
     variacao_escala_minima: float = VARIACAO_ESCALA_MINIMA
     variacao_escala_maxima: float = VARIACAO_ESCALA_MAXIMA
     grade_densidade: tuple[int, int] = GRADE_DENSIDADE_PADRAO
+    diretorio_placas_reais: Path | None = None
+    proporcao_bases_reais: float = 0.5
+    intensidade_aglomeracao: float = 0.70
+    limite_reuso_recorte: int = 2
+    proporcao_placas_avaliacao: float = 0.2
 
     def __post_init__(self) -> None:
         if self.quantidade < 1:
@@ -175,6 +216,32 @@ class ConfiguracaoDataset:
         if min(self.grade_densidade) < 2:
             raise ValueError(
                 "A grade de densidade precisa ter ao menos duas células por eixo."
+            )
+        if (
+            isinstance(self.proporcao_bases_reais, bool)
+            or not math.isfinite(self.proporcao_bases_reais)
+            or not 0 <= self.proporcao_bases_reais <= 1
+        ):
+            raise ValueError(
+                "A proporção de bases reais precisa ficar entre zero e um."
+            )
+        if (
+            isinstance(self.intensidade_aglomeracao, bool)
+            or not math.isfinite(self.intensidade_aglomeracao)
+            or not 0 <= self.intensidade_aglomeracao <= 1
+        ):
+            raise ValueError(
+                "A intensidade de aglomeração precisa ficar entre zero e um."
+            )
+        if self.limite_reuso_recorte < 1:
+            raise ValueError("O limite de reuso de recorte precisa ser positivo.")
+        if (
+            isinstance(self.proporcao_placas_avaliacao, bool)
+            or not math.isfinite(self.proporcao_placas_avaliacao)
+            or not 0 < self.proporcao_placas_avaliacao < 1
+        ):
+            raise ValueError(
+                "A fração de placas de avaliação precisa ficar entre zero e um."
             )
         pesos = (
             dict(PESOS_GRUPO_PADRAO)
@@ -241,6 +308,26 @@ class GeometriaPlaca:
     caixa: tuple[int, int, int, int]
     margem_moldura: int
     px_por_mm: float
+
+
+@dataclass(frozen=True)
+class RecorteInsetoReal:
+    """Componente com pixels originais e placa de origem registrada."""
+
+    identificador: str
+    placa_origem: str
+    imagem: Image.Image
+    area_px: int
+
+
+@dataclass(frozen=True)
+class BasePlacaReal:
+    """Imagem real e máscara de classes que podem servir como base."""
+
+    identificador: str
+    imagem: Image.Image
+    mascara: Image.Image
+    percentual_herdado: float
 
 
 def create_plate_geometry(
@@ -537,9 +624,574 @@ def generate_sample(
     )
 
 
+def _dividir_placas_reais(
+    diretorio: Path,
+    semente: int,
+    proporcao_avaliacao: float,
+) -> tuple[list[Path], list[Path]]:
+    """Separa os identificadores das placas antes de carregar qualquer máscara."""
+    pasta_imagens = diretorio / "imagens"
+    pasta_mascaras = diretorio / "mascaras"
+    if not pasta_imagens.is_dir() or not pasta_mascaras.is_dir():
+        raise FileNotFoundError(
+            f"O conjunto real precisa conter imagens/ e mascaras/: {diretorio}."
+        )
+    imagens = sorted(
+        caminho
+        for caminho in pasta_imagens.iterdir()
+        if caminho.is_file() and caminho.suffix.lower() in {".png", ".jpg", ".jpeg"}
+    )
+    mascaras = {
+        caminho.stem: caminho
+        for caminho in pasta_mascaras.iterdir()
+        if caminho.is_file() and caminho.suffix.lower() in {".png", ".jpg", ".jpeg"}
+    }
+    faltantes = [caminho.stem for caminho in imagens if caminho.stem not in mascaras]
+    sem_imagem = sorted(set(mascaras) - {caminho.stem for caminho in imagens})
+    if not imagens or faltantes or sem_imagem:
+        raise ValueError(
+            "Imagens e máscaras precisam formar pares completos; "
+            f"sem máscara={faltantes[:3]}, sem imagem={sem_imagem[:3]}."
+        )
+    if len(imagens) < 2:
+        raise ValueError("A separação exige pelo menos duas placas reais.")
+
+    quantidade_avaliacao = max(1, round(len(imagens) * proporcao_avaliacao))
+    quantidade_avaliacao = min(len(imagens) - 1, quantidade_avaliacao)
+    nomes = {caminho.stem for caminho in imagens}
+    bases_forcadas = {Path(nome).stem for nome in NOMES_BASES_REAIS} & nomes
+    quantidade_composicao = len(imagens) - quantidade_avaliacao
+    if len(bases_forcadas) > quantidade_composicao:
+        raise ValueError("Há mais bases obrigatórias do que placas de composição.")
+
+    restantes = sorted(nomes - bases_forcadas)
+    random.Random(semente).shuffle(restantes)
+    composicao = bases_forcadas | set(
+        restantes[: quantidade_composicao - len(bases_forcadas)]
+    )
+    avaliacao = nomes - composicao
+    por_nome = {caminho.stem: caminho for caminho in imagens}
+    return (
+        [por_nome[nome] for nome in sorted(composicao)],
+        [por_nome[nome] for nome in sorted(avaliacao)],
+    )
+
+
+def _carregar_base_real(
+    caminho_imagem: Path,
+    diretorio: Path,
+    resolucao: tuple[int, int],
+) -> BasePlacaReal:
+    import numpy as np
+
+    caminho_mascara = diretorio / "mascaras" / f"{caminho_imagem.stem}.png"
+    if not caminho_mascara.is_file():
+        caminho_mascara = next(
+            (
+                candidato
+                for candidato in (".jpg", ".jpeg")
+                if (
+                    diretorio / "mascaras" / f"{caminho_imagem.stem}{candidato}"
+                ).is_file()
+            ),
+            None,
+        )
+        if caminho_mascara is None:
+            raise FileNotFoundError(f"Máscara ausente para {caminho_imagem.name}.")
+        caminho_mascara = (
+            diretorio / "mascaras" / f"{caminho_imagem.stem}{caminho_mascara}"
+        )
+
+    with Image.open(caminho_imagem) as origem:
+        imagem = origem.convert("RGB")
+    with Image.open(caminho_mascara) as origem:
+        mascara = origem.convert("L")
+    if imagem.size != mascara.size:
+        raise ValueError(f"Dimensões divergentes em {caminho_imagem.stem}.")
+    if imagem.size != resolucao:
+        imagem = imagem.resize(resolucao, Image.Resampling.BILINEAR)
+        mascara = mascara.resize(resolucao, Image.Resampling.NEAREST)
+    valores = set(np.unique(np.asarray(mascara)).tolist())
+    if not valores <= {0, 1, 2}:
+        raise ValueError(f"Máscara de {caminho_imagem.stem} tem classes inválidas.")
+    classes = np.asarray(mascara, dtype=np.uint8)
+    area_placa = int(np.count_nonzero(classes > 0))
+    if area_placa == 0:
+        raise ValueError(f"A placa de {caminho_imagem.stem} está vazia.")
+    cobertura = 100.0 * np.count_nonzero(classes == 2) / area_placa
+    return BasePlacaReal(caminho_imagem.stem, imagem, mascara, cobertura)
+
+
+def _extrair_recortes_reais(
+    bases: tuple[BasePlacaReal, ...],
+) -> tuple[list[RecorteInsetoReal], dict[str, int], dict[str, int]]:
+    """Recorta apenas as placas de composição, preservando a alfa da classe 2."""
+    import cv2
+    import numpy as np
+
+    recortes: list[RecorteInsetoReal] = []
+    componentes_por_placa: dict[str, int] = {}
+    aceitos_por_placa: dict[str, int] = {}
+    for base in bases:
+        mascara = np.asarray(base.mascara, dtype=np.uint8)
+        quantidade, rotulos, estatisticas, _ = cv2.connectedComponentsWithStats(
+            (mascara == VALORES_CLASSES["placa_coberta"]).astype(np.uint8),
+            connectivity=8,
+        )
+        componentes_por_placa[base.identificador] = quantidade - 1
+        aceitos = 0
+        for indice in range(1, quantidade):
+            x, y, largura, altura, area = estatisticas[indice]
+            if area < AREA_MINIMA_RECORTE_REAL:
+                continue
+            proporcao = max(largura / altura, altura / largura)
+            if proporcao > PROPORCAO_MAXIMA_RECORTE_REAL:
+                continue
+            alfa = (rotulos[y : y + altura, x : x + largura] == indice).astype(
+                np.uint8
+            ) * 255
+            recorte = base.imagem.crop((x, y, x + largura, y + altura)).convert("RGBA")
+            recorte.putalpha(Image.fromarray(alfa, mode="L"))
+            recortes.append(
+                RecorteInsetoReal(
+                    identificador=f"{base.identificador}__cc{indice:04d}",
+                    placa_origem=base.identificador,
+                    imagem=recorte,
+                    area_px=int(area),
+                )
+            )
+            aceitos += 1
+        aceitos_por_placa[base.identificador] = aceitos
+    if not recortes:
+        raise ValueError("Nenhum componente de inseto passou pelos filtros de recorte.")
+    return recortes, componentes_por_placa, aceitos_por_placa
+
+
+def _criar_base_sintetica(
+    resolucao: tuple[int, int],
+    rng: random.Random,
+) -> tuple[Image.Image, Image.Image]:
+    """Cria uma base StickFly K-45 lisa, sem grade ou insetos desenhados."""
+    import numpy as np
+
+    largura, altura = resolucao
+    imagem = Image.new("RGB", resolucao, (239, 240, 238))
+    desenho = ImageDraw.Draw(imagem)
+    margem_x = max(8, round(largura * 0.055))
+    margem_y = max(8, round(altura * 0.12))
+    largura_placa = min(
+        largura - margem_x * 2,
+        round((altura - margem_y * 2) * 450 / 220),
+    )
+    altura_placa = round(largura_placa * 220 / 450)
+    x0 = (largura - largura_placa) // 2
+    y0 = (altura - altura_placa) // 2
+    borda = max(3, round(min(largura, altura) * 0.018))
+    caixa_externa = (
+        max(0, x0 - borda),
+        max(0, y0 - borda),
+        min(largura - 1, x0 + largura_placa + borda),
+        min(altura - 1, y0 + altura_placa + borda),
+    )
+    desenho.rectangle(caixa_externa, fill=(184, 185, 180))
+    desenho.rectangle(
+        (x0, y0, x0 + largura_placa - 1, y0 + altura_placa - 1),
+        fill=(232, 230, 221),
+    )
+
+    superficie = np.full(
+        (altura_placa, largura_placa, 3), (232, 230, 221), dtype=np.float32
+    )
+    eixo_x = np.minimum(np.arange(largura_placa), np.arange(largura_placa)[::-1])
+    eixo_y = np.minimum(np.arange(altura_placa), np.arange(altura_placa)[::-1])
+    distancia_borda = np.minimum(eixo_y[:, None], eixo_x[None, :])
+    peso_amarelo = 0.55 * np.exp(
+        -distancia_borda / max(1.0, min(largura_placa, altura_placa) * 0.10)
+    )
+    amarelo = np.asarray((206, 194, 152), dtype=np.float32)
+    superficie = (
+        superficie * (1 - peso_amarelo[..., None]) + amarelo * peso_amarelo[..., None]
+    )
+    gerador_ruido = np.random.default_rng(rng.getrandbits(64))
+    ruido = gerador_ruido.normal(0.0, 4.0, (altura_placa, largura_placa, 1))
+    superficie = np.clip(superficie + 0.10 * ruido, 0, 255).astype(np.uint8)
+    pixels = np.asarray(imagem).copy()
+    pixels[y0 : y0 + altura_placa, x0 : x0 + largura_placa] = superficie
+    mascara = np.zeros((altura, largura), dtype=np.uint8)
+    mascara[y0 : y0 + altura_placa, x0 : x0 + largura_placa] = 1
+    return Image.fromarray(pixels, mode="RGB"), Image.fromarray(mascara, mode="L")
+
+
+def _ordenar_recortes_por_reuso(
+    usos_globais: list[int],
+    rng: random.Random,
+) -> list[int]:
+    """Prioriza recortes menos usados e randomiza recortes empatados."""
+    por_uso: dict[int, list[int]] = defaultdict(list)
+    for indice, usos in enumerate(usos_globais):
+        por_uso[usos].append(indice)
+    ordem: list[int] = []
+    for usos in sorted(por_uso):
+        grupo = por_uso[usos]
+        rng.shuffle(grupo)
+        ordem.extend(grupo)
+    return ordem
+
+
+def _amostrar_centro_placa(
+    erodida: object,
+    centros_validos: object,
+    focos: list[tuple[int, int]],
+    probabilidade_cluster: float,
+    rng: random.Random,
+    regiao_cluster: object,
+) -> tuple[int, int]:
+    if focos and rng.random() < probabilidade_cluster:
+        centro_x, centro_y = rng.choice(focos)
+        altura, largura = erodida.shape
+        for _ in range(24):
+            x = round(rng.gauss(centro_x, max(2, largura * 0.11)))
+            y = round(rng.gauss(centro_y, max(2, altura * 0.12)))
+            if (
+                0 <= x < largura
+                and 0 <= y < altura
+                and erodida[y, x]
+                and regiao_cluster[y, x]
+            ):
+                return x, y
+    y, x = centros_validos[rng.randrange(len(centros_validos))]
+    return int(x), int(y)
+
+
+def _transformar_recorte_real(
+    recorte: Image.Image,
+    rng: random.Random,
+) -> Image.Image:
+    """Aplica somente giros ortogonais e espelhamento sem interpolação."""
+    imagem = recorte.copy()
+    rotacoes = (
+        None,
+        Image.Transpose.ROTATE_90,
+        Image.Transpose.ROTATE_180,
+        Image.Transpose.ROTATE_270,
+    )
+    rotacao = rotacoes[rng.randrange(4)]
+    if rotacao is not None:
+        imagem = imagem.transpose(rotacao)
+    if rng.random() < 0.5:
+        imagem = imagem.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    return imagem
+
+
+def _colar_recorte_real(
+    imagem: object,
+    coberta: object,
+    placa: object,
+    inseto: Image.Image,
+    centro_x: int,
+    centro_y: int,
+) -> tuple[int, int, object]:
+    import numpy as np
+
+    pixels = np.asarray(inseto, dtype=np.uint8)
+    alfa = pixels[:, :, 3] > 0
+    inicio_x = centro_x - inseto.width // 2
+    inicio_y = centro_y - inseto.height // 2
+    fim_x = inicio_x + inseto.width
+    fim_y = inicio_y + inseto.height
+    altura, largura = coberta.shape
+    x0, y0 = max(0, inicio_x), max(0, inicio_y)
+    x1, y1 = min(largura, fim_x), min(altura, fim_y)
+    sx0, sy0 = x0 - inicio_x, y0 - inicio_y
+    sx1, sy1 = sx0 + x1 - x0, sy0 + y1 - y0
+    alfa_local = alfa[sy0:sy1, sx0:sx1]
+    alfa_placa = alfa_local & placa[y0:y1, x0:x1]
+    recorte_rgb = pixels[sy0:sy1, sx0:sx1, :3]
+    regiao_imagem = imagem[y0:y1, x0:x1]
+    regiao_imagem[alfa_placa] = recorte_rgb[alfa_placa]
+    coberta[y0:y1, x0:x1] |= alfa_placa
+    return x0, y0, alfa_placa
+
+
+def _compor_recortes_reais(
+    imagem_base: Image.Image,
+    mascara_base: Image.Image,
+    recortes: list[RecorteInsetoReal],
+    percentual_alvo: float,
+    rng: random.Random,
+    limite_colagens: int,
+    limite_reuso: int,
+    intensidade_aglomeracao: float,
+    usos_globais: list[int],
+) -> tuple[Image.Image, Image.Image, dict[str, object]]:
+    """Cola recortes exatos dentro da placa e devolve as áreas medidas."""
+    import cv2
+    import numpy as np
+
+    imagem = np.asarray(imagem_base.convert("RGB"), dtype=np.uint8).copy()
+    classes = np.asarray(mascara_base.convert("L"), dtype=np.uint8)
+    placa = classes > 0
+    herdada = (classes == VALORES_CLASSES["placa_coberta"]) & placa
+    coberta = herdada.copy()
+    area_placa = int(placa.sum())
+    if area_placa == 0:
+        raise ValueError("A base escolhida não contém uma placa identificável.")
+
+    largura, altura = mascara_base.size
+    raio_x = max(1, round(EROSAO_PLACA_PX * largura / LARGURA_MODELO))
+    raio_y = max(1, round(EROSAO_PLACA_PX * altura / ALTURA_MODELO))
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        (raio_x * 2 + 1, raio_y * 2 + 1),
+    )
+    erodida = cv2.erode(placa.astype(np.uint8), kernel, iterations=1).astype(bool)
+    centros_validos = np.argwhere(erodida)
+    if len(centros_validos) == 0:
+        raise ValueError("A placa ficou vazia após a erosão da margem adesiva.")
+
+    minimo_y, minimo_x = centros_validos.min(axis=0)
+    maximo_y, maximo_x = centros_validos.max(axis=0)
+    faixa_x = max(1, int(maximo_x - minimo_x + 1))
+    faixa_y = max(1, int(maximo_y - minimo_y + 1))
+    raio_foco_x = max(1, round(faixa_x * FRACAO_RAIO_FOCO_LARGURA))
+    raio_foco_y = max(1, round(faixa_y * FRACAO_RAIO_FOCO_ALTURA))
+    focos: list[tuple[int, int]] = []
+    numero_focos = max(
+        NUMERO_MINIMO_FOCOS,
+        min(NUMERO_MAXIMO_FOCOS, round(4 + percentual_alvo / 25)),
+    )
+    distancia_minima_focos = min(faixa_x, faixa_y) * 0.30
+    for _ in range(numero_focos):
+        for _ in range(256):
+            y_foco, x_foco = centros_validos[rng.randrange(len(centros_validos))]
+            candidato = (int(x_foco), int(y_foco))
+            if all(
+                math.hypot(candidato[0] - x, candidato[1] - y) >= distancia_minima_focos
+                for x, y in focos
+            ):
+                focos.append(candidato)
+                break
+        else:
+            y_foco, x_foco = centros_validos[rng.randrange(len(centros_validos))]
+            focos.append((int(x_foco), int(y_foco)))
+
+    regiao_aglomeracao = np.zeros_like(erodida)
+    yy, xx = np.ogrid[:altura, :largura]
+    for centro_x, centro_y in focos:
+        elipse = ((xx - centro_x) / raio_foco_x) ** 2 + (
+            (yy - centro_y) / raio_foco_y
+        ) ** 2 <= 1.0
+        regiao_aglomeracao |= elipse & erodida
+    centros_aglomeracao = np.argwhere(regiao_aglomeracao)
+    if not len(centros_aglomeracao):
+        regiao_aglomeracao = erodida.copy()
+        centros_aglomeracao = centros_validos
+
+    raio_separacao = round(
+        EROSAO_PLACA_PX * largura / LARGURA_MODELO * FRACAO_MARGEM_DISPERSAO
+    )
+    margem = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        (raio_separacao * 2 + 1, raio_separacao * 2 + 1),
+    )
+    regiao_dispersao = erodida & ~cv2.dilate(
+        regiao_aglomeracao.astype(np.uint8), margem, iterations=1
+    ).astype(bool)
+    centros_dispersos = np.argwhere(regiao_dispersao)
+    if not len(centros_dispersos):
+        centros_dispersos = centros_validos
+
+    ordem_recortes = _ordenar_recortes_por_reuso(usos_globais, rng)
+    ha_recortes_aglomerados = any(
+        max(registro.imagem.size) > LADO_MAXIMO_RECORTE_DISPERSO
+        for registro in recortes
+    )
+    usos_amostra: dict[int, int] = {}
+    placas_origem: set[str] = set()
+    selecionados: list[int] = []
+    indice_ordem = 0
+
+    def proximo_recorte(*, pequeno: bool = False) -> int | None:
+        nonlocal indice_ordem
+        indice_recorte: int | None = None
+        for _ in range(len(ordem_recortes)):
+            candidato = ordem_recortes[indice_ordem % len(ordem_recortes)]
+            indice_ordem += 1
+            if usos_amostra.get(candidato, 0) < limite_reuso and (
+                (
+                    not pequeno
+                    and (
+                        max(recortes[candidato].imagem.size)
+                        > LADO_MAXIMO_RECORTE_DISPERSO
+                        or not ha_recortes_aglomerados
+                    )
+                )
+                or (
+                    pequeno
+                    and max(recortes[candidato].imagem.size)
+                    <= LADO_MAXIMO_RECORTE_DISPERSO
+                )
+            ):
+                indice_recorte = candidato
+                break
+        return indice_recorte
+
+    def reservar_recorte(indice_recorte: int) -> RecorteInsetoReal:
+        usos_amostra[indice_recorte] = usos_amostra.get(indice_recorte, 0) + 1
+        selecionados.append(indice_recorte)
+        registro = recortes[indice_recorte]
+        placas_origem.add(registro.placa_origem)
+        return registro
+
+    area_alvo = round(percentual_alvo * area_placa / 100.0)
+    area_nova_alvo = max(0, area_alvo - int(herdada.sum()))
+    area_aglomerada_alvo = round(area_nova_alvo * intensidade_aglomeracao)
+    area_dispersao_alvo = max(0, area_nova_alvo - area_aglomerada_alvo)
+    mascara_aglomerada = np.zeros_like(coberta)
+    mascara_dispersos = np.zeros_like(coberta)
+    tentativas = 0
+    recortes_aglomerados = [
+        registro.area_px
+        for registro in recortes
+        if max(registro.imagem.size) > LADO_MAXIMO_RECORTE_DISPERSO
+    ]
+    recortes_dispersos = [
+        registro.area_px
+        for registro in recortes
+        if max(registro.imagem.size) <= LADO_MAXIMO_RECORTE_DISPERSO
+    ]
+    if not recortes_aglomerados:
+        recortes_aglomerados = [registro.area_px for registro in recortes]
+    if not recortes_dispersos:
+        recortes_dispersos = [registro.area_px for registro in recortes]
+    tentativas_aglomeradas_estimadas = area_aglomerada_alvo / max(
+        1.0,
+        sum(recortes_aglomerados)
+        / len(recortes_aglomerados)
+        * EFICIENCIA_AREA_AGLOMERADA,
+    )
+    tentativas_dispersas_estimadas = area_dispersao_alvo / max(
+        1.0,
+        sum(recortes_dispersos) / len(recortes_dispersos) * EFICIENCIA_AREA_DISPERSA,
+    )
+    tentativas_estimadas = (
+        tentativas_aglomeradas_estimadas + tentativas_dispersas_estimadas
+    )
+    intensidade_contagem = (
+        tentativas_aglomeradas_estimadas / tentativas_estimadas
+        if tentativas_estimadas
+        else intensidade_aglomeracao
+    )
+    limite_tentativas_aglomeradas = min(
+        limite_colagens,
+        max(0, math.ceil(limite_colagens * intensidade_contagem)),
+    )
+    while (
+        tentativas < limite_tentativas_aglomeradas
+        and int((mascara_aglomerada & ~herdada).sum()) < area_aglomerada_alvo
+    ):
+        indice_recorte = proximo_recorte()
+        if indice_recorte is None:
+            break
+        registro = reservar_recorte(indice_recorte)
+        inseto = _transformar_recorte_real(registro.imagem, rng)
+        centro_x, centro_y = _amostrar_centro_placa(
+            erodida,
+            centros_aglomeracao,
+            focos,
+            1.0,
+            rng,
+            regiao_aglomeracao,
+        )
+        x0, y0, alfa_placa = _colar_recorte_real(
+            imagem, coberta, placa, inseto, centro_x, centro_y
+        )
+        mascara_aglomerada[
+            y0 : y0 + alfa_placa.shape[0], x0 : x0 + alfa_placa.shape[1]
+        ] |= alfa_placa
+        tentativas += 1
+
+    area_alvo_com_tolerancia = max(
+        0, area_alvo - round(TOLERANCIA_RECOMPOSICAO_PP * area_placa / 100)
+    )
+    distancia_a_cobertura = cv2.distanceTransform(
+        (~coberta).astype(np.uint8), cv2.DIST_L2, 5
+    )
+    centros_isolados: list[tuple[int, int, int]] = []
+    while (
+        tentativas < limite_colagens
+        and int(coberta.sum()) < area_alvo_com_tolerancia
+        and int(mascara_dispersos.sum()) < area_dispersao_alvo
+    ):
+        indice_recorte = proximo_recorte(pequeno=True)
+        if indice_recorte is None:
+            break
+        registro = recortes[indice_recorte]
+        inseto = _transformar_recorte_real(registro.imagem, rng)
+        raio = max(1, max(inseto.size) // 3) + 1
+        margem_grupos = max(2, max(inseto.size) // DIVISOR_ESPACAMENTO_DISPERSO)
+        centro_isolado: tuple[int, int] | None = None
+        for _ in range(256):
+            y, x = centros_dispersos[rng.randrange(len(centros_dispersos))]
+            x, y = int(x), int(y)
+            if distancia_a_cobertura[y, x] <= margem_grupos:
+                continue
+            if any(
+                math.hypot(x - outro_x, y - outro_y) <= raio + outro_raio
+                for outro_x, outro_y, outro_raio in centros_isolados
+            ):
+                continue
+            centro_isolado = (x, y)
+            break
+        if centro_isolado is None:
+            break
+        reservar_recorte(indice_recorte)
+        centro_x, centro_y = centro_isolado
+        x0, y0, alfa_placa = _colar_recorte_real(
+            imagem, coberta, placa, inseto, centro_x, centro_y
+        )
+        mascara_dispersos[
+            y0 : y0 + alfa_placa.shape[0], x0 : x0 + alfa_placa.shape[1]
+        ] |= alfa_placa
+        centros_isolados.append((centro_x, centro_y, raio))
+        tentativas += 1
+
+    classes_finais = np.zeros_like(classes)
+    classes_finais[placa] = VALORES_CLASSES["placa_limpa"]
+    classes_finais[coberta] = VALORES_CLASSES["placa_coberta"]
+    area_herdada = int(herdada.sum())
+    area_final = int(coberta.sum())
+    adicionada = area_final - area_herdada
+    percentual_real = 100.0 * area_final / area_placa
+    n, _, estatisticas, _ = cv2.connectedComponentsWithStats(
+        coberta.astype(np.uint8), connectivity=8
+    )
+    area_aglomerada = sum(
+        int(estatisticas[indice, cv2.CC_STAT_AREA])
+        for indice in range(1, n)
+        if int(estatisticas[indice, cv2.CC_STAT_AREA]) > AREA_COMPONENTE_AGLOMERADO
+    )
+    fracao_aglomerada = area_aglomerada / area_final if area_final else 0.0
+    metadados: dict[str, object] = {
+        "_indices_recortes_usados": selecionados,
+        "n_recortes": len(selecionados),
+        "cobertura_herdada_base_percentual": 100.0 * area_herdada / area_placa,
+        "cobertura_adicionada_percentual": 100.0 * adicionada / area_placa,
+        "percentual_cobertura_real": percentual_real,
+        "fracao_aglomerada": fracao_aglomerada,
+        "maior_reuso_recorte_na_amostra": max(usos_amostra.values(), default=0),
+        "placas_origem_recortes": sorted(placas_origem),
+    }
+    return (
+        Image.fromarray(imagem, mode="RGB"),
+        Image.fromarray(classes_finais, mode="L"),
+        metadados,
+    )
+
+
 def generate_dataset(
     configuracao: ConfiguracaoDataset,
-    sprites: tuple[SpriteCatalogado, ...],
+    sprites: tuple[SpriteCatalogado, ...] = (),
 ) -> list[dict[str, object]]:
     """Gera imagens, máscaras e metadados em uma estrutura estável.
 
@@ -554,6 +1206,10 @@ def generate_dataset(
         FileExistsError: Se o diretório de saída já contiver arquivos.
         OSError: Se não for possível criar ou gravar os artefatos.
     """
+    if configuracao.diretorio_placas_reais is not None:
+        return _gerar_dataset_recomposicao_real(configuracao)
+    if not sprites:
+        raise ValueError("Informe sprites ou o diretório de placas reais.")
     saida = configuracao.diretorio_saida.resolve()
     if saida.exists() and any(saida.iterdir()):
         raise FileExistsError(f"O diretório de saída não está vazio: {saida}.")
@@ -680,6 +1336,510 @@ def generate_dataset(
         encoding="utf-8",
     )
     return registros
+
+
+def _criar_faixas_recomposicao(quantidade: int, semente: int) -> list[int]:
+    base, resto = divmod(quantidade, len(FAIXAS_COBERTURA_RECOMPOSICAO))
+    indices = [
+        faixa
+        for faixa in range(len(FAIXAS_COBERTURA_RECOMPOSICAO))
+        for _ in range(base)
+    ]
+    indices.extend(range(resto))
+    random.Random(semente ^ 0x5EED5EED).shuffle(indices)
+    return indices
+
+
+def _sequencia_bases_reais(quantidade: int, proporcao_real: float) -> list[bool]:
+    acumulado = 0.0
+    sequencia: list[bool] = []
+    for _ in range(quantidade):
+        acumulado += proporcao_real
+        usar_real = acumulado >= 1.0
+        sequencia.append(usar_real)
+        if usar_real:
+            acumulado -= 1.0
+    return sequencia
+
+
+def _descritores_visuais(
+    imagem: Image.Image, mascara: Image.Image
+) -> dict[str, object]:
+    """Mede tom, componentes escuros e aglomeração somente na superfície."""
+    import cv2
+    import numpy as np
+
+    rgb = np.asarray(imagem.convert("RGB"), dtype=np.uint8)
+    classes = np.asarray(mascara.convert("L"), dtype=np.uint8)
+    placa = classes > 0
+    pixels_placa = int(placa.sum())
+    if pixels_placa == 0:
+        raise ValueError("Não há área de placa para medir similaridade visual.")
+    cinza = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    histograma = np.histogram(cinza[placa], bins=32, range=(0, 256), density=False)[
+        0
+    ].astype(np.float64)
+    histograma /= max(1.0, float(histograma.sum()))
+    pixels_escuros = (cinza < LIMIAR_PIXEL_ESCURO) & placa
+    quantidade_escuros, _, estatisticas_escuros, _ = cv2.connectedComponentsWithStats(
+        pixels_escuros.astype(np.uint8), connectivity=8
+    )
+    lados = [
+        max(
+            int(estatisticas_escuros[indice, cv2.CC_STAT_WIDTH]),
+            int(estatisticas_escuros[indice, cv2.CC_STAT_HEIGHT]),
+        )
+        for indice in range(1, quantidade_escuros)
+    ]
+    area_pixels_escuros = int(pixels_escuros.sum())
+    area_aglomerada_escura = sum(
+        int(estatisticas_escuros[indice, cv2.CC_STAT_AREA])
+        for indice in range(1, quantidade_escuros)
+        if int(estatisticas_escuros[indice, cv2.CC_STAT_AREA])
+        > AREA_COMPONENTE_AGLOMERADO
+    )
+    insetos = (classes == VALORES_CLASSES["placa_coberta"]) & placa
+    area_insetos = int(insetos.sum())
+    quantidade_componentes, _, estatisticas_insetos, _ = (
+        cv2.connectedComponentsWithStats(insetos.astype(np.uint8), connectivity=8)
+    )
+    area_aglomerada = sum(
+        int(estatisticas_insetos[indice, cv2.CC_STAT_AREA])
+        for indice in range(1, quantidade_componentes)
+        if int(estatisticas_insetos[indice, cv2.CC_STAT_AREA])
+        > AREA_COMPONENTE_AGLOMERADO
+    )
+    return {
+        "histograma_cinza": histograma.tolist(),
+        "componentes_escuros_maior_lado_px": lados,
+        "fracao_pixels_escuros": float(pixels_escuros.sum() / pixels_placa),
+        "fracao_aglomerada": area_aglomerada / area_insetos if area_insetos else 0.0,
+        "fracao_aglomerada_pixels_escuros": (
+            area_aglomerada_escura / area_pixels_escuros if area_pixels_escuros else 0.0
+        ),
+        "percentual_cobertura": 100.0 * area_insetos / pixels_placa,
+    }
+
+
+def _resumir_descritores(
+    descritores: list[dict[str, object]],
+) -> dict[str, object]:
+    import numpy as np
+
+    if not descritores:
+        raise ValueError("A avaliação visual precisa de pelo menos uma placa.")
+    histogramas = np.asarray(
+        [item["histograma_cinza"] for item in descritores], dtype=np.float64
+    )
+    componentes = [
+        int(lado)
+        for item in descritores
+        for lado in item["componentes_escuros_maior_lado_px"]
+    ]
+    return {
+        "histograma_cinza": histogramas.mean(axis=0).tolist(),
+        "componentes_escuros_maior_lado_px": componentes,
+        "quantidade_componentes_escuros": len(componentes),
+        "fracao_pixels_escuros": float(
+            np.mean([item["fracao_pixels_escuros"] for item in descritores])
+        ),
+        "fracao_aglomerada": float(
+            np.mean([item["fracao_aglomerada"] for item in descritores])
+        ),
+        "fracao_aglomerada_pixels_escuros": float(
+            np.mean([item["fracao_aglomerada_pixels_escuros"] for item in descritores])
+        ),
+        "percentual_cobertura": float(
+            np.mean([item["percentual_cobertura"] for item in descritores])
+        ),
+    }
+
+
+def _distancia_ks(amostra_a: list[int], amostra_b: list[int]) -> float:
+    import numpy as np
+
+    if not amostra_a or not amostra_b:
+        return 1.0
+    a = np.sort(np.asarray(amostra_a, dtype=np.int64))
+    b = np.sort(np.asarray(amostra_b, dtype=np.int64))
+    pontos = np.union1d(a, b)
+    cdf_a = np.searchsorted(a, pontos, side="right") / len(a)
+    cdf_b = np.searchsorted(b, pontos, side="right") / len(b)
+    return float(np.max(np.abs(cdf_a - cdf_b)))
+
+
+def _comparar_descritores_visuais(
+    descritores_gerados: list[dict[str, object]],
+    descritores_avaliacao: list[dict[str, object]],
+) -> dict[str, object]:
+    import numpy as np
+
+    gerado = _resumir_descritores(descritores_gerados)
+    avaliacao = _resumir_descritores(descritores_avaliacao)
+    amostras_cobertura_alta = [
+        descritor
+        for descritor in descritores_gerados
+        if float(descritor["percentual_cobertura"]) >= 50.0
+    ]
+    gerado_cobertura_alta = (
+        _resumir_descritores(amostras_cobertura_alta)
+        if amostras_cobertura_alta
+        else None
+    )
+    hist_gerado = np.asarray(gerado["histograma_cinza"], dtype=np.float64)
+    hist_avaliacao = np.asarray(avaliacao["histograma_cinza"], dtype=np.float64)
+    fracao_escura_gerada = float(gerado["fracao_pixels_escuros"])
+    fracao_aglomerada_gerada = (
+        float(gerado_cobertura_alta["fracao_aglomerada"])
+        if gerado_cobertura_alta is not None
+        else None
+    )
+    return {
+        "regiao": "pixels da superfície da placa (classes 1 e 2)",
+        "limiar_escuro_cinza": LIMIAR_PIXEL_ESCURO,
+        "amostras_geradas": len(descritores_gerados),
+        "placas_avaliacao": len(descritores_avaliacao),
+        "componentes_escuros_maior_lado_ks": {
+            "distancia": _distancia_ks(
+                gerado["componentes_escuros_maior_lado_px"],
+                avaliacao["componentes_escuros_maior_lado_px"],
+            ),
+            "componentes_gerados": gerado["quantidade_componentes_escuros"],
+            "componentes_avaliacao": avaliacao["quantidade_componentes_escuros"],
+            "componentes_referencia_69_placas": COMPONENTES_ESCUROS_REFERENCIA,
+        },
+        "histograma_cinza_32_faixas_l1_metade": float(
+            0.5 * np.abs(hist_gerado - hist_avaliacao).sum()
+        ),
+        "fracao_pixels_escuros": {
+            "gerada": fracao_escura_gerada,
+            "referencia_69_placas": 0.0635,
+            "avaliacao_media": avaliacao["fracao_pixels_escuros"],
+            "diferenca_referencia": fracao_escura_gerada - 0.0635,
+        },
+        "aglomeracao_area_em_componentes_maiores_500": {
+            "criterio": "máscara classe 2; médias de cobertura alta usam percentual real >= 50%",
+            "gerada_media_todas_as_coberturas": float(gerado["fracao_aglomerada"]),
+            "gerada_media_cobertura_50_70": fracao_aglomerada_gerada,
+            "amostras_cobertura_50_70": len(amostras_cobertura_alta),
+            "referencia_69_placas": 0.777,
+            "diferenca_referencia_cobertura_50_70": (
+                fracao_aglomerada_gerada - 0.777
+                if fracao_aglomerada_gerada is not None
+                else None
+            ),
+            "avaliacao_media_mascara_rotulada": avaliacao["fracao_aglomerada"],
+            "aproximacao_visual_pixels_escuros": {
+                "gerada_cobertura_50_70": (
+                    float(gerado_cobertura_alta["fracao_aglomerada_pixels_escuros"])
+                    if gerado_cobertura_alta is not None
+                    else None
+                ),
+                "avaliacao_media": avaliacao["fracao_aglomerada_pixels_escuros"],
+                "referencia_69_placas": 0.777,
+            },
+        },
+    }
+
+
+def _avaliar_inpainting(bases: list[BasePlacaReal]) -> dict[str, object]:
+    import cv2
+    import numpy as np
+
+    alteracoes: list[float] = []
+    areas_marcadas: list[float] = []
+    for base in bases:
+        rgb = np.asarray(base.imagem.convert("RGB"), dtype=np.uint8)
+        classes = np.asarray(base.mascara.convert("L"), dtype=np.uint8)
+        placa = classes > 0
+        alvo = (classes == VALORES_CLASSES["placa_coberta"]).astype(np.uint8) * 255
+        if not np.any(alvo):
+            continue
+        resultado = cv2.inpaint(rgb, alvo, 3, cv2.INPAINT_TELEA)
+        mudou = np.any(resultado != rgb, axis=2) & placa
+        alteracoes.append(100.0 * float(mudou.sum()) / max(1, int(placa.sum())))
+        areas_marcadas.append(
+            100.0 * float((alvo > 0).sum()) / max(1, int(placa.sum()))
+        )
+    return {
+        "metodo_testado": "cv2.inpaint TELEA, raio 3, somente nas regiões classe 2",
+        "cobertura_marcada_media_percentual": (
+            sum(areas_marcadas) / len(areas_marcadas) if areas_marcadas else 0.0
+        ),
+        "area_alterada_media_percentual": (
+            sum(alteracoes) / len(alteracoes) if alteracoes else 0.0
+        ),
+        "conclusao": (
+            "não implementar: as máscaras cobrem 25,6% das anotações originais; "
+            "inpainting guiado por classe 2 deixa insetos não rotulados na base, "
+            "e não há imagem limpa de referência para validar reconstruções."
+        ),
+    }
+
+
+def _gerar_dataset_recomposicao_real(
+    configuracao: ConfiguracaoDataset,
+) -> list[dict[str, object]]:
+    """Gera amostras sem usar recortes ou bases de placas reservadas à avaliação."""
+    diretorio_real = configuracao.diretorio_placas_reais
+    if diretorio_real is None:
+        raise ValueError("O diretório das placas reais é obrigatório nesta modalidade.")
+    diretorio_real = diretorio_real.resolve()
+    if not diretorio_real.is_dir():
+        raise FileNotFoundError(f"Conjunto de placas reais ausente: {diretorio_real}.")
+    saida = configuracao.diretorio_saida.resolve()
+    if saida.exists() and any(saida.iterdir()):
+        raise FileExistsError(f"O diretório de saída não está vazio: {saida}.")
+
+    # A separação usa apenas nomes de arquivo; máscaras de avaliação só serão lidas
+    # depois que todas as amostras de composição forem gravadas.
+    placas_composicao, placas_avaliacao = _dividir_placas_reais(
+        diretorio_real,
+        configuracao.semente,
+        configuracao.proporcao_placas_avaliacao,
+    )
+    bases_composicao = tuple(
+        _carregar_base_real(caminho, diretorio_real, configuracao.resolucao)
+        for caminho in placas_composicao
+    )
+    recortes, componentes_por_placa, aceitos_por_placa = _extrair_recortes_reais(
+        bases_composicao
+    )
+    bases_por_id = {base.identificador: base for base in bases_composicao}
+    bases_reais = [
+        bases_por_id[Path(nome).stem]
+        for nome in NOMES_BASES_REAIS
+        if Path(nome).stem in bases_por_id
+    ]
+    ids_bases = {base.identificador for base in bases_reais}
+    for base in sorted(bases_composicao, key=lambda item: item.percentual_herdado):
+        if len(bases_reais) >= 6:
+            break
+        if base.identificador not in ids_bases:
+            bases_reais.append(base)
+            ids_bases.add(base.identificador)
+    if not bases_reais:
+        raise ValueError("Nenhuma base de placa real está disponível para composição.")
+
+    pasta_imagens = saida / "imagens"
+    pasta_mascaras = saida / "mascaras"
+    pasta_imagens.mkdir(parents=True, exist_ok=True)
+    pasta_mascaras.mkdir(parents=True, exist_ok=True)
+    rng_global = random.Random(configuracao.semente)
+    sementes = [rng_global.getrandbits(64) for _ in range(configuracao.quantidade)]
+    faixas = _criar_faixas_recomposicao(configuracao.quantidade, configuracao.semente)
+    divisoes = _criar_divisoes(configuracao.quantidade, configuracao.semente)
+    sequencia_bases = _sequencia_bases_reais(
+        configuracao.quantidade, configuracao.proporcao_bases_reais
+    )
+    usos_globais = [0] * len(recortes)
+    registros: list[dict[str, object]] = []
+    caminho_metadados = saida / "metadados.jsonl"
+    with caminho_metadados.open("w", encoding="utf-8", newline="\n") as arquivo:
+        for indice, semente_amostra in enumerate(sementes):
+            rng = random.Random(semente_amostra)
+            rng_cobertura = random.Random(semente_amostra ^ 0xC0B3A7)
+            rng_idade = random.Random(semente_amostra ^ 0xA61DADE)
+            faixa, minimo, maximo = FAIXAS_COBERTURA_RECOMPOSICAO[faixas[indice]]
+            percentual_alvo = rng_cobertura.uniform(minimo, maximo)
+            idade_simulada = rng_idade.uniform(0.0, configuracao.idade_maxima_dias)
+            usar_base_real = sequencia_bases[indice]
+            if usar_base_real:
+                base = rng.choice(bases_reais)
+                imagem_base, mascara_base = base.imagem.copy(), base.mascara.copy()
+                identificador_base: str | None = base.identificador
+                tipo_base = "real_ums"
+            else:
+                imagem_base, mascara_base = _criar_base_sintetica(
+                    configuracao.resolucao, rng
+                )
+                identificador_base = None
+                tipo_base = "sintetica_stickfly_k45"
+            imagem, mascara, composicao = _compor_recortes_reais(
+                imagem_base,
+                mascara_base,
+                recortes,
+                percentual_alvo,
+                rng,
+                configuracao.limite_sprites,
+                configuracao.limite_reuso_recorte,
+                configuracao.intensidade_aglomeracao,
+                usos_globais,
+            )
+            for indice_recorte in composicao.pop("_indices_recortes_usados"):
+                usos_globais[int(indice_recorte)] += 1
+            identificador = f"amostra_{indice + 1:06d}"
+            imagem.save(pasta_imagens / f"{identificador}.png", format="PNG")
+            mascara.save(pasta_mascaras / f"{identificador}.png", format="PNG")
+            placas_origem = composicao["placas_origem_recortes"]
+            ids_avaliacao = {caminho.stem for caminho in placas_avaliacao}
+            if ids_avaliacao.intersection(placas_origem):
+                raise RuntimeError(
+                    "Um recorte de placa de avaliação entrou na geração."
+                )
+            registro: dict[str, object] = {
+                "id": identificador,
+                "semente": semente_amostra,
+                "conjunto": divisoes[indice],
+                "faixa_cobertura_alvo": faixa,
+                "percentual_cobertura_alvo": percentual_alvo,
+                "percentual_cobertura_real": composicao["percentual_cobertura_real"],
+                "alvo_atingido": abs(
+                    float(composicao["percentual_cobertura_real"]) - percentual_alvo
+                )
+                <= TOLERANCIA_RECOMPOSICAO_PP + 1e-9,
+                "idade_simulada_dias": idade_simulada,
+                "n_sprites": composicao["n_recortes"],
+                "n_recortes": composicao["n_recortes"],
+                "distratores_presentes": [],
+                "dominante_cor": "preservada_da_fonte",
+                "mascara_classes": VALORES_CLASSES,
+                "pesos_grupo": {},
+                "origem_base": tipo_base,
+                "placa_base_id": identificador_base,
+                "cobertura_herdada_base_percentual": composicao[
+                    "cobertura_herdada_base_percentual"
+                ],
+                "cobertura_adicionada_percentual": composicao[
+                    "cobertura_adicionada_percentual"
+                ],
+                "fracao_aglomerada": composicao["fracao_aglomerada"],
+                "maior_reuso_recorte_na_amostra": composicao[
+                    "maior_reuso_recorte_na_amostra"
+                ],
+                "placas_origem_recortes": placas_origem,
+            }
+            registros.append(registro)
+            arquivo.write(
+                json.dumps(
+                    registro, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                )
+                + "\n"
+            )
+
+    quantidade_descritores = min(configuracao.quantidade, AMOSTRAS_DESCRITORES_VISUAIS)
+    indices_descritores = {
+        round(
+            indice * (configuracao.quantidade - 1) / max(1, quantidade_descritores - 1)
+        )
+        for indice in range(quantidade_descritores)
+    }
+    descritores_gerados: list[dict[str, object]] = []
+    for indice in sorted(indices_descritores):
+        identificador = str(registros[indice]["id"])
+        with Image.open(pasta_imagens / f"{identificador}.png") as origem:
+            imagem = origem.convert("RGB")
+        with Image.open(pasta_mascaras / f"{identificador}.png") as origem:
+            mascara = origem.convert("L")
+        descritores_gerados.append(_descritores_visuais(imagem, mascara))
+
+    bases_avaliacao = [
+        _carregar_base_real(caminho, diretorio_real, configuracao.resolucao)
+        for caminho in placas_avaliacao
+    ]
+    descritores_avaliacao = [
+        _descritores_visuais(base.imagem, base.mascara) for base in bases_avaliacao
+    ]
+    comparacao_visual = _comparar_descritores_visuais(
+        descritores_gerados, descritores_avaliacao
+    )
+    avaliacao_inpainting = _avaliar_inpainting(bases_reais)
+    alvo_alto = [
+        float(registro["fracao_aglomerada"])
+        for registro in registros
+        if float(registro["percentual_cobertura_alvo"]) >= 50.0
+    ]
+    maximo_reuso = max(usos_globais, default=0)
+    configuracao_saida = {
+        "semente_global": configuracao.semente,
+        "semente_divisao_placas": configuracao.semente,
+        "quantidade": configuracao.quantidade,
+        "idade_maxima_dias": configuracao.idade_maxima_dias,
+        "resolucao": list(configuracao.resolucao),
+        "fonte_placas_reais": str(diretorio_real),
+        "faixas_cobertura_alvo": {
+            nome: [minimo, maximo]
+            for nome, minimo, maximo in FAIXAS_COBERTURA_RECOMPOSICAO
+        },
+        "proporcao_bases_reais": configuracao.proporcao_bases_reais,
+        "intensidade_aglomeracao": configuracao.intensidade_aglomeracao,
+        "lado_maximo_recorte_disperso_px": LADO_MAXIMO_RECORTE_DISPERSO,
+        "raio_foco_fracao_placa": {
+            "largura": FRACAO_RAIO_FOCO_LARGURA,
+            "altura": FRACAO_RAIO_FOCO_ALTURA,
+        },
+        "numero_focos_por_alvo": {
+            "minimo": NUMERO_MINIMO_FOCOS,
+            "maximo": NUMERO_MAXIMO_FOCOS,
+            "regra": "clamp(round(4 + percentual_alvo / 25))",
+        },
+        "margem_dispersao_fracao_erosao": FRACAO_MARGEM_DISPERSAO,
+        "espacamento_recortes_dispersos_divisor_lado": DIVISOR_ESPACAMENTO_DISPERSO,
+        "eficiencia_estimada_area_aglomerada": EFICIENCIA_AREA_AGLOMERADA,
+        "eficiencia_estimada_area_dispersada": EFICIENCIA_AREA_DISPERSA,
+        "limite_reuso_recorte": configuracao.limite_reuso_recorte,
+        "proporcao_placas_avaliacao": configuracao.proporcao_placas_avaliacao,
+        "erosao_adesiva_px_em_768x576": EROSAO_PLACA_PX,
+        "limiar_dark_cinza": LIMIAR_PIXEL_ESCURO,
+        "classes_mascara": VALORES_CLASSES,
+        "versao_gerador": 4,
+    }
+    relatorio = {
+        "semente_global": configuracao.semente,
+        "separacao_placas": {
+            "semente": configuracao.semente,
+            "total": len(placas_composicao) + len(placas_avaliacao),
+            "composicao": [caminho.stem for caminho in placas_composicao],
+            "avaliacao": [caminho.stem for caminho in placas_avaliacao],
+            "nenhuma_placa_avaliacao_usada_na_geracao": True,
+        },
+        "extracao_recortes": {
+            "area_minima_px": AREA_MINIMA_RECORTE_REAL,
+            "proporcao_maxima": PROPORCAO_MAXIMA_RECORTE_REAL,
+            "componentes_encontrados_em_placas_de_composicao": sum(
+                componentes_por_placa.values()
+            ),
+            "recortes_aceitos": len(recortes),
+            "placas_com_recortes": sum(
+                valor > 0 for valor in aceitos_por_placa.values()
+            ),
+            "maior_lado_percentis_px": _percentis_tamanho_recortes(recortes),
+            "recortes_por_placa": aceitos_por_placa,
+        },
+        "bases_reais": [base.identificador for base in bases_reais],
+        "amostras": configuracao.quantidade,
+        "bases_reais_usadas": sum(sequencia_bases),
+        "bases_sinteticas_usadas": configuracao.quantidade - sum(sequencia_bases),
+        "maximo_reuso_recorte_no_conjunto": maximo_reuso,
+        "limite_reuso_recorte_por_amostra": configuracao.limite_reuso_recorte,
+        "fracao_aglomerada_media_alvos_50_70": (
+            sum(alvo_alto) / len(alvo_alto) if alvo_alto else None
+        ),
+        "descritores_visuais": comparacao_visual,
+        "avaliacao_inpainting": avaliacao_inpainting,
+    }
+    (saida / "configuracao.json").write_text(
+        json.dumps(configuracao_saida, ensure_ascii=False, sort_keys=True, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+    (saida / "relatorio_geracao.json").write_text(
+        json.dumps(relatorio, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return registros
+
+
+def _percentis_tamanho_recortes(
+    recortes: list[RecorteInsetoReal],
+) -> dict[str, float]:
+    import numpy as np
+
+    lados = [max(recorte.imagem.size) for recorte in recortes]
+    return {
+        f"p{percentil}": float(np.percentile(lados, percentil))
+        for percentil in (10, 50, 90)
+    }
 
 
 def _texto_obrigatorio(registro: dict[str, object], campo: str, indice: int) -> str:
