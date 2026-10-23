@@ -93,6 +93,25 @@ def _logar(client: TestClient, session: Session) -> dict:
     return resposta.json()
 
 
+def test_aplicar_credenciais_substitui_sessao_de_login(
+    client: TestClient, session: Session
+) -> None:
+    """Aplica outra sessão sem manter o cookie recebido no login anterior."""
+    _logar(client, session)
+    usuario = criar_usuario(session, client.app, email="outra@exemplo.com")
+    credenciais = criar_sessao(session, client.app, usuario)
+
+    aplicar_credenciais(client, credenciais)
+    resposta = client.get("/api/auth/me")
+
+    assert resposta.status_code == 200
+    assert resposta.json()["usuario"]["email"] == usuario.email
+    assert resposta.json()["csrf_token"] == credenciais.csrf_token
+    assert len(list(client.cookies.jar)) == 1
+    assert client.headers["X-CSRF-Token"] == credenciais.csrf_token
+    assert client.headers["Origin"] == ORIGEM_DE_TESTE
+
+
 def test_login_valido_abre_sessao_com_cookie_restrito(
     client: TestClient, session: Session
 ) -> None:
