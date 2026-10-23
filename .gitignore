@@ -91,4 +91,4 @@ scratch_ml02a/
 .tmp-*/
 
 # Pastas e arquivos temporários de teste
-backend/.pytest-tmp-*
+backend/.pytest-*
