@@ -80,10 +80,10 @@ def criar_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--limite-sprites",
         type=int,
-        default=LIMITE_SPRITES_POR_AMOSTRA,
+        default=None,
         help=(
             "Máximo de tentativas de composição por imagem "
-            f"(padrão: {LIMITE_SPRITES_POR_AMOSTRA})."
+            "(padrão: 12000 na recomposição real; 3000 no modo legado)."
         ),
     )
     parser.add_argument(
@@ -91,6 +91,11 @@ def criar_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.5,
         help="Fração de bases reais na recomposição (padrão: 0.5).",
+    )
+    parser.add_argument(
+        "--mascaras-bases",
+        type=Path,
+        help="Máscaras complementares revisadas das seis bases; preserva as originais.",
     )
     parser.add_argument(
         "--intensidade-aglomeracao",
@@ -101,8 +106,8 @@ def criar_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--limite-reuso-recorte",
         type=int,
-        default=2,
-        help="Máximo de vezes que um recorte aparece na mesma amostra.",
+        default=None,
+        help="Máximo de vezes por recorte e amostra (real: 12; legado: 2).",
     )
     parser.add_argument(
         "--proporcao-placas-avaliacao",
@@ -183,15 +188,20 @@ def main(argumentos: list[str] | None = None) -> int:
             idade_maxima_dias=opcoes.idade_maxima_dias,
             quantidade=opcoes.quantidade,
             resolucao=(opcoes.largura, opcoes.altura),
-            limite_sprites=opcoes.limite_sprites,
+            limite_sprites=opcoes.limite_sprites
+            if opcoes.limite_sprites is not None
+            else (12000 if opcoes.placas_reais else LIMITE_SPRITES_POR_AMOSTRA),
             pesos_grupo=opcoes.pesos_grupo,
             px_por_mm=opcoes.px_por_mm,
             k_escala_min=opcoes.k_escala_min,
             k_escala_max=opcoes.k_escala_max,
             diretorio_placas_reais=opcoes.placas_reais,
+            diretorio_mascaras_bases=opcoes.mascaras_bases,
             proporcao_bases_reais=opcoes.proporcao_bases_reais,
             intensidade_aglomeracao=opcoes.intensidade_aglomeracao,
-            limite_reuso_recorte=opcoes.limite_reuso_recorte,
+            limite_reuso_recorte=opcoes.limite_reuso_recorte
+            if opcoes.limite_reuso_recorte is not None
+            else (12 if opcoes.placas_reais else 2),
             proporcao_placas_avaliacao=opcoes.proporcao_placas_avaliacao,
         )
         inicio = time.perf_counter()

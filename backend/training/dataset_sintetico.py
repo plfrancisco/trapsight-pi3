@@ -8,12 +8,13 @@ e licença documentada no manifesto local.
 from __future__ import annotations
 
 import bisect
+import hashlib
 import io
 import json
 import math
 import platform
 import random
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
@@ -85,7 +86,7 @@ FREQUENCIAS_DISTRATORES = (
 FAIXAS_COBERTURA_RECOMPOSICAO: tuple[tuple[FaixaCobertura, float, float], ...] = (
     ("ok", 0.0, 10.0),
     ("atencao", 10.0, 20.0),
-    ("trocar", 20.0, 70.0),
+    ("trocar", 20.0, 55.0),
 )
 NOMES_BASES_REAIS = (
     "senai_tebrau_sb__resized_w_uv_tebrau_160824_c172.png",
@@ -189,6 +190,7 @@ class ConfiguracaoDataset:
     intensidade_aglomeracao: float = 0.70
     limite_reuso_recorte: int = 2
     proporcao_placas_avaliacao: float = 0.2
+    diretorio_mascaras_bases: Path | None = None
 
     def __post_init__(self) -> None:
         if self.quantidade < 1:
@@ -681,10 +683,15 @@ def _carregar_base_real(
     caminho_imagem: Path,
     diretorio: Path,
     resolucao: tuple[int, int],
+    diretorio_mascaras: Path | None = None,
 ) -> BasePlacaReal:
     import numpy as np
 
-    caminho_mascara = diretorio / "mascaras" / f"{caminho_imagem.stem}.png"
+    caminho_mascara = (
+        diretorio_mascaras or diretorio / "mascaras"
+    ) / f"{caminho_imagem.stem}.png"
+    if diretorio_mascaras is not None and not caminho_mascara.is_file():
+        raise FileNotFoundError(f"Máscara complementar ausente: {caminho_mascara}.")
     if not caminho_mascara.is_file():
         caminho_mascara = next(
             (
@@ -712,14 +719,49 @@ def _carregar_base_real(
         imagem = imagem.resize(resolucao, Image.Resampling.BILINEAR)
         mascara = mascara.resize(resolucao, Image.Resampling.NEAREST)
     valores = set(np.unique(np.asarray(mascara)).tolist())
-    if not valores <= {0, 1, 2}:
+    if not valores <= {0, 1, 2, 255}:
         raise ValueError(f"Máscara de {caminho_imagem.stem} tem classes inválidas.")
     classes = np.asarray(mascara, dtype=np.uint8)
-    area_placa = int(np.count_nonzero(classes > 0))
+    area_placa = int(np.count_nonzero((classes == 1) | (classes == 2)))
     if area_placa == 0:
         raise ValueError(f"A placa de {caminho_imagem.stem} está vazia.")
     cobertura = 100.0 * np.count_nonzero(classes == 2) / area_placa
     return BasePlacaReal(caminho_imagem.stem, imagem, mascara, cobertura)
+
+
+def _particionar_fontes(placas: list[Path], semente: int) -> dict[str, list[Path]]:
+    """Atribui cada placa inteira a um único conjunto antes de abrir os pixels."""
+    if len(placas) < 3:
+        raise ValueError(
+            "São necessárias três placas de composição para separar os conjuntos."
+        )
+    bases = [p for p in placas if p.name in NOMES_BASES_REAIS]
+    if len(bases) < 3:
+        bases = sorted(placas)[: min(6, len(placas))]
+    restantes = [p for p in placas if p not in bases]
+    rng = random.Random(semente ^ 0xF07E5)
+    rng.shuffle(bases)
+    rng.shuffle(restantes)
+    grupos: dict[str, list[Path]] = {
+        nome: [] for nome in ("treino", "validacao", "teste")
+    }
+    for lista in (bases, restantes):
+        validacao = round(len(lista) * 0.15)
+        teste = round(len(lista) * 0.15)
+        if lista is bases:
+            validacao = max(1, validacao)
+            teste = max(1, teste)
+        treino = len(lista) - validacao - teste
+        for nome, fatia in zip(
+            grupos,
+            (
+                lista[:treino],
+                lista[treino : treino + validacao],
+                lista[treino + validacao :],
+            ),
+        ):
+            grupos[nome].extend(fatia)
+    return {nome: sorted(lista) for nome, lista in grupos.items()}
 
 
 def _extrair_recortes_reais(
@@ -930,7 +972,7 @@ def _compor_recortes_reais(
 
     imagem = np.asarray(imagem_base.convert("RGB"), dtype=np.uint8).copy()
     classes = np.asarray(mascara_base.convert("L"), dtype=np.uint8)
-    placa = classes > 0
+    placa = (classes == 1) | (classes == 2)
     herdada = (classes == VALORES_CLASSES["placa_coberta"]) & placa
     coberta = herdada.copy()
     area_placa = int(placa.sum())
@@ -944,7 +986,12 @@ def _compor_recortes_reais(
         cv2.MORPH_ELLIPSE,
         (raio_x * 2 + 1, raio_y * 2 + 1),
     )
-    erodida = cv2.erode(placa.astype(np.uint8), kernel, iterations=1).astype(bool)
+    # Uma região sem supervisão não é uma borda física da placa. Erodir cada
+    # mancha ignorada criaria grandes buracos artificiais na área de composição.
+    erodida = (
+        cv2.erode((classes > 0).astype(np.uint8), kernel, iterations=1).astype(bool)
+        & placa
+    )
     centros_validos = np.argwhere(erodida)
     if len(centros_validos) == 0:
         raise ValueError("A placa ficou vazia após a erosão da margem adesiva.")
@@ -1011,14 +1058,15 @@ def _compor_recortes_reais(
     selecionados: list[int] = []
     indice_ordem = 0
 
-    def proximo_recorte(*, pequeno: bool = False) -> int | None:
+    def proximo_recorte(*, pequeno: bool = False, qualquer: bool = False) -> int | None:
         nonlocal indice_ordem
         indice_recorte: int | None = None
         for _ in range(len(ordem_recortes)):
             candidato = ordem_recortes[indice_ordem % len(ordem_recortes)]
             indice_ordem += 1
             if usos_amostra.get(candidato, 0) < limite_reuso and (
-                (
+                qualquer
+                or (
                     not pequeno
                     and (
                         max(recortes[candidato].imagem.size)
@@ -1112,7 +1160,7 @@ def _compor_recortes_reais(
         tentativas += 1
 
     area_alvo_com_tolerancia = max(
-        0, area_alvo - round(TOLERANCIA_RECOMPOSICAO_PP * area_placa / 100)
+        0, math.ceil((percentual_alvo - TOLERANCIA_RECOMPOSICAO_PP) * area_placa / 100)
     )
     distancia_a_cobertura = cv2.distanceTransform(
         (~coberta).astype(np.uint8), cv2.DIST_L2, 5
@@ -1156,7 +1204,30 @@ def _compor_recortes_reais(
         centros_isolados.append((centro_x, centro_y, raio))
         tentativas += 1
 
+    # Expande a cobertura em torno das aglomerações quando as inserções isoladas
+    # esgotam o espaço; o teto de tentativas e de reutilização continua obrigatório.
+    while (
+        tentativas < limite_colagens and int(coberta.sum()) < area_alvo_com_tolerancia
+    ):
+        indice_recorte = proximo_recorte(qualquer=True)
+        if indice_recorte is None:
+            break
+        registro = reservar_recorte(indice_recorte)
+        inseto = _transformar_recorte_real(registro.imagem, rng)
+        borda_coberta = cv2.dilate(
+            coberta.astype(np.uint8), np.ones((9, 9), np.uint8)
+        ).astype(bool)
+        candidatos = np.argwhere(erodida & ~coberta & borda_coberta)
+        if not len(candidatos):
+            candidatos = np.argwhere(erodida & ~coberta)
+        if not len(candidatos):
+            break
+        y, x = candidatos[rng.randrange(len(candidatos))]
+        _colar_recorte_real(imagem, coberta, placa, inseto, int(x), int(y))
+        tentativas += 1
+
     classes_finais = np.zeros_like(classes)
+    classes_finais[classes == 255] = 255
     classes_finais[placa] = VALORES_CLASSES["placa_limpa"]
     classes_finais[coberta] = VALORES_CLASSES["placa_coberta"]
     area_herdada = int(herdada.sum())
@@ -1371,7 +1442,7 @@ def _descritores_visuais(
 
     rgb = np.asarray(imagem.convert("RGB"), dtype=np.uint8)
     classes = np.asarray(mascara.convert("L"), dtype=np.uint8)
-    placa = classes > 0
+    placa = (classes == 1) | (classes == 2)
     pixels_placa = int(placa.sum())
     if pixels_placa == 0:
         raise ValueError("Não há área de placa para medir similaridade visual.")
@@ -1598,6 +1669,7 @@ def _gerar_dataset_recomposicao_real(
         configuracao.semente,
         configuracao.proporcao_placas_avaliacao,
     )
+    fontes_por_conjunto = _particionar_fontes(placas_composicao, configuracao.semente)
     bases_composicao = tuple(
         _carregar_base_real(caminho, diretorio_real, configuracao.resolucao)
         for caminho in placas_composicao
@@ -1621,6 +1693,63 @@ def _gerar_dataset_recomposicao_real(
     if not bases_reais:
         raise ValueError("Nenhuma base de placa real está disponível para composição.")
 
+    versoes_bases: dict[str, dict[str, str]] = {}
+    if configuracao.diretorio_mascaras_bases is not None:
+        pasta_mascaras = configuracao.diretorio_mascaras_bases.resolve()
+        manifest = json.loads(
+            (pasta_mascaras.parent / "configuracao.json").read_text("utf-8")
+        )
+        if manifest.get("revisao_visual") != "aprovada" or any(
+            p["depois"]["completude"] < 0.9 for p in manifest["placas"]
+        ):
+            raise ValueError(
+                "As máscaras complementares precisam de revisão e pelo menos 90% de manchas resolvidas."
+            )
+        bases_reais = [
+            _carregar_base_real(
+                diretorio_real / "imagens" / f"{b.identificador}.png",
+                diretorio_real,
+                configuracao.resolucao,
+                pasta_mascaras,
+            )
+            for b in bases_reais
+        ]
+        for base in bases_reais:
+            caminho = pasta_mascaras / f"{base.identificador}.png"
+            registro_revisao = next(
+                (p for p in manifest["placas"] if p["placa"] == base.identificador),
+                None,
+            )
+            resumo = hashlib.sha256(caminho.read_bytes()).hexdigest()
+            if (
+                registro_revisao is None
+                or registro_revisao.get("sha256_complementar") != resumo
+            ):
+                raise ValueError(
+                    f"Máscara complementar alterada ou sem revisão: {base.identificador}."
+                )
+            versoes_bases[base.identificador] = {
+                "versao": str(manifest["versao"]),
+                "sha256": resumo,
+            }
+    else:
+        versoes_bases = {
+            base.identificador: {"versao": "sam_original_incompleta"}
+            for base in bases_reais
+        }
+    bases_por_conjunto: dict[str, list[BasePlacaReal]] = {}
+    recortes_por_conjunto: dict[str, list[RecorteInsetoReal]] = {}
+    for conjunto, fontes in fontes_por_conjunto.items():
+        ids = {p.stem for p in fontes}
+        bases_por_conjunto[conjunto] = [
+            b for b in bases_reais if b.identificador in ids
+        ]
+        recortes_por_conjunto[conjunto] = [r for r in recortes if r.placa_origem in ids]
+        if not bases_por_conjunto[conjunto] or not recortes_por_conjunto[conjunto]:
+            raise ValueError(
+                f"O conjunto {conjunto} precisa de base e recortes próprios."
+            )
+
     pasta_imagens = saida / "imagens"
     pasta_mascaras = saida / "mascaras"
     pasta_imagens.mkdir(parents=True, exist_ok=True)
@@ -1632,11 +1761,16 @@ def _gerar_dataset_recomposicao_real(
     sequencia_bases = _sequencia_bases_reais(
         configuracao.quantidade, configuracao.proporcao_bases_reais
     )
-    usos_globais = [0] * len(recortes)
+    usos_por_conjunto = {
+        nome: [0] * len(pool) for nome, pool in recortes_por_conjunto.items()
+    }
     registros: list[dict[str, object]] = []
     caminho_metadados = saida / "metadados.jsonl"
     with caminho_metadados.open("w", encoding="utf-8", newline="\n") as arquivo:
         for indice, semente_amostra in enumerate(sementes):
+            conjunto = divisoes[indice]
+            recortes_amostra = recortes_por_conjunto[conjunto]
+            usos_globais = usos_por_conjunto[conjunto]
             rng = random.Random(semente_amostra)
             rng_cobertura = random.Random(semente_amostra ^ 0xC0B3A7)
             rng_idade = random.Random(semente_amostra ^ 0xA61DADE)
@@ -1645,7 +1779,7 @@ def _gerar_dataset_recomposicao_real(
             idade_simulada = rng_idade.uniform(0.0, configuracao.idade_maxima_dias)
             usar_base_real = sequencia_bases[indice]
             if usar_base_real:
-                base = rng.choice(bases_reais)
+                base = rng.choice(bases_por_conjunto[conjunto])
                 imagem_base, mascara_base = base.imagem.copy(), base.mascara.copy()
                 identificador_base: str | None = base.identificador
                 tipo_base = "real_ums"
@@ -1655,10 +1789,29 @@ def _gerar_dataset_recomposicao_real(
                 )
                 identificador_base = None
                 tipo_base = "sintetica_stickfly_k45"
+            distratores: list[str] = []
+            if not usar_base_real:
+                distratores = _selecionar_distratores(rng)
+                import numpy as np
+
+                ys, xs = np.nonzero(np.asarray(mascara_base) == 1)
+                rgba = imagem_base.convert("RGBA")
+                _desenhar_distratores(
+                    rgba,
+                    (
+                        int(xs.min()),
+                        int(ys.min()),
+                        int(xs.max()) + 1,
+                        int(ys.max()) + 1,
+                    ),
+                    distratores,
+                    rng,
+                )
+                imagem_base = rgba.convert("RGB")
             imagem, mascara, composicao = _compor_recortes_reais(
                 imagem_base,
                 mascara_base,
-                recortes,
+                recortes_amostra,
                 percentual_alvo,
                 rng,
                 configuracao.limite_sprites,
@@ -1677,6 +1830,12 @@ def _gerar_dataset_recomposicao_real(
                 raise RuntimeError(
                     "Um recorte de placa de avaliação entrou na geração."
                 )
+            fontes_permitidas = {p.stem for p in fontes_por_conjunto[conjunto]}
+            if not set(placas_origem) <= fontes_permitidas or (
+                identificador_base is not None
+                and identificador_base not in fontes_permitidas
+            ):
+                raise RuntimeError("Uma fonte de outro conjunto entrou na geração.")
             registro: dict[str, object] = {
                 "id": identificador,
                 "semente": semente_amostra,
@@ -1691,12 +1850,15 @@ def _gerar_dataset_recomposicao_real(
                 "idade_simulada_dias": idade_simulada,
                 "n_sprites": composicao["n_recortes"],
                 "n_recortes": composicao["n_recortes"],
-                "distratores_presentes": [],
+                "distratores_presentes": distratores,
                 "dominante_cor": "preservada_da_fonte",
-                "mascara_classes": VALORES_CLASSES,
+                "mascara_classes": {**VALORES_CLASSES, "ignorada": 255},
                 "pesos_grupo": {},
                 "origem_base": tipo_base,
                 "placa_base_id": identificador_base,
+                "mascara_base_versao": versoes_bases[identificador_base]
+                if identificador_base
+                else {"versao": "sintetica_exata_v1"},
                 "cobertura_herdada_base_percentual": composicao[
                     "cobertura_herdada_base_percentual"
                 ],
@@ -1724,6 +1886,12 @@ def _gerar_dataset_recomposicao_real(
         )
         for indice in range(quantidade_descritores)
     }
+    altos = [
+        i
+        for i, r in enumerate(registros)
+        if float(r["percentual_cobertura_real"]) >= 50
+    ]
+    indices_descritores.update(altos[:30])
     descritores_gerados: list[dict[str, object]] = []
     for indice in sorted(indices_descritores):
         identificador = str(registros[indice]["id"])
@@ -1749,7 +1917,9 @@ def _gerar_dataset_recomposicao_real(
         for registro in registros
         if float(registro["percentual_cobertura_alvo"]) >= 50.0
     ]
-    maximo_reuso = max(usos_globais, default=0)
+    maximo_reuso = max(
+        (u for usos in usos_por_conjunto.values() for u in usos), default=0
+    )
     configuracao_saida = {
         "semente_global": configuracao.semente,
         "semente_divisao_placas": configuracao.semente,
@@ -1778,11 +1948,17 @@ def _gerar_dataset_recomposicao_real(
         "eficiencia_estimada_area_aglomerada": EFICIENCIA_AREA_AGLOMERADA,
         "eficiencia_estimada_area_dispersada": EFICIENCIA_AREA_DISPERSA,
         "limite_reuso_recorte": configuracao.limite_reuso_recorte,
+        "limite_colagens": configuracao.limite_sprites,
         "proporcao_placas_avaliacao": configuracao.proporcao_placas_avaliacao,
         "erosao_adesiva_px_em_768x576": EROSAO_PLACA_PX,
         "limiar_dark_cinza": LIMIAR_PIXEL_ESCURO,
-        "classes_mascara": VALORES_CLASSES,
-        "versao_gerador": 4,
+        "classes_mascara": {**VALORES_CLASSES, "ignorada": 255},
+        "versao_gerador": 5,
+        "mascaras_bases": versoes_bases,
+        "fontes_por_conjunto": {
+            nome: [p.stem for p in fontes]
+            for nome, fontes in fontes_por_conjunto.items()
+        },
     }
     relatorio = {
         "semente_global": configuracao.semente,
@@ -1807,6 +1983,19 @@ def _gerar_dataset_recomposicao_real(
             "recortes_por_placa": aceitos_por_placa,
         },
         "bases_reais": [base.identificador for base in bases_reais],
+        "fontes_por_conjunto": {
+            nome: {
+                "placas_origem": [p.stem for p in fontes],
+                "bases_reais": [b.identificador for b in bases_por_conjunto[nome]],
+                "recortes": len(recortes_por_conjunto[nome]),
+            }
+            for nome, fontes in fontes_por_conjunto.items()
+        },
+        "avaliacao_real_rotulo_incompleto": True,
+        "diversidade_fundos": "4/1/1 nas seis bases: validação e teste têm apenas um fundo real; ampliar bases independentes ou avaliar com bases sintéticas é recomendado antes do conjunto definitivo.",
+        "distratores": dict(
+            Counter(d for r in registros for d in r["distratores_presentes"])
+        ),
         "amostras": configuracao.quantidade,
         "bases_reais_usadas": sum(sequencia_bases),
         "bases_sinteticas_usadas": configuracao.quantidade - sum(sequencia_bases),

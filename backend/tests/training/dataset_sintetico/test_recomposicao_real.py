@@ -13,9 +13,12 @@ from training.dataset_sintetico import (
     NOMES_BASES_REAIS,
     BasePlacaReal,
     ConfiguracaoDataset,
+    _compor_recortes_reais,
     _criar_base_sintetica,
+    _desenhar_distratores,
     _dividir_placas_reais,
     _extrair_recortes_reais,
+    _particionar_fontes,
     generate_dataset,
 )
 
@@ -148,6 +151,14 @@ def test_geracao_exclui_fontes_de_avaliacao_e_respeita_metadados(
         not ids_avaliacao.intersection(registro["placas_origem_recortes"])
         for registro in registros
     )
+    donos = {}
+    for registro in registros:
+        fontes = set(registro["placas_origem_recortes"])
+        if registro["placa_base_id"]:
+            fontes.add(registro["placa_base_id"])
+        for fonte in fontes:
+            donos.setdefault(fonte, set()).add(registro["conjunto"])
+    assert all(len(conjuntos) == 1 for conjuntos in donos.values())
     assert all(
         registro["maior_reuso_recorte_na_amostra"] <= 2 for registro in registros
     )
@@ -198,3 +209,57 @@ def test_recomposicao_real_e_deterministica(tmp_path: Path) -> None:
         if caminho.is_file()
     }
     assert arquivos_primeiros == arquivos_segundos
+
+
+def test_seis_bases_particionadas_em_quatro_um_um_antes_da_composicao(tmp_path):
+    fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
+    composicao, _ = _dividir_placas_reais(fonte, 19, 0.25)
+    grupos = _particionar_fontes(composicao, 19)
+    assert [len(g) for g in grupos.values()] == [4, 1, 1]
+    assert set().union(*map(set, grupos.values())) == set(composicao)
+    assert sum(map(len, grupos.values())) == len(composicao)
+
+
+def test_distratores_modificam_a_imagem_e_permanecem_em_placa_limpa():
+    imagem, mascara = _criar_base_sintetica((320, 240), random.Random(1))
+    antes = np.array(imagem)
+    classes = np.array(mascara)
+    ys, xs = np.nonzero(classes == 1)
+    rgba = imagem.convert("RGBA")
+    _desenhar_distratores(
+        rgba,
+        (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1),
+        ["poeira", "pelos", "teia", "respingos"],
+        random.Random(9),
+    )
+    alterados = np.any(np.array(rgba.convert("RGB")) != antes, axis=2)
+    assert alterados.any()
+    assert np.all(classes[alterados] == 1)
+    assert np.array_equal(classes, np.array(mascara))
+
+
+def test_expansao_atinge_cobertura_e_preserva_regioes_ignoradas(tmp_path):
+    fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
+    base = BasePlacaReal(
+        "placa",
+        Image.open(fonte / "imagens" / NOMES_BASES_REAIS[1]).convert("RGB"),
+        Image.open(fonte / "mascaras" / NOMES_BASES_REAIS[1]).convert("L"),
+        1.0,
+    )
+    recortes, _, _ = _extrair_recortes_reais((base,))
+    classes = np.array(base.mascara)
+    classes[90:100, 180:190] = 255
+    _, resultado, meta = _compor_recortes_reais(
+        base.imagem,
+        Image.fromarray(classes),
+        recortes,
+        25.0,
+        random.Random(7),
+        1000,
+        500,
+        0.7,
+        [0] * len(recortes),
+    )
+    assert abs(meta["percentual_cobertura_real"] - 25.0) <= 1.0
+    assert np.all(np.array(resultado)[classes == 255] == 255)
+    assert meta["n_recortes"] <= 1000

@@ -250,6 +250,39 @@ arquivos são preservados. Fora do desenvolvimento local, a execução exige a
 confirmação explícita `--confirmar-ambiente`; o destino é exibido sem
 credenciais.
 
+## Revisão da recomposição real
+
+O diagnóstico mantém as fontes separadas por placa e gera somente uma amostra
+balanceada de 30 imagens e outros 30 casos com cobertura real de pelo menos
+50%. Os casos adicionais servem aos descritores; não integram o treino. Os
+diretórios de saída precisam ser novos. A pasta `dataset/` fica ignorada pelo
+Git, permitindo revisar os artefatos dentro do checkout.
+
+A partir da raiz, com o grupo `treino` e o pacote opcional `segment-anything`
+disponíveis no ambiente, execute:
+
+```powershell
+$env:PYTHONPATH = "backend"
+uv run --project backend --locked --group treino --with segment-anything python -m training.completar_mascaras_bases `
+  --fonte dataset/apoio/teste-real-ums `
+  --saida dataset/apoio/bases-mascaras-revisadas `
+  --checkpoint dataset/apoio/modelos-sam/sam_vit_b_01ec64.pth `
+  --revisao backend/training/anotacoes_bases_ums.json
+
+uv run --project backend --locked --group treino python -m training.revisar_recomposicao `
+  --amostra dataset/recomposicao-amostra-revisada `
+  --fonte dataset/apoio/teste-real-ums `
+  --mascaras dataset/apoio/bases-mascaras-revisadas/mascaras `
+  --saida dataset/recomposicao-diagnostico-alto
+```
+
+As anotações vinculam a revisão visual ao hash de cada máscara original. A
+completude usa o protocolo descrito na seção 5.4 da especificação e distingue
+classe 2, ignoradas e não resolvidas. O diagnóstico registra a calibração por
+colagens usando apenas o banco de treino e informa que os rótulos das 14
+placas reais de avaliação continuam incompletos. A aprovação da amostra não
+gera automaticamente as 3.000 imagens.
+
 ## Verificações
 
 Execute os testes e o lint a partir do diretório `backend`:
