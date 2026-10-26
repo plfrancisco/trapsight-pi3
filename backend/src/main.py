@@ -14,6 +14,7 @@ from src.api.protecao import ProtecaoDeSessaoMiddleware, agora_utc
 from src.config.database import create_database_engine, create_session_factory
 from src.config.settings import Settings
 from src.inference.fabrica import criar_inferidor
+from src.services.auditoria import configurar_auditoria
 from src.services.limitador_analises import LimitadorDeAnalises
 from src.services.limitador_contas import LimitadorDeContas
 from src.services.senhas import ServicoDeSenhas
@@ -22,6 +23,7 @@ from src.services.senhas import ServicoDeSenhas
 def create_app() -> FastAPI:
     """Cria a API com configurações validadas antes de atender requisições."""
     settings = Settings()
+    configurar_auditoria()
 
     inferidor = criar_inferidor(settings)
     engine = create_database_engine(settings.database_url.get_secret_value())

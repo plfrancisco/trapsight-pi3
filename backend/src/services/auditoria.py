@@ -2,16 +2,35 @@
 
 from __future__ import annotations
 
-from logging import getLogger
+import sys
+from logging import INFO, Formatter, StreamHandler, getLogger
 from typing import Final
 from uuid import UUID
 
 logger = getLogger("trapsight.auditoria")
+_NOME_HANDLER = "trapsight.auditoria.stdout"
 
 # Só estes campos podem aparecer: nunca senha, hash, token, CSRF nem e-mail digitado.
 _CAMPOS_PERMITIDOS: Final = frozenset(
     {"usuario_id", "sessao_id", "ip", "motivo", "criado_por_id"}
 )
+
+
+def configurar_auditoria() -> None:
+    """Envia eventos de auditoria ao stdout sem repetir os logs do servidor.
+
+    A configuração é idempotente porque a fábrica da aplicação também é usada
+    pelos testes e por processos que instanciam mais de uma aplicação.
+    """
+    logger.setLevel(INFO)
+    logger.propagate = False
+    for handler_existente in tuple(logger.handlers):
+        if handler_existente.get_name() == _NOME_HANDLER:
+            logger.removeHandler(handler_existente)
+    handler = StreamHandler(sys.stdout)
+    handler.set_name(_NOME_HANDLER)
+    handler.setFormatter(Formatter("%(message)s"))
+    logger.addHandler(handler)
 
 
 def registrar_evento(evento: str, **campos: str | UUID | None) -> None:
