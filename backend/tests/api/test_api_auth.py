@@ -494,6 +494,27 @@ def test_troca_recusa_reutilizar_senha_atual(
     assert _entrar(client, senha=SENHA_DE_TESTE).status_code == 200
 
 
+def test_troca_reutilizada_audita_motivo_sem_dados_sensiveis(
+    client: TestClient, session: Session, capfd
+) -> None:
+    """A recusa da senha repetida deixa rastro sem registrar credenciais."""
+    _logar(client, session)
+    from src.services.auditoria import configurar_auditoria
+
+    configurar_auditoria()
+
+    resposta = client.post(
+        "/api/auth/senha",
+        json={"senha_atual": SENHA_DE_TESTE, "senha_nova": SENHA_DE_TESTE},
+    )
+
+    saida, _ = capfd.readouterr()
+    assert resposta.status_code == 422
+    assert "auth.troca_senha_recusada" in saida
+    assert "motivo=igual_atual" in saida
+    assert SENHA_DE_TESTE not in saida
+
+
 @pytest.mark.parametrize(
     ("senha_nova", "motivo"),
     [

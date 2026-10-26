@@ -20,7 +20,7 @@ from src.entities import Usuario
 from src.entities.papel import PapelUsuario
 from src.repositories import EmailDuplicado, UsuarioRepository
 from src.repositories.exceptions import GerenteJaExiste
-from src.services.auditoria import registrar_evento
+from src.services.auditoria import configurar_auditoria, registrar_evento
 from src.services.autenticacao import normalizar_email
 from src.services.senhas import SenhaFraca, ServicoDeSenhas, validar_politica
 from src.services.sessoes import ServicoDeSessoes
@@ -31,6 +31,7 @@ _MOTIVOS = {
     "comum": "a senha é comum demais",
     "trivial": "a senha é uma sequência ou repetição simples",
     "contextual": "a senha não pode derivar do e-mail, do nome ou do produto",
+    "igual_atual": "a senha nova precisa ser diferente da senha atual",
 }
 
 
@@ -281,6 +282,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         Código de saída do processo.
     """
     args = _parser().parse_args(argv)
+    configurar_auditoria()
     settings = Settings()
     senhas = ServicoDeSenhas(
         memoria_kib=settings.argon2_memoria_kib,

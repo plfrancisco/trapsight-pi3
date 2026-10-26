@@ -1,5 +1,6 @@
 """Integração da saída de auditoria com a criação da aplicação."""
 
+import re
 from uuid import uuid4
 
 import pytest
@@ -26,6 +27,10 @@ def test_auditoria_escreve_evento_em_stdout_sem_dados_proibidos(
 
     saida, erro = capfd.readouterr()
     assert saida.count("auth.login_ok") == 1
+    assert re.search(
+        r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|\+00:00) auth\.login_ok ",
+        saida,
+    )
     assert "usuario_id=" in saida
     assert "sessao_id=" in saida
     assert erro == ""

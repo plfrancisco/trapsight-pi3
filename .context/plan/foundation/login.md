@@ -577,6 +577,11 @@ e acessos negados. Identificar o usuário pelo `id`; para e-mail inexistente,
 registrar apenas um hash curto, nunca o e-mail digitado, para não gravar
 senhas digitadas no campo errado. Os logs são revisados quando houver
 suspeita de ataque (OWASP: monitorar falhas de autenticação).
+Na CLI, o destino imediato é o stdout do processo do administrador, com o
+mesmo formato estruturado e horário UTC. Esse stdout não é armazenamento
+durável quando a CLI roda em `docker exec`; persistir os eventos da CLI em uma
+tabela de auditoria ou coletor central continua pendente para uma implantação
+operacional.
 
 ## 12.2 Riscos aceitos na v1
 

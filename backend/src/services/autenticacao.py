@@ -203,6 +203,9 @@ class ServicoDeAutenticacao:
             )
             raise CredenciaisInvalidas
         if self._senhas.verificar(senha_nova, usuario.senha_hash)[0]:
+            registrar_evento(
+                "troca_senha_recusada", usuario_id=usuario.id, motivo="igual_atual"
+            )
             raise SenhaFraca("igual_atual")
         validar_politica(senha_nova, email=usuario.email, nome=usuario.nome)
 

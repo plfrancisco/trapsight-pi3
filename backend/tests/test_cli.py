@@ -1,6 +1,10 @@
 """Testes da gestão de contas pela linha de comando."""
 
+import re
+from contextlib import nullcontext
 from datetime import datetime, timezone
+from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
@@ -233,3 +237,30 @@ def test_despacho_cli_concede_papel_e_revoga_sessoes(
     session.refresh(sessao)
     assert usuario.papel == PapelUsuario.OPERADOR
     assert sessao.revogada_em == _AGORA
+
+
+def test_main_configura_auditoria_cli_no_stdout(settings, monkeypatch, capfd) -> None:
+    """A entrada da CLI configura auditoria antes de executar o comando."""
+    monkeypatch.setattr(cli, "Settings", lambda: settings)
+    engine = MagicMock()
+    monkeypatch.setattr(cli, "create_database_engine", lambda _url: engine)
+    monkeypatch.setattr(
+        cli,
+        "create_session_factory",
+        lambda _engine: lambda: nullcontext(MagicMock()),
+    )
+
+    def executar(*_args):
+        cli.registrar_evento("papel_alterado", usuario_id=uuid4(), motivo="gerente")
+        return []
+
+    monkeypatch.setattr(cli, "_executar", executar)
+
+    assert cli.main(["listar-usuarios"]) == 0
+    saida, erro = capfd.readouterr()
+    assert re.search(
+        r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|\+00:00) auth\.papel_alterado ",
+        saida,
+        re.MULTILINE,
+    )
+    assert erro == ""
