@@ -151,6 +151,11 @@ Implementa o requisito da seção 3.4 de `modelo_spec.md`:
 Todo distrator é desenhado na imagem e **ausente da máscara** — é o que
 ensina o modelo a não classificar sujeira como inseto.
 
+Sujeira confirmada nas fotografias também permanece na classe 1, registrada
+como revisada. A classe 255 é reservada a regiões ambíguas; não pode substituir
+os exemplos negativos de sujeira. Marcações impressas, grade e bordas têm
+máscaras de estrutura próprias, separadas dos insetos e dos distratores.
+
 ---
 
 # 5. Composição
@@ -225,22 +230,15 @@ tipos uniformemente ao longo do conjunto.
 O alvo é sorteado antes da quantidade de colagens. No modo real, `trocar` cobre
 20–55%, limitando o alvo à capacidade verificada após a separação das fontes;
 os modos legados de sprites continuam
-limitados às faixas anteriores. Recortes com lado maior que 14 px são
-posicionados ao redor de quatro a sete focos sorteados na placa. Cada foco
-define uma elipse com raios de 14% da largura útil e 18% da altura útil; a
-posição dentro dela usa amostragem normal com desvio de 11% da largura e 12% da
-altura da imagem. O número de focos cresce com a cobertura-alvo, limitado a
-quatro e sete. Recortes de até 14 px são distribuídos em áreas fora das elipses
-expandidas por metade da margem de erosão, quando há espaço. A distância entre
-os centros dispersos também considera o tamanho de cada recorte. O orçamento
-de tentativas estima a área útil média de cada grupo de recortes e reserva a
-fração configurável, que começa em 0,70, para os grupos. A fração efetiva é
-recalculada pela máscara final e guardada em `fracao_aglomerada`. A mesma fonte
+limitados às faixas anteriores. Em `ok` e `atencao`, a colocação é quase uniforme
+com espaçamento mínimo, sem focos. Em `trocar`, o padrão é uniforme com
+sobreposição. Qualquer hipótese com focos exige comparação contra colocação
+aleatória uniforme na mesma densidade e justificativa explícita. A mesma fonte
 pode aparecer no máximo doze vezes em uma amostra no modo real, com até
 12.000 colagens. Isso compensa o banco menor de validação e teste, mas aumenta
 a repetição dentro da amostra e deve ser acompanhado no relatório. Quando a
-fase dispersa não alcança o alvo, recortes grandes e pequenos do mesmo conjunto
-expandem as bordas das aglomerações, respeitando ambos os tetos. O relatório
+fase espaçada não alcança o alvo, a execução informa a limitação em vez de
+criar focos silenciosamente. O relatório
 registra a origem dos recortes, os parâmetros geométricos, a maior reutilização
 no conjunto, a cobertura herdada pela base e a cobertura adicionada pela
 composição, sempre medidas na máscara final.
@@ -256,19 +254,24 @@ validar reconstruções. Por isso, a base permanece sem inpainting e as duas
 parcelas de cobertura são reportadas separadamente.
 
 As seis bases recebem máscaras complementares em diretório próprio, sem
-substituir as originais. O SAM recebe caixas de componentes 8-conexos com
-cinza em ponto fixo `(4899R + 9617G + 1868B + 8192) >> 14` abaixo da mediana
-na placa menos 35, área mínima de 12 px, maior lado até 60 px e razão entre
-lados até 6. Não há redimensionamento. Esse protocolo é exclusivamente de
-anotação, sem alterar o baseline por limiar global.
+substituir as originais. Cada placa tem uma máscara de estruturas versionada
+(grade, etiqueta, logomarca e borda), desenhada e revisada separadamente. Não
+se descartam componentes grandes por tamanho: insetos grandes precisam entrar.
+O contorno físico da placa é revisado; buracos de classe 0 causados por insetos
+sobre a placa são corrigidos com a segmentação do inseto.
 
-Uma mancha está rotulada quando pelo menos 50% de seus pixels pertencem à
-classe 2; está ignorada quando pelo menos 50% pertencem a 255; as demais são
-não resolvidas. O relatório registra as três contagens e o total, antes e
-depois; ignoradas não são contadas como insetos. A meta é no máximo 10% não
-resolvidas. Propostas do SAM sobre impressões, bordas ou regiões sem contorno
-seguro são excluídas da supervisão pela revisão visual, registrada por
-componente e vinculada ao hash da máscara original.
+Candidatas são regiões 8-conexas com cinza em ponto fixo
+`(4899R + 9617G + 1868B + 8192) >> 14` abaixo da mediana na placa menos 35,
+fora das estruturas. O limiar localiza caixas para SAM, sem decidir a classe.
+A decisão semântica de cada região fica em arquivo versionado por placa:
+inseto → 2; sujeira confirmada → 1; ambígua → 255. Não há redimensionamento.
+O baseline continua usando um único limiar global independente deste processo.
+
+O aceite é por placa: nenhuma candidata sem decisão; área candidata ambígua
+de no máximo 10% da área candidata e no máximo 0,2 ponto percentual da placa.
+O relatório discrimina regiões e áreas antes/depois por decisão e mostra a
+imagem original junto da sobreposição colorida. Contagem de componentes
+resolvidos sozinha não comprova completude do rótulo.
 
 Pixels 255 não entram na entropia cruzada, Dice, termo de área, percentual,
 pesos de classe nem métricas. A configuração e cada amostra registram a versão
@@ -376,13 +379,15 @@ apenas como teste de fumaça do gerador e do treino.
 | Reprodutibilidade | Gerar duas vezes com a mesma semente global produz dataset idêntico |
 | Sem vazamento entre placas | Conferir que `placas_origem_recortes` e `placa_base_id` não intersectam as placas de avaliação listadas no relatório |
 | Sem vazamento entre treino, validação e teste | Cada placa de composição pertence a exatamente um conjunto; a união de bases e origens de recortes de um conjunto é disjunta dos demais. O carregador deve recusar cruzamentos, inclusive entre os papéis de base e recorte |
-| Bases com rótulos revisados | Pelo protocolo da seção 5.4, no máximo 10% de manchas não resolvidas; registrar total, classe 2, ignoradas e não resolvidas antes/depois, versões e hashes, preservando as originais |
+| Bases com rótulos revisados | Aplicar o aceite por área e decisão da seção 5.4 em cada placa; registrar regiões, áreas, versões e hashes, preservando as originais |
 | Classe ignorada | Perturbar predições somente em pixels 255 não altera perda nem métricas e produz gradiente zero nesses pixels |
 | Cobertura real e heredada corretas | Recalcular `percentual_cobertura_real`, cobertura herdada e área adicionada pelas máscaras gravadas |
 | Similaridade dos recortes | Comparar a distribuição do maior lado dos componentes escuros por KS contra as placas de avaliação; registrar a distância |
 | Similaridade de tons | Comparar histogramas de tons de cinza com 32 faixas usando meia distância L1 |
 | Fração escura | Comparar a fração com cinza abaixo de 110 contra 0,0635; medir somente pixels da placa |
-| Aglomeração | Comparar a fração de área da classe 2 em componentes maiores que 500 px contra 0,777 usando pelo menos 30 amostras com cobertura real de pelo menos 50%; um diagnóstico adicional de 30 casos altos não integra treino, validação ou teste; registrar também a aproximação visual com pixels cinza abaixo de 110 nas placas de avaliação |
+| Aglomeração sem grade | Fração dos pixels escuros (<110) em componentes >500 px após remover segmentos horizontais/verticais de pelo menos 41 px. Referência nas 69 placas: 0,016 sem grade; com grade, aproximadamente 0,72. A antiga referência 0,777 incluía estruturas e foi invalidada |
+| Ocupação espacial | Fração dos tiles de 24 px elegíveis (>=50% de placa válida) com pelo menos 3 pixels escuros. Comparar por densidade escura: ocupação real 0,35 em 1–2%, 0,57 em 2–4% e 0,88 em 4–8% |
+| Completude por área e decisão | Em cada base: zero candidatas sem decisão, área ambígua <=10% da área candidata e <=0,2 pp da placa; estruturas versionadas; sujeira revisada na classe 1; inseto sobre a placa nunca na classe 0 |
 | Quantidade de componentes de referência | Registrar as 5.144 componentes escuros identificadas nas 69 placas |
 | Relatório visual | Gravar os quatro descritores somente dentro da placa, a cobertura das amostras usadas na comparação de aglomeração, a divisão e semente das placas, a maior reutilização de recorte e a conclusão do teste de inpainting em `relatorio_geracao.json` |
 
@@ -390,6 +395,14 @@ A classe 2 é a medida exata da máscara gerada. Nas placas reais, as máscaras
 SAM cobrem somente 25,6% das anotações COCO; por isso, a comparação de
 aglomeração também registra os componentes dos pixels escuros como aproximação
 visual e informa separadamente a fração calculada pela máscara rotulada.
+
+Não há referência real validada de insetos acima de aproximadamente 8% de pixels escuros. O
+domínio `trocar` de 20–70% de cobertura é extrapolação; o perfil limitado a
+20–55% é um subintervalo desse domínio, sem validação visual real nessa faixa.
+Não se compara aglomeração a uma suposta referência real de cobertura >=50%.
+Na amostra de 30, medir todas as imagens, comparar `trocar` com o aleatório e
+parar para revisão. No conjunto de 3.000, autorizado separadamente, medir pelo
+menos 100 amostras com os mesmos instrumentos versionados e testados.
 
 ---
 
