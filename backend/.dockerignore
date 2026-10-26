@@ -12,3 +12,7 @@ __pycache__
 **/__pycache__
 *.py[cod]
 .ruff_cache
+.tmp-*
+**/.tmp-*
+.pytest-*
+**/.pytest-*
