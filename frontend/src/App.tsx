@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import AuthProvider from './auth/AuthProvider'
 import RotaProtegida from './auth/RotaProtegida'
+import RotaGerente from './auth/RotaGerente'
 import Layout from './components/Layout'
 import AlterarSenhaPage from './pages/AlterarSenhaPage'
 import CadastroArmadilhaPage from './pages/CadastroArmadilhaPage'
@@ -9,6 +10,7 @@ import DetalheArmadilhaPage from './pages/DetalheArmadilhaPage'
 import LoginPage from './pages/LoginPage'
 import NaoEncontradaPage from './pages/NaoEncontradaPage'
 import NovaAnalisePage from './pages/NovaAnalisePage'
+import ContasPage from './pages/ContasPage'
 
 /**
  * Declara as rotas para permitir testes com qualquer router. Só `/login` é pública;
@@ -27,6 +29,9 @@ export function Rotas() {
           <Route path="/armadilhas/:id/editar" element={<CadastroArmadilhaPage />} />
           <Route path="/analises/nova" element={<NovaAnalisePage />} />
           <Route path="/conta/senha" element={<AlterarSenhaPage />} />
+          <Route element={<RotaGerente />}>
+            <Route path="/contas" element={<ContasPage />} />
+          </Route>
           <Route path="*" element={<NaoEncontradaPage />} />
         </Route>
       </Route>

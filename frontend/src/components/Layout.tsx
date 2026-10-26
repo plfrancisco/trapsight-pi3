@@ -9,7 +9,7 @@ import MensagemErro from './MensagemErro'
 const CHAVE_SIDEBAR = 'trapsight:sidebar-recolhida'
 
 interface IconeNavegacaoProps {
-  tipo: 'painel' | 'analise' | 'armadilha'
+  tipo: 'painel' | 'analise' | 'armadilha' | 'contas'
 }
 
 /** Desenha os ícones vetoriais usados na navegação principal.
@@ -30,6 +30,11 @@ function IconeNavegacao({ tipo }: IconeNavegacaoProps) {
         <>
           <path d="M4 8.5h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-10Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" />
           <path d="m8 8.5 1.3-3h5.4l1.3 3M9 13h6m-3-3v6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+        </>
+      ) : tipo === 'contas' ? (
+        <>
+          <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.7" />
+          <path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
         </>
       ) : (
         <>
@@ -70,7 +75,9 @@ export default function Layout() {
 
   const tituloDaRota = pathname === '/'
     ? 'Visão geral'
-    : pathname.startsWith('/analises')
+    : pathname === '/contas'
+      ? 'Contas'
+      : pathname.startsWith('/analises')
       ? 'Nova análise'
       : pathname === '/conta/senha'
         ? 'Segurança da conta'
@@ -141,6 +148,12 @@ export default function Layout() {
             <IconeNavegacao tipo="armadilha" />
             <span className="sidebar-link-label">Nova armadilha</span>
           </NavLink>
+          {usuario?.papel === 'gerente' ? (
+            <NavLink aria-label="Contas" className={classeLink} title={sidebarRecolhida ? 'Contas' : undefined} to="/contas">
+              <IconeNavegacao tipo="contas" />
+              <span className="sidebar-link-label">Contas</span>
+            </NavLink>
+          ) : null}
         </nav>
 
         <div className="sidebar-bottom">
@@ -212,6 +225,12 @@ export default function Layout() {
             <IconeNavegacao tipo="armadilha" />
             <span>Armadilha</span>
           </NavLink>
+          {usuario?.papel === 'gerente' ? (
+            <NavLink aria-label="Contas" className={classeLinkMovel} to="/contas">
+              <IconeNavegacao tipo="contas" />
+              <span>Contas</span>
+            </NavLink>
+          ) : null}
         </nav>
       ) : null}
     </div>

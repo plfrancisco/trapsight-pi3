@@ -15,7 +15,7 @@ import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import Layout from './Layout'
 
-const usuario = { id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
+const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
 
 const montar = (ativa: boolean) =>
   render(
@@ -36,6 +36,22 @@ beforeEach(() => {
 })
 
 describe('Layout e a conta do usuário', () => {
+  it('mostra Contas nos dois menus somente ao gerente', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { ...usuario, papel: 'gerente' }, csrf_token: 'c',
+    })
+    montar(true)
+    await screen.findByText(usuario.email)
+    expect(screen.getAllByRole('link', { name: 'Contas' })).toHaveLength(2)
+  })
+
+  it('não mostra Contas ao operador', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    montar(true)
+    await screen.findByText(usuario.email)
+    expect(screen.queryByRole('link', { name: 'Contas' })).not.toBeInTheDocument()
+  })
+
   it('mostra e-mail, "Alterar senha" e "Sair" quando há sessão', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
 

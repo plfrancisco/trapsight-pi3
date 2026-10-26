@@ -129,6 +129,21 @@ export interface Usuario {
   id: string
   email: string
   nome: string
+  papel: 'gerente' | 'operador'
+}
+
+/** Campos aceitos ao criar uma conta de operador. */
+export interface UsuarioEntrada {
+  email: string
+  nome: string
+  senha: string
+}
+
+/** Projeção pública de uma conta administrada pelo gerente. */
+export interface Conta extends Usuario {
+  ativo: boolean
+  ultimo_login_em: string | null
+  criado_em: string
 }
 
 /** Sessão atual: o usuário e o token CSRF exigido em métodos que alteram estado. */

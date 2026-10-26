@@ -21,15 +21,21 @@ vi.mock('../services/analises', () => ({
   createAnalise: vi.fn(),
   getAnalise: vi.fn(),
 }))
+vi.mock('../services/usuarios', () => ({
+  listUsuarios: vi.fn().mockResolvedValue([]),
+  createUsuario: vi.fn(),
+  mensagemDeContas: vi.fn(),
+}))
 
 import { Rotas } from '../App'
 import * as api from '../services/auth'
 import { listArmadilhas } from '../services/armadilhas'
+import { listUsuarios } from '../services/usuarios'
 import { ApiError } from '../services/erros'
 import { limparCsrf, notificarSessaoExpirada } from '../services/sessao'
 import AuthProvider from './AuthProvider'
 
-const usuario = { id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
 function Local() {
   const { pathname, search } = useLocation()
@@ -49,6 +55,7 @@ const montar = (caminho: string) =>
 const local = () => screen.getByTestId('local').textContent
 
 beforeEach(() => {
+  vi.mocked(listUsuarios).mockClear()
   vi.mocked(api.getSessao).mockReset()
   vi.mocked(api.login).mockReset()
   vi.mocked(api.logout).mockReset()
@@ -59,6 +66,23 @@ beforeEach(() => {
 afterEach(() => limparCsrf())
 
 describe('fluxo de acesso', () => {
+  it('recusa URL de Contas ao operador sem carregar contas', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    montar('/contas')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Acesso negado')
+    expect(screen.queryByRole('heading', { name: 'Contas' })).not.toBeInTheDocument()
+    expect(listUsuarios).not.toHaveBeenCalled()
+  })
+
+  it('abre Contas pelo acesso direto do gerente', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { ...usuario, papel: 'gerente' }, csrf_token: 'c',
+    })
+    montar('/contas')
+    expect(await screen.findByRole('heading', { name: 'Contas', level: 1 })).toBeVisible()
+    expect(await screen.findByText('Nenhuma conta cadastrada.')).toBeVisible()
+  })
+
   it('leva ao login quem não tem sessão e não exibe nada protegido', async () => {
     vi.mocked(api.getSessao).mockRejectedValue(new ApiError('NAO_AUTENTICADO', 'x', 401))
 

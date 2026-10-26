@@ -15,7 +15,7 @@ import { limparCsrf, notificarSessaoExpirada, obterCsrf } from '../services/sess
 import AuthProvider from './AuthProvider'
 import { useAuth } from './useAuth'
 
-const usuario = { id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
 function Sonda() {
   const auth = useAuth()

@@ -15,7 +15,7 @@ import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import LoginPage from './LoginPage'
 
-const usuario = { id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
 const montar = () =>
   render(
