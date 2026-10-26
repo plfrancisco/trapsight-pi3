@@ -16,7 +16,7 @@ from src.repositories import (
     UsuarioRepository,
 )
 from src.services.auditoria import registrar_evento
-from src.services.senhas import ServicoDeSenhas, validar_politica
+from src.services.senhas import SenhaFraca, ServicoDeSenhas, validar_politica
 from src.services.sessoes import ServicoDeSessoes
 
 
@@ -202,6 +202,8 @@ class ServicoDeAutenticacao:
                 "troca_senha_recusada", usuario_id=usuario.id, motivo="senha_atual"
             )
             raise CredenciaisInvalidas
+        if self._senhas.verificar(senha_nova, usuario.senha_hash)[0]:
+            raise SenhaFraca("igual_atual")
         validar_politica(senha_nova, email=usuario.email, nome=usuario.nome)
 
         usuario.troca_senha_pendente = False

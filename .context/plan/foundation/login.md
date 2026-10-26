@@ -245,10 +245,10 @@ Enquanto pendente, o middleware só libera GET /api/auth/me,
 POST /api/auth/senha e POST /api/auth/logout; qualquer outra rota sob /api
 retorna 403 TROCA_DE_SENHA_OBRIGATORIA. OPTIONS conserva o tratamento CORS;
 login permanece público com verificação de origem.
-A troca exige senha atual e política existente, limpa a flag só após
-sucesso, revoga sessões anteriores e emite novo cookie/CSRF. Falhas mantêm
-a flag. O frontend encaminha a conta para /conta/senha antes de mostrar
-dados e consulta /auth/me após o sucesso.
+A troca exige senha atual, senha nova diferente da atual e política existente,
+limpa a flag só após sucesso, revoga sessões anteriores e emite novo
+cookie/CSRF. Falhas mantêm a flag. O frontend encaminha a conta para
+/conta/senha antes de mostrar dados e consulta /auth/me após o sucesso.
 
 ---
 

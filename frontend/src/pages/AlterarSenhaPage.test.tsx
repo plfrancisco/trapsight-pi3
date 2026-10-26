@@ -141,6 +141,19 @@ describe('AlterarSenhaPage', () => {
     expect(alerta).not.toHaveTextContent(nova)
   })
 
+  it('explica que a nova senha deve ser diferente da atual', async () => {
+    vi.mocked(api.changeSenha).mockRejectedValue(
+      new ApiError('SENHA_FRACA', 'x', 422, { motivo: 'igual_atual' }),
+    )
+
+    montar()
+    await preencher()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'A nova senha precisa ser diferente da senha atual.',
+    )
+  })
+
   it('não mostra confirmação de sucesso depois de uma falha posterior', async () => {
     vi.mocked(api.changeSenha).mockResolvedValueOnce({ csrf_token: 'c1' })
     montar()

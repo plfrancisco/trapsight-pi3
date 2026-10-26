@@ -234,7 +234,8 @@ sem sessão. O aplicativo o chama ao carregar para recuperar o estado.
 - `200`: `{ "csrf_token": "..." }` e `Set-Cookie` de uma sessão **nova**; todas as
   outras sessões do usuário são revogadas.
 - `401 CREDENCIAIS_INVALIDAS` se a senha atual estiver errada; `422 SENHA_FRACA` se
-  a nova violar a política (`login.md`, 5.2).
+  a nova violar a política (`login.md`, 5.2) ou for igual à senha atual. Neste
+  último caso, detalhes.motivo é `igual_atual`.
 
 ---
 

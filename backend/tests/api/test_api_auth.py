@@ -468,6 +468,32 @@ def test_troca_de_senha_exige_a_senha_atual(
     assert resposta.json()["erro"]["codigo"] == "CREDENCIAIS_INVALIDAS"
 
 
+@pytest.mark.parametrize("pendente", [False, True])
+def test_troca_recusa_reutilizar_senha_atual(
+    client: TestClient, session: Session, pendente: bool
+) -> None:
+    """A mesma senha não pode satisfazer a troca inicial nem uma troca comum."""
+    _logar(client, session)
+    usuario = session.scalars(select(Usuario)).one()
+    usuario.troca_senha_pendente = pendente
+    session.flush()
+
+    resposta = client.post(
+        "/api/auth/senha",
+        json={"senha_atual": SENHA_DE_TESTE, "senha_nova": SENHA_DE_TESTE},
+    )
+
+    assert resposta.status_code == 422
+    assert resposta.json()["erro"] == {
+        "codigo": "SENHA_FRACA",
+        "mensagem": "A nova senha não atende à política de senhas.",
+        "detalhes": {"motivo": "igual_atual"},
+    }
+    session.refresh(usuario)
+    assert usuario.troca_senha_pendente is pendente
+    assert _entrar(client, senha=SENHA_DE_TESTE).status_code == 200
+
+
 @pytest.mark.parametrize(
     ("senha_nova", "motivo"),
     [

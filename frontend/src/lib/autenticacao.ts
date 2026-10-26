@@ -11,6 +11,12 @@ function codigoDe(falha: unknown): string | null {
   return falha instanceof ApiError ? falha.codigo : null
 }
 
+function motivoDe(falha: unknown): string | null {
+  if (!(falha instanceof ApiError)) return null
+  const motivo = falha.detalhes?.motivo
+  return typeof motivo === 'string' ? motivo : null
+}
+
 /**
  * Traduz uma falha de login em texto para o usuário, decidindo SEMPRE pelo código.
  * O texto vindo do servidor nunca é exibido: a mensagem única impede descobrir se
@@ -46,6 +52,9 @@ export function mensagemDeTrocaSenha(falha: unknown): string {
     case 'CREDENCIAIS_INVALIDAS':
       return 'A senha atual está incorreta.'
     case 'SENHA_FRACA':
+      if (motivoDe(falha) === 'igual_atual') {
+        return 'A nova senha precisa ser diferente da senha atual.'
+      }
       return `A nova senha não atende à política: use ao menos ${SENHA_TAMANHO_MINIMO} caracteres e evite senhas comuns ou ligadas ao seu e-mail.`
     case 'FALHA_DE_REDE':
     case 'TEMPO_ESGOTADO':
