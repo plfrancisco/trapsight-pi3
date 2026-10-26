@@ -24,20 +24,19 @@ ação de comunicação ou decisão de grupo.
 
 # 3. Tarefas
 
-**Estado (2026-10-26):** os cards de EXT01, EXT03 e EXT04 constam como concluídos
-no quadro do Trello, mas sem checklist, e `../plan/foundation/project_overview.md`
-(seção 9) ainda registra integrantes e prazo como "a definir"; por isso as caixas
-abaixo ficam como estavam, até confirmação do grupo. Em EXT04 a escolha feita foi
-Vercel e Supabase (`../../deploy/vercel-supabase.md`), e não um servidor próprio com
-domínio e firewall do provedor, como os itens abaixo pressupõem.
+**Estado (2026-10-26):** EXT01, EXT02 e EXT03 confirmadas como concluídas pelo usuário.
+Em EXT04 a escolha feita foi Vercel e Supabase (`../../deploy/vercel-supabase.md`), e não
+um servidor próprio com domínio e firewall do provedor, como os itens abaixo pressupõem;
+os demais itens de EXT04 seguem em aberto. `../plan/foundation/project_overview.md`
+(seção 9) ainda registra integrantes e prazo como "a definir".
 
 ## EXT01 — Material da empresa parceira
 
-- [ ] Fotos reais de armadilhas em diferentes níveis de saturação
-- [ ] Fotos de refis em idades diferentes (confirma a perda de contraste por
-      amarelamento — `../plan/model/modelo_spec.md`, seção 4.2.1)
-- [ ] Confirmar se o adesivo apresenta fluorescência sob as lâmpadas UV
-- [ ] Especificação da câmera, se/quando a Fase 2 for iniciada
+- [x] Fotos reais de armadilhas em diferentes níveis de saturação
+- [x] Fotos de refis em idades diferentes (confirma a perda de contraste por
+  amarelamento — `../plan/model/modelo_spec.md`, seção 4.2.1)
+- [x] Confirmar se o adesivo apresenta fluorescência sob as lâmpadas UV
+- [x] Especificação da câmera, se/quando a Fase 2 for iniciada
 
 **Especificação:** `../plan/foundation/hardware_armadilha.md`, seção 5;
 `../plan/data/dataset_sintetico.md`, seção 8.
@@ -49,21 +48,21 @@ chegar, menor a chance de corrigir o gerador a tempo.
 
 ## EXT02 — Entrevista estruturada com o Gustavo
 
-- [ ] Frequência atual de troca, custo por deslocamento, custo do refil,
-      volume mensal de trocas antecipadas
-- [ ] Validar persona e jornada do usuário (hoje marcadas como hipótese no
-      diagnóstico)
-- [ ] Confirmar se o nome da empresa pode ser citado no relatório final
+- [x] Frequência atual de troca, custo por deslocamento, custo do refil,
+  volume mensal de trocas antecipadas
+- [x] Validar persona e jornada do usuário (hoje marcadas como hipótese no
+  diagnóstico)
+- [x] Confirmar se o nome da empresa pode ser citado no relatório final
 
 **Especificação:** `../plan/foundation/stakeholder_evidencias.md`, seção 5.
 **Dependências:** nenhuma — pode ser feita a qualquer momento.
 
 ## EXT03 — Integrantes e prazo
 
-- [ ] Confirmar integrantes do grupo e RAs
-- [ ] Definir divisão de responsabilidades por trilha (infra, banco, api,
-      frontend, modelo)
-- [ ] Definir prazo final de entrega e marcos intermediários
+- [x] Confirmar integrantes do grupo e RAs
+- [x] Definir divisão de responsabilidades por trilha (infra, banco, api,
+  frontend, modelo)
+- [x] Definir prazo final de entrega e marcos intermediários
 
 **Especificação:** `../plan/foundation/project_overview.md`, seção 9
 (restrições).
@@ -74,11 +73,11 @@ de menor esforço e maior efeito destravante do projeto.
 
 ## EXT04 — Provedor de hospedagem e domínio
 
-- [ ] Escolher o provedor do servidor (VPS ou equivalente, com firewall de rede
-      do provedor que negue tudo por padrão)
+- [x] Escolher o provedor do servidor (VPS ou equivalente, com firewall de rede
+  do provedor que negue tudo por padrão)
 - [ ] Registrar um domínio e apontar o DNS (necessário ao HTTPS automático)
 - [ ] Definir quem administra o servidor, o acesso por SSH com chave e onde
-      ficam os backups do banco
+  ficam os backups do banco
 - [ ] Definir o orçamento mensal aceitável
 
 **Especificação:** `../plan/foundation/login.md`, seções 10.1 e 10.5.
