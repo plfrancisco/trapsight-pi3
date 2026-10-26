@@ -8,6 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     clearMocks: true,
+    // A carga paralela do CI pode alongar a inicialização do jsdom sem alterar o teste.
+    testTimeout: 15_000,
     // Valor fixo para que a suíte não dependa do .env da máquina.
     env: { VITE_API_URL: 'http://localhost:8000/api' },
   },
