@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from src import cli
 from src.config.settings import Settings
+from src.entities.papel import PapelUsuario
 from src.repositories import UsuarioRepository
 from src.services.senhas import ServicoDeSenhas
 from src.services.sessoes import ServicoDeSessoes
@@ -127,3 +128,71 @@ def test_listagem_nao_expoe_dados_de_senha(
     linhas = cli.listar(session)
 
     assert linhas == ["ana@exemplo.com\tAna Lima\tativa"]
+
+
+def test_cli_define_papel_e_revoga_sessoes(session, settings, senhas):
+    usuario = _criar(session, senhas)
+    sessao, _ = ServicoDeSessoes(session, settings).criar(
+        usuario, agora=_AGORA, ip=None, user_agent=None
+    )
+    cli.definir_papel(
+        session,
+        settings,
+        email=usuario.email,
+        papel=PapelUsuario.GERENTE,
+        agora=_AGORA,
+    )
+    session.refresh(sessao)
+    assert usuario.papel == PapelUsuario.GERENTE
+    assert sessao.revogada_em == _AGORA
+
+
+def test_cli_cria_gerente_e_recusa_segundo_sem_mudar_operador(
+    session, settings, senhas
+):
+    gerente = cli.criar_usuario(
+        session,
+        senhas,
+        email="chefe@exemplo.com",
+        nome="Chefe",
+        senha=_SENHA,
+        papel=PapelUsuario.GERENTE,
+    )
+    operador = _criar(session, senhas)
+    with pytest.raises(cli.ErroDeComando, match="Já existe um gerente"):
+        cli.definir_papel(
+            session,
+            settings,
+            email=operador.email,
+            papel=PapelUsuario.GERENTE,
+            agora=_AGORA,
+        )
+    session.refresh(operador)
+    assert operador.papel == PapelUsuario.OPERADOR
+    assert gerente.papel == PapelUsuario.GERENTE
+    with pytest.raises(cli.ErroDeComando, match="Já existe um gerente"):
+        cli.criar_usuario(
+            session,
+            senhas,
+            email="terceiro@exemplo.com",
+            nome="Terceiro",
+            senha=_SENHA,
+            papel=PapelUsuario.GERENTE,
+        )
+
+
+def test_parser_cli_restringe_papeis():
+    args = cli._parser().parse_args(
+        ["criar-usuario", "--email", "a@exemplo.com", "--nome", "Nome"]
+    )
+    assert args.papel == PapelUsuario.OPERADOR
+    assert (
+        cli._parser()
+        .parse_args(["definir-papel", "--email", "a@exemplo.com", "--papel", "gerente"])
+        .papel
+        == PapelUsuario.GERENTE
+    )
+    with pytest.raises(SystemExit):
+        cli._parser().parse_args(
+            ["definir-papel", "--email", "a@exemplo.com", "--papel", "admin"]
+        )

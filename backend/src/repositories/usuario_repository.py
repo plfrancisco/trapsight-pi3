@@ -10,8 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.entities import Usuario
+from src.entities.papel import PapelUsuario
 from src.repositories._integridade import nome_constraint_violada
-from src.repositories.exceptions import EmailDuplicado
+from src.repositories.exceptions import EmailDuplicado, GerenteJaExiste
 
 
 class UsuarioRepository:
@@ -25,13 +26,21 @@ class UsuarioRepository:
         """
         self._session = session
 
-    def create(self, *, email: str, nome: str, senha_hash: str) -> Usuario:
+    def create(
+        self,
+        *,
+        email: str,
+        nome: str,
+        senha_hash: str,
+        papel: PapelUsuario = PapelUsuario.OPERADOR,
+    ) -> Usuario:
         """Adiciona um usuário e envia a alteração ao banco para obter seu UUID.
 
         Args:
             email: e-mail já normalizado.
             nome: nome de exibição.
             senha_hash: string PHC do Argon2id.
+            papel: papel concedido pelo administrador; padrão operador.
 
         Returns:
             O usuário persistido dentro da transação atual.
@@ -39,7 +48,7 @@ class UsuarioRepository:
         Raises:
             EmailDuplicado: se o e-mail já estiver cadastrado.
         """
-        usuario = Usuario(email=email, nome=nome, senha_hash=senha_hash)
+        usuario = Usuario(email=email, nome=nome, senha_hash=senha_hash, papel=papel)
         try:
             # O savepoint preserva a transação do chamador quando a inserção falha.
             with self._session.begin_nested():
@@ -48,6 +57,8 @@ class UsuarioRepository:
         except IntegrityError as error:
             if nome_constraint_violada(error) == "uq_usuario_email":
                 raise EmailDuplicado from None
+            if nome_constraint_violada(error) == "uq_usuario_gerente":
+                raise GerenteJaExiste from None
             raise
         return usuario
 
@@ -60,7 +71,18 @@ class UsuarioRepository:
         Returns:
             O usuário encontrado ou None.
         """
-        return self._session.get(Usuario, usuario_id)
+        return self._session.get(Usuario, usuario_id, populate_existing=True)
+
+    def definir_papel(self, usuario: Usuario, papel: PapelUsuario) -> None:
+        """Atualiza o papel sem inutilizar a transação se já existir gerente."""
+        try:
+            with self._session.begin_nested():
+                usuario.papel = papel
+                self._session.flush()
+        except IntegrityError as erro:
+            if nome_constraint_violada(erro) == "uq_usuario_gerente":
+                raise GerenteJaExiste from None
+            raise
 
     def get_by_email(self, email: str) -> Usuario | None:
         """Busca um usuário pelo e-mail normalizado.

@@ -114,6 +114,7 @@ def login(
             id=resultado.usuario.id,
             email=resultado.usuario.email,
             nome=resultado.usuario.nome,
+            papel=resultado.usuario.papel,
         ),
         csrf_token=resultado.sessao.csrf_token,
     )
@@ -133,6 +134,7 @@ def sessao_atual(
             id=autenticada.usuario_id,
             email=autenticada.email,
             nome=autenticada.nome,
+            papel=autenticada.papel,
         ),
         csrf_token=autenticada.csrf_token,
     )

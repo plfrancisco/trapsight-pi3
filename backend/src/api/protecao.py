@@ -30,6 +30,7 @@ from src.api.sessao_http import (
     origem_permitida,
 )
 from src.config.settings import Settings
+from src.entities.papel import PapelUsuario
 from src.services.sessoes import ServicoDeSessoes
 
 ROTA_DE_LOGIN = "/api/auth/login"
@@ -50,6 +51,7 @@ class SessaoAutenticada:
     usuario_id: UUID
     email: str
     nome: str
+    papel: PapelUsuario
     csrf_token: str
 
 
@@ -93,6 +95,7 @@ def _validar_sessao(
             usuario_id=valida.usuario.id,
             email=valida.usuario.email,
             nome=valida.usuario.nome,
+            papel=valida.usuario.papel,
             csrf_token=valida.sessao.csrf_token,
         )
         session.commit()

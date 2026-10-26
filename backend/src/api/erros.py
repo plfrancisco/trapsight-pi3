@@ -42,6 +42,8 @@ class CodigoErro(StrEnum):
     LIMITE_TENTATIVAS = "LIMITE_TENTATIVAS"
     LIMITE_ANALISES = "LIMITE_ANALISES"
     SENHA_FRACA = "SENHA_FRACA"
+    ACESSO_NEGADO = "ACESSO_NEGADO"
+    EMAIL_JA_CADASTRADO = "EMAIL_JA_CADASTRADO"
 
 
 STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
@@ -67,6 +69,8 @@ STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
         CodigoErro.LIMITE_TENTATIVAS: 429,
         CodigoErro.LIMITE_ANALISES: 429,
         CodigoErro.SENHA_FRACA: 422,
+        CodigoErro.ACESSO_NEGADO: 403,
+        CodigoErro.EMAIL_JA_CADASTRADO: 409,
     }
 )
 

@@ -4,17 +4,46 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String, UniqueConstraint, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    Index,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.entities.base import Base, UUIDTimestampMixin
+from src.entities.papel import PapelUsuario
 
 
 class Usuario(UUIDTimestampMixin, Base):
     """Conta criada pelo administrador; usuários são desativados, nunca excluídos."""
 
     __tablename__ = "usuario"
-    __table_args__ = (UniqueConstraint("email", name="uq_usuario_email"),)
+    __table_args__ = (
+        UniqueConstraint("email", name="uq_usuario_email"),
+        CheckConstraint("papel IN ('gerente', 'operador')", name="ck_usuario_papel"),
+        Index(
+            "uq_usuario_gerente",
+            "papel",
+            unique=True,
+            postgresql_where=text("papel = 'gerente'"),
+        ),
+    )
+
+    papel: Mapped[PapelUsuario] = mapped_column(
+        Enum(
+            PapelUsuario,
+            native_enum=False,
+            values_callable=lambda papeis: [papel.value for papel in papeis],
+        ),
+        nullable=False,
+        server_default=text("'operador'"),
+    )
 
     email: Mapped[str] = mapped_column(String, nullable=False)
     nome: Mapped[str] = mapped_column(String, nullable=False)

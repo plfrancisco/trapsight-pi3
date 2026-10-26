@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from src.api.schemas.entrada import EntradaBase
+from src.entities.papel import PapelUsuario
 
 
 class LoginEntrada(EntradaBase):
@@ -29,6 +30,7 @@ class UsuarioSaida(BaseModel):
     id: UUID
     email: str
     nome: str
+    papel: PapelUsuario
 
 
 class SessaoSaida(BaseModel):

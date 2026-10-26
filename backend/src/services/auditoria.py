@@ -9,7 +9,9 @@ from uuid import UUID
 logger = getLogger("trapsight.auditoria")
 
 # Só estes campos podem aparecer: nunca senha, hash, token, CSRF nem e-mail digitado.
-_CAMPOS_PERMITIDOS: Final = frozenset({"usuario_id", "sessao_id", "ip", "motivo"})
+_CAMPOS_PERMITIDOS: Final = frozenset(
+    {"usuario_id", "sessao_id", "ip", "motivo", "criado_por_id"}
+)
 
 
 def registrar_evento(evento: str, **campos: str | UUID | None) -> None:
@@ -17,7 +19,7 @@ def registrar_evento(evento: str, **campos: str | UUID | None) -> None:
 
     Args:
         evento: nome estável do evento (ex.: `login_falhou`, `login_bloqueado`).
-        **campos: contexto limitado a `usuario_id`, `sessao_id`, `ip` e `motivo`.
+        **campos: contexto com IDs de usuário, sessão e criador, IP e motivo.
 
     Raises:
         ValueError: se algum campo fora da lista permitida for informado.

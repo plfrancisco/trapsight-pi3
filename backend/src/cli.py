@@ -1,6 +1,6 @@
 """Gestão de contas pela linha de comando.
 
-Não existe cadastro público: as contas nascem aqui, com acesso ao servidor.
+Não existe cadastro público; papéis privilegiados são concedidos aqui.
 Uso: `python -m src.cli <comando> --help`.
 """
 
@@ -17,7 +17,9 @@ from sqlalchemy.orm import Session
 from src.config.database import create_database_engine, create_session_factory
 from src.config.settings import Settings
 from src.entities import Usuario
+from src.entities.papel import PapelUsuario
 from src.repositories import EmailDuplicado, UsuarioRepository
+from src.repositories.exceptions import GerenteJaExiste
 from src.services.auditoria import registrar_evento
 from src.services.autenticacao import normalizar_email
 from src.services.senhas import SenhaFraca, ServicoDeSenhas, validar_politica
@@ -50,6 +52,7 @@ def criar_usuario(
     email: str,
     nome: str,
     senha: str,
+    papel: PapelUsuario = PapelUsuario.OPERADOR,
 ) -> Usuario:
     """Cria uma conta ativa depois de validar a política de senhas.
 
@@ -59,6 +62,7 @@ def criar_usuario(
         email: e-mail da conta, como digitado.
         nome: nome de exibição.
         senha: senha inicial em claro.
+        papel: papel atribuído pela administração local.
 
     Returns:
         A conta criada.
@@ -78,10 +82,40 @@ def criar_usuario(
             email=email_normalizado,
             nome=nome.strip(),
             senha_hash=senhas.gerar_hash(senha),
+            papel=papel,
         )
     except EmailDuplicado:
         raise ErroDeComando("Já existe uma conta com este e-mail.") from None
-    registrar_evento("conta_criada", usuario_id=usuario.id)
+    except GerenteJaExiste:
+        raise ErroDeComando(
+            "Já existe um gerente. Rebaixe a conta atual antes."
+        ) from None
+    registrar_evento("conta_criada", usuario_id=usuario.id, criado_por_id=None)
+    return usuario
+
+
+def definir_papel(
+    session: Session,
+    settings: Settings,
+    *,
+    email: str,
+    papel: PapelUsuario,
+    agora: datetime,
+) -> Usuario:
+    """Define o papel pela administração local e encerra todas as sessões.
+
+    Raises:
+        ErroDeComando: Se a conta não existir ou já houver outro gerente.
+    """
+    usuario = _buscar(UsuarioRepository(session), email)
+    try:
+        UsuarioRepository(session).definir_papel(usuario, papel)
+    except GerenteJaExiste:
+        raise ErroDeComando(
+            "Já existe um gerente. Rebaixe a conta atual antes."
+        ) from None
+    ServicoDeSessoes(session, settings).revogar_todas(usuario, agora=agora)
+    registrar_evento("papel_alterado", usuario_id=usuario.id, motivo=papel.value)
     return usuario
 
 
@@ -208,6 +242,17 @@ def _parser() -> argparse.ArgumentParser:
     criar = comandos.add_parser("criar-usuario", help="cria uma conta")
     criar.add_argument("--email", required=True)
     criar.add_argument("--nome", required=True)
+    criar.add_argument(
+        "--papel",
+        type=PapelUsuario,
+        choices=list(PapelUsuario),
+        default=PapelUsuario.OPERADOR,
+    )
+    papel = comandos.add_parser("definir-papel", help="define papel e encerra sessões")
+    papel.add_argument("--email", required=True)
+    papel.add_argument(
+        "--papel", required=True, type=PapelUsuario, choices=list(PapelUsuario)
+    )
     redefinir = comandos.add_parser("redefinir-senha", help="define nova senha")
     redefinir.add_argument("--email", required=True)
     for nome in ("criar-usuario", "redefinir-senha"):
@@ -275,8 +320,14 @@ def _executar(
             email=args.email,
             nome=args.nome,
             senha=_ler_senha(args.senha_stdin),
+            papel=args.papel,
         )
         return [f"Conta criada: {usuario.email}"]
+    if comando == "definir-papel":
+        usuario = definir_papel(
+            session, settings, email=args.email, papel=args.papel, agora=agora
+        )
+        return [f"Papel definido e sessões encerradas: {usuario.email}"]
     if comando == "redefinir-senha":
         usuario = redefinir_senha(
             session,

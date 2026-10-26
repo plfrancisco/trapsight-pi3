@@ -23,3 +23,7 @@ class DataTrocaInvalida(ErroDeDominio):
 
 class EmailDuplicado(ErroDeDominio):
     """Indica que outro usuário já usa o e-mail informado."""
+
+
+class GerenteJaExiste(ErroDeDominio):
+    """Já existe uma conta com o único papel de gerente disponível."""

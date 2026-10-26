@@ -7,6 +7,7 @@ from src.api.rotas.armadilhas import router as armadilhas_router
 from src.api.rotas.auth import router as auth_router
 from src.api.rotas.historico import router as historico_router
 from src.api.rotas.modelos_armadilha import router as modelos_router
+from src.api.rotas.usuarios import router as usuarios_router
 
 # A exigência de sessão não é declarada rota a rota: o middleware de proteção
 # cobre tudo sob /api (ver src/api/protecao.py), então rota nova nasce protegida.
@@ -16,3 +17,4 @@ api_router.include_router(analises_router)
 api_router.include_router(armadilhas_router)
 api_router.include_router(historico_router)
 api_router.include_router(modelos_router)
+api_router.include_router(usuarios_router)

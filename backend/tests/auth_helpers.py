@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from src.api.sessao_http import nome_do_cookie
 from src.entities import Usuario
+from src.entities.papel import PapelUsuario
 from src.repositories import UsuarioRepository
 from src.services.sessoes import ServicoDeSessoes
 
@@ -36,6 +37,7 @@ def criar_usuario(
     email: str = EMAIL_DE_TESTE,
     nome: str = "Operador de Teste",
     senha: str = SENHA_DE_TESTE,
+    papel: PapelUsuario = PapelUsuario.OPERADOR,
 ) -> Usuario:
     """Cria uma conta com o hash real (Argon2id) usado pela aplicação.
 
@@ -45,13 +47,14 @@ def criar_usuario(
         email: e-mail da conta, já normalizado.
         nome: nome de exibição.
         senha: senha em claro da conta.
+        papel: papel da conta criada para o cenário.
 
     Returns:
         O usuário persistido na transação do teste.
     """
     hash_da_senha = app.state.servico_de_senhas.gerar_hash(senha)
     return UsuarioRepository(session).create(
-        email=email, nome=nome, senha_hash=hash_da_senha
+        email=email, nome=nome, senha_hash=hash_da_senha, papel=papel
     )
 
 
