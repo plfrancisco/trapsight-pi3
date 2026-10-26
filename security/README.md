@@ -62,7 +62,8 @@ bash security/scans/run_scans.sh pentest
 # 3) Homologação (duas passadas, ver abaixo)
 export TARGET_URL=https://homologacao.exemplo.com
 export TARGET_HOST=homologacao.exemplo.com
-export SEC_USER_EMAIL=... SEC_USER_PASSWORD=...        # conta de teste descartável
+export SEC_USER_EMAIL=... SEC_USER_PASSWORD=...        # conta de teste descartável (operador)
+export SEC_MANAGER_EMAIL=... SEC_MANAGER_PASSWORD=...  # conta do gerente (criar-usuario --papel gerente)
 export SEC_LOCKOUT_EMAIL=... SEC_LOCKOUT_PASSWORD=...  # conta separada (fica bloqueada)
 bash security/scans/run_scans.sh tudo
 CONFIRMO_HOMOLOGACAO=sim bash security/scans/run_scans.sh ativo
@@ -85,7 +86,7 @@ passadas. `PASSADA` nomeia o relatório e `PYTEST_ARGS` escolhe os testes:
 | Passada | Configuração da homologação | Comando |
 |---|---|---|
 | **1. Funcional** | Limite de tentativas por IP **elevado** (ex.: 100000); prazos de sessão padrão | `PASSADA=1 bash security/scans/run_scans.sh pentest` |
-| **2. Limites** | Limite por IP e de análises com os **valores padrão** (30 falhas/15 min; 30 análises/min) | `PASSADA=2 SEC_RUN_RATE_LIMIT=1 PYTEST_ARGS='-k "test_limite_de_analises or test_limite_de_tentativas_por_ip"' bash security/scans/run_scans.sh pentest` |
+| **2. Limites** | Limite por IP e de análises com os **valores padrão** (30 falhas/15 min; 30 análises/min) | `PASSADA=2 SEC_RUN_RATE_LIMIT=1 PYTEST_ARGS='-k "test_limite_de_analises or test_limite_de_criacao_de_contas or test_limite_de_tentativas_por_ip"' bash security/scans/run_scans.sh pentest` |
 | **3. Expiração** | `SEC_IDLE_TIMEOUT_SECONDS=5` e `SEC_ABSOLUTE_TIMEOUT_SECONDS=15` **também configurados no backend** | `PASSADA=3 PYTEST_ARGS='-k expiracao' bash security/scans/run_scans.sh pentest` |
 
 Por que separar: o teste de limite por IP esgota o IP do executor (não se
@@ -114,13 +115,14 @@ seção 2.6). Os valores de uma devem refletir os da outra:
 | `TARGET_HOST` | Host para varredura de portas |
 | `EXPECTED_OPEN_PORTS` | Portas permitidas (padrão `80,443`) |
 | `DOCKER_NET` | Rede do Compose, para alvo local |
-| `SEC_USER_EMAIL`, `SEC_USER_PASSWORD` | Conta de teste |
+| `SEC_USER_EMAIL`, `SEC_USER_PASSWORD` | Conta de teste (precisa ser **operador**) |
+| `SEC_MANAGER_EMAIL`, `SEC_MANAGER_PASSWORD` | Conta do **gerente**, a única que cria contas (`python -m src.cli criar-usuario --papel gerente`) |
 | `SEC_LOCKOUT_EMAIL`, `SEC_LOCKOUT_PASSWORD`, `SEC_LOCKOUT_THRESHOLD` | Conta do teste de bloqueio e limite (padrão 5) |
 | `SEC_CHANGEPWD_EMAIL`, `SEC_CHANGEPWD_PASSWORD`, `SEC_CHANGEPWD_NEW` | Conta dos testes de troca e de política de senha |
 | `SEC_DB_DSN_APP`, `SEC_DB_DSN_ADMIN` | DSN do usuário da aplicação (e, opcional, administrativo) para os testes de banco; o executor precisa estar na rede interna (`DOCKER_NET`) |
 | `SEC_MAX_SESSIONS` | Limite de sessões simultâneas (padrão 5) |
 | `SEC_IDLE_TIMEOUT_SECONDS`, `SEC_ABSOLUTE_TIMEOUT_SECONDS` | Prazos curtos da homologação |
-| `SEC_RUN_RATE_LIMIT` | `1` liga os testes que esgotam limites |
+| `SEC_RUN_RATE_LIMIT` | `1` liga os testes que esgotam limites (login por IP, análises e criação de contas pelo gerente) |
 | `SEC_CA_FILE` | CA extra (somente ambiente local com certificado interno do Caddy); o teste de validade do certificado fica como "não verificado" |
 | `SEC_IMAGEM` | Imagem do executor com dependências já instaladas (`docker build -t trapsight-seguranca:local security`); necessária quando o executor roda na rede interna, sem internet |
 

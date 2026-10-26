@@ -163,12 +163,12 @@ Arquivos, um por área, todos parametrizados por variáveis de ambiente
 | `test_04_autenticacao.py` | Anti-enumeração, tempo, credenciais padrão, injeção, bloqueio de conta | Parcial | **Sim** (bloqueia a conta de teste de bloqueio) |
 | `test_05_sessao.py` | Cookie, entropia, fixação, logout, limite de sessões, expiração | Sim | Cria sessões |
 | `test_06_csrf_cors.py` | CSRF, `Origin`, CORS | Sim | Não |
-| `test_07_autorizacao.py` | Toda rota exige sessão, normalização de caminho, verbos | Não | Não |
+| `test_07_autorizacao.py` | Toda rota exige sessão, normalização de caminho, verbos; gestão de contas só pelo gerente, escalada de papel e portão da troca obrigatória | Parcial (operador e gerente) | Cria contas fictícias |
 | `test_08_injecao.py` | SQL, XSS, SSTI, parâmetros malformados | Sim | Cria registros fictícios |
 | `test_09_upload.py` | Arquivos maliciosos, bomba de descompressão, travessia | Sim | Cria registros fictícios |
 | `test_11_politica_de_senha.py` | Política de senha: 14 rejeitadas, 15 aceitas, sem regra de composição, Unicode/NFC, teto de 128, lista mínima, senha contextual, padrões triviais, sem eco da senha | Sim (conta de troca) | **Sim** (troca a senha da conta de teste e a restaura) |
-| `test_12_banco_e_hash.py` | Banco: papel sem privilégios, sem alterar esquema, credenciais padrão recusadas, Argon2id com parâmetros mínimos, token só como hash, sem coluna de segredo em claro, `pg_hba` sem `trust` | Sim (e acesso ao banco pela rede interna) | Não |
-| `test_10_abuso.py` | Limite de análises, corpos gigantes e, **por último**, limite de tentativas por IP | Sim | **Sim** (esgota limites; o IP do executor fica bloqueado por 15 min) |
+| `test_12_banco_e_hash.py` | Banco: papel sem privilégios, sem alterar esquema, credenciais padrão recusadas, Argon2id com parâmetros mínimos, token só como hash, sem coluna de segredo em claro, `pg_hba` sem `trust`, gerente único e papel válido garantidos pelo banco, papel rebaixado vale na requisição seguinte | Sim (e acesso ao banco pela rede interna) | Não |
+| `test_10_abuso.py` | Limite de análises, limite de criação de contas, corpos gigantes e, **por último**, limite de tentativas por IP | Sim | **Sim** (esgota limites; a cota de criação do gerente e o IP do executor ficam bloqueados) |
 
 **Os testes afirmam o estado final desejado**, não o atual. Antes da
 implementação do login, os testes que não exigem sessão (exposição, transporte,
@@ -189,14 +189,15 @@ Nenhum valor aqui é versionado.
 | `API_PREFIX` | Não (`/api`) | Prefixo da API |
 | `TARGET_HOST` | Não | Host para varredura de portas (padrão: o host de `TARGET_URL`) |
 | `EXPECTED_OPEN_PORTS` | Não (`80,443`) | Portas que **podem** estar abertas |
-| `SEC_USER_EMAIL`, `SEC_USER_PASSWORD` | Para testes autenticados | Conta de teste da homologação |
+| `SEC_USER_EMAIL`, `SEC_USER_PASSWORD` | Para testes autenticados | Conta de teste da homologação (precisa ser **operador**) |
+| `SEC_MANAGER_EMAIL`, `SEC_MANAGER_PASSWORD` | Para a gestão de contas | Conta do **gerente** (`criar-usuario --papel gerente`); cria as contas fictícias dos testes |
 | `SEC_LOCKOUT_EMAIL`, `SEC_LOCKOUT_PASSWORD` | Para o teste de bloqueio | Conta **separada**, que fica bloqueada (usar `desbloquear-usuario` depois) |
 | `SEC_CHANGEPWD_EMAIL`, `SEC_CHANGEPWD_PASSWORD`, `SEC_CHANGEPWD_NEW` | Para a troca de senha e a política de senha | Conta separada |
 | `SEC_DB_DSN_APP` | Para `test_12` | DSN do usuário **da aplicação** (só em variável de ambiente; o executor precisa estar na rede interna do Compose) |
 | `SEC_DB_DSN_ADMIN` | Opcional (`pg_hba`) | DSN administrativo, só para ler as regras de acesso |
 | `SEC_IDLE_TIMEOUT_SECONDS` | Para expiração | Valor curto de inatividade configurado **na homologação** (ex.: 5) |
 | `SEC_ABSOLUTE_TIMEOUT_SECONDS` | Para expiração | Valor curto de duração absoluta (ex.: 15) |
-| `SEC_RUN_RATE_LIMIT` | Não (`0`) | `1` liga os testes que esgotam limites (login por IP, análises) |
+| `SEC_RUN_RATE_LIMIT` | Não (`0`) | `1` liga os testes que esgotam limites (login por IP, análises, criação de contas) |
 | `PASSADA`, `PYTEST_ARGS` | Não | Nomeiam o relatório e selecionam testes em cada passada (abaixo) |
 
 **Três passadas na homologação** (comandos em `security/README.md`): (1) funcional, com o limite de tentativas por IP **elevado**; (2) limites, com os valores padrão e `SEC_RUN_RATE_LIMIT=1`; (3) expiração, com prazos curtos. Sem isso o limite de IP é esgotado pelos próprios testes e geraria falsos `429`.
