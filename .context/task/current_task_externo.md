@@ -24,6 +24,13 @@ ação de comunicação ou decisão de grupo.
 
 # 3. Tarefas
 
+**Estado (2026-10-26):** os cards de EXT01, EXT03 e EXT04 constam como concluídos
+no quadro do Trello, mas sem checklist, e `../plan/foundation/project_overview.md`
+(seção 9) ainda registra integrantes e prazo como "a definir"; por isso as caixas
+abaixo ficam como estavam, até confirmação do grupo. Em EXT04 a escolha feita foi
+Vercel e Supabase (`../../deploy/vercel-supabase.md`), e não um servidor próprio com
+domínio e firewall do provedor, como os itens abaixo pressupõem.
+
 ## EXT01 — Material da empresa parceira
 
 - [ ] Fotos reais de armadilhas em diferentes níveis de saturação

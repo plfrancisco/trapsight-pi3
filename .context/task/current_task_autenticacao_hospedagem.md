@@ -9,8 +9,9 @@
 # 1. Objetivo
 
 Colocar o protótipo **online e acessível** com autenticação segura, **nada
-exposto além das portas 80 e 443** e a suíte de invasão verde, conforme
-`../plan/foundation/login.md` (aprovado em 2026-10-16).
+exposto além do necessário** (portas 80 e 443 no Compose local; no ambiente
+publicado, só HTTPS e os controles do Supabase) e a suíte de invasão verde,
+conforme `../plan/foundation/login.md` (aprovado em 2026-10-16).
 
 ---
 
@@ -42,6 +43,19 @@ domínio depende do usuário e está em `current_task_externo.md` (EXT04).
 
 # 3. Tarefas
 
+**Estado (2026-10-26):** AUTH00 a AUTH06 e HOST01 concluídas; HOST02 tem um item
+aberto (backup). A publicação ainda não foi feita. O deploy previsto usa Vercel
+Services (frontend e API no mesmo projeto e domínio) e Supabase (PostgreSQL pelo
+pooler transacional, porta 6543, TLS e papel dedicado), conforme
+`../../deploy/vercel-supabase.md`; o Compose de produção com Caddy serve às
+varreduras locais.
+
+**Decisão (2026-10-26):** no ambiente publicado, a segurança do banco fica a cargo
+dos controles do próprio Supabase (TLS obrigatório, papel dedicado de menor
+privilégio, RLS e nenhuma chave Supabase no navegador). A exigência de só as portas
+80 e 443 abertas e do banco inalcançável de fora vale para o Compose local, onde o
+projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
+
 ## AUTH00 — Alinhar a especificação
 
 - [x] `rules/security_spec.md`: seção 4 deixa de ser "risco aceito" e aponta
@@ -56,7 +70,7 @@ domínio depende do usuário e está em `current_task_externo.md` (EXT04).
 - [x] `plan/frontend/telas_spec.md`: tela `/login`, logout e sessão expirada
 - [x] `README.md`: execução, hospedagem e status
 - [x] Referências remanescentes a "sem autenticação": `rules/ai_development_rules.md`
-      (9.5), `task/current_task_frontend.md` (escopo) e `plan/README.md` (índice)
+      (9.5), `task/completed/current_task_frontend.md` (escopo) e `plan/README.md` (índice)
 
 **Especificação:** `../plan/foundation/login.md`, seção 13.
 **Executor:** revisor (é especificação, não código).
@@ -216,10 +230,11 @@ EXT04).
       credenciais de teste próprias (nunca de pessoas reais)
 - [ ] Na homologação, prazos de sessão curtos e limites configurados para as três
       passadas da suíte (`security/README.md`)
-- [ ] Firewall do **provedor** com negação por padrão (entrada só 80/443 e SSH
-      por chave, restrito à origem do administrador); o do host não substitui
-      esse, porque o Docker o contorna
-- [ ] Atualizações de segurança do sistema operacional ativas; SSH sem senha
+- [ ] Somente com servidor próprio: firewall do **provedor** com negação por
+      padrão (entrada só 80/443 e SSH por chave, restrito à origem do
+      administrador); o do host não substitui esse, porque o Docker o contorna
+- [ ] Somente com servidor próprio: atualizações de segurança do sistema
+      operacional ativas; SSH sem senha
 - [ ] Contas de teste criadas por `criar-usuario` (AUTH05)
 
 **Especificação:** `login.md`, 10.5 (regra 8) e 10.7;
@@ -278,11 +293,13 @@ demais tasks resolvem.
 
 ## SEG05 — Publicação e verificação final
 
-- [ ] Varredura de portas (todas as TCP) e teste de TLS contra o **definitivo**:
-      somente 80 e 443, TLS 1.2 ou superior, certificado válido, HSTS
+- [ ] Teste de TLS contra o **definitivo**: TLS 1.2 ou superior, certificado
+      válido, HSTS; a varredura de portas (somente 80 e 443) vale para o Compose
+      local, porque a Vercel e o Supabase não são infraestrutura do projeto
 - [ ] ZAP *baseline* (passivo) contra o definitivo
-- [ ] Banco, backend e demais serviços **inacessíveis** de fora (conexão direta
-      falha)
+- [ ] Banco, backend e demais serviços **inacessíveis** de fora no Compose local
+      (conexão direta falha); no Supabase, o banco só aceita conexão com TLS e o
+      papel dedicado, e os papéis `anon` e `authenticated` não alcançam as tabelas
 - [ ] Relatório final aprovado e arquivado; qualquer exceção aceita registrada
 - [ ] README com a seção de hospedagem e o status atualizados
 - [ ] Rotina de verificação semanal ativa (dependências, imagens e ZAP
@@ -311,7 +328,10 @@ SEG01 (agora) ─▶ SEG02 ─▶ SEG03 ─▶ SEG04 ─▶ SEG05
 
 O protótipo está **online**, e todas as condições abaixo valem ao mesmo tempo:
 
-1. Só as portas 80 e 443 respondem; o banco e o backend são inalcançáveis de fora.
+1. No Compose local, só as portas 80 e 443 respondem e o banco e o backend são
+   inalcançáveis de fora. No ambiente publicado, o navegador só fala HTTPS com a
+   mesma origem e a segurança do banco fica a cargo do Supabase (TLS obrigatório,
+   papel dedicado de menor privilégio, RLS e nenhuma chave Supabase no navegador).
 2. Toda rota de dados exige sessão, e o login resiste à suíte de invasão.
 3. As três passadas da suíte, o checklist manual e o ataque exploratório fecham
    com **zero achado crítico ou alto**.

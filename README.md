@@ -90,10 +90,10 @@ Os três serviços (frontend, API e banco) sobem juntos com Docker Compose. O tr
 | Ambiente de desenvolvimento e Docker Compose                       | Concluída     |
 | Banco de dados (esquema, migrations, regras de integridade)        | Concluída     |
 | API (endpoints, upload de imagem, histórico e projeção de saturação) | Concluída     |
-| Interface web (dashboard, cadastro, nova análise e detalhe da armadilha prontos; timelapse em desenvolvimento) | Em andamento  |
+| Interface web (dashboard, cadastro, nova análise, detalhe da armadilha e timelapse) | Concluída     |
 | Login e hospedagem pública (frontend na Vercel e banco no Supabase; rodadas de teste de segurança pendentes) | Em andamento  |
 | Gerador de dataset sintético e banco de sprites                    | Concluída     |
-| Treinamento e avaliação do modelo (especificação do treino pronta; baseline e treino em desenvolvimento) | Em andamento  |
+| Treinamento e avaliação do modelo (especificação, baseline e inferência prontos; treino e avaliação pendentes) | Em andamento  |
 | Validação com fotos reais da empresa parceira                      | Não iniciada  |
 
 Ainda não há resultados de modelo para reportar. Eles serão publicados aqui após a avaliação.
@@ -117,7 +117,7 @@ docker compose up --build
 | Frontend  | http://localhost:5173          |
 | API (docs)| http://localhost:8000/docs     |
 
-**Publicação online:** o protótipo está hospedado com o frontend na Vercel e o banco no Supabase, e o acesso exige login. O repositório também traz um Compose de produção (`docker-compose.prod.yml`) em que só o proxy (portas 80 e 443) fica público, usado nos testes de segurança locais. O desenho está em [`.context/plan/foundation/login.md`](.context/plan/foundation/login.md) e a suíte de testes de segurança em [`security/`](security/README.md).
+**Publicação online:** o protótipo está preparado para ser publicado com o frontend e a API na Vercel e o banco no Supabase, e o acesso exige login; a publicação ainda não foi feita. O repositório também traz um Compose de produção (`docker-compose.prod.yml`) em que só o proxy (portas 80 e 443) fica público, usado nos testes de segurança locais. O desenho está em [`.context/plan/foundation/login.md`](.context/plan/foundation/login.md) e a suíte de testes de segurança em [`security/`](security/README.md).
 
 Para desenvolver o backend fora do Docker, instale o [`uv`](https://docs.astral.sh/uv/) e use `uv sync`, `uv run ruff check .` e `uv run pytest` na pasta `backend/`. Os testes de integração precisam de um PostgreSQL com as migrations aplicadas (`uv run alembic upgrade head`). Com o banco do Compose ativo (`docker compose up -d db`), `scripts/testar-backend.sh` roda os testes em um banco separado dentro dele, sem subir outro PostgreSQL. O CI do GitHub Actions roda lint, formatação e testes do backend e do frontend, além da verificação das migrações com o papel de produção, a cada push e pull request.
 
