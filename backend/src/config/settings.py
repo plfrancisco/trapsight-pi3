@@ -37,6 +37,7 @@ _ENVIRONMENT_NAMES = {
     "login_falhas_por_ip": "LOGIN_FALHAS_POR_IP",
     "login_janela_segundos": "LOGIN_JANELA_SEGUNDOS",
     "analises_por_minuto": "ANALISES_POR_MINUTO",
+    "contas_por_hora": "CONTAS_POR_HORA",
     "argon2_memoria_kib": "ARGON2_MEMORIA_KIB",
     "argon2_iteracoes": "ARGON2_ITERACOES",
     "argon2_paralelismo": "ARGON2_PARALELISMO",
@@ -83,6 +84,7 @@ class Settings(BaseSettings):
     login_falhas_por_ip: int = Field(default=30, ge=1)
     login_janela_segundos: int = Field(default=900, ge=1)
     analises_por_minuto: int = Field(default=30, ge=1)
+    contas_por_hora: int = Field(default=20, ge=1)
     argon2_memoria_kib: int = 19456
     argon2_iteracoes: int = 2
     argon2_paralelismo: int = Field(default=1, ge=1)

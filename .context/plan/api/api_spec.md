@@ -88,6 +88,7 @@ podem ser reescritas sem aviso, códigos não.
 | `CSRF_INVALIDO` | 403 | Token `X-CSRF-Token` ausente ou incorreto, ou `Origin` não permitido |
 | `LIMITE_TENTATIVAS` | 429 | Limite de falhas de login por IP; traz `Retry-After` |
 | `LIMITE_ANALISES` | 429 | Excesso de análises por usuário; traz `Retry-After` |
+| `LIMITE_CONTAS` | 429 | Excesso de criação de contas pelo gerente; traz `Retry-After` |
 | `SENHA_FRACA` | 422 | Senha fora da política (`login.md`, 5.2); o motivo vai em `detalhes` e a senha **nunca** é devolvida |
 | `ACESSO_NEGADO` | 403 | Papel atual do banco não autoriza a operação |
 | `EMAIL_JA_CADASTRADO` | 409 | E-mail normalizado duplicado; somente gerente |
@@ -152,6 +153,7 @@ dispensa CORS no uso normal (`login.md`, 4.2).
 | `LOGIN_FALHAS_POR_IP` | `30` | Não — padrão 30 em `LOGIN_JANELA_SEGUNDOS` |
 | `LOGIN_JANELA_SEGUNDOS` | `900` | Não — padrão 900 (15 min) |
 | `ANALISES_POR_MINUTO` | `30` | Não — padrão 30 por usuário |
+| `CONTAS_POR_HORA` | `20` | Não — padrão 20 por gerente |
 | `ARGON2_MEMORIA_KIB` | `19456` | Não — padrão 19456 (19 MiB), mínimo do OWASP |
 | `ARGON2_ITERACOES` | `2` | Não — padrão 2 |
 | `ARGON2_PARALELISMO` | `1` | Não — padrão 1 |
@@ -250,6 +252,8 @@ Cria operador ativo, sem sessão, com troca_senha_pendente=true.
 Responde 201 com id, email, nome, papel, ativo, ultimo_login_em e criado_em.
 GET responde 200 com array desses campos em ordem de email, sem paginação.
 Nunca retorna senha nem hash. Cache-Control: no-store.
+Cada gerente pode criar até 20 contas por hora, configurável por CONTAS_POR_HORA.
+O limite é por gerente, retorna 429 LIMITE_CONTAS e inclui Retry-After.
 
 Novos códigos: ACESSO_NEGADO (403), EMAIL_JA_CADASTRADO (409) e
 TROCA_DE_SENHA_OBRIGATORIA (403). Reutiliza SENHA_FRACA (422),

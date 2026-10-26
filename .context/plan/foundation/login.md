@@ -216,6 +216,9 @@ POST responde 201 com id, email, nome, papel, ativo, ultimo_login_em e
 criado_em. GET /api/usuarios exige gerente e devolve array dos mesmos campos
 em ordem de email, sem paginação no MVP. Nunca senha ou hash.
 As respostas usam Cache-Control: no-store.
+Cada gerente pode criar até 20 contas por hora; CONTAS_POR_HORA configura esse
+teto. O limite é contado por gerente, não por IP, e responde 429 LIMITE_CONTAS
+com Retry-After quando esgotado.
 
 Nos dois endpoints, anônimo recebe 401 NAO_AUTENTICADO, operador recebe
 403 ACESSO_NEGADO e gerente recebe sucesso. Em métodos não seguros, a
@@ -405,6 +408,7 @@ Seguem o envelope existente (`{ "erro": { "codigo", "mensagem", "detalhes" } }`)
 | `CSRF_INVALIDO` | 403 | Token ausente ou incorreto, `Origin` não permitido |
 | `LIMITE_TENTATIVAS` | 429 | Limite por IP no login |
 | `LIMITE_ANALISES` | 429 | Excesso de análises por usuário (9.4) |
+| `LIMITE_CONTAS` | 429 | Excesso de criação de contas pelo gerente (5.4.1) |
 | `SENHA_FRACA` | 422 | Política 5.2 violada, com o motivo em `detalhes` |
 
 O frontend decide o comportamento **pelo código**, nunca pelo texto, como no

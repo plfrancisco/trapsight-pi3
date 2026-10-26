@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_servico_de_senhas, get_session
@@ -62,15 +62,24 @@ def listar_usuarios(
         CodigoErro.EMAIL_JA_CADASTRADO,
         CodigoErro.SENHA_FRACA,
         CodigoErro.VALIDACAO_FALHOU,
+        CodigoErro.LIMITE_CONTAS,
     ),
 )
 def criar_usuario(
     corpo: UsuarioEntrada,
+    request: Request,
     gerente: Annotated[Usuario, Depends(get_gerente)],
     session: Annotated[Session, Depends(get_session)],
     senhas: Annotated[ServicoDeSenhas, Depends(get_servico_de_senhas)],
 ) -> ContaSaida:
     """Cria somente operador e confirma a transação após todas as validações."""
+    espera = request.app.state.limitador_de_contas.tentar(str(gerente.id))
+    if espera is not None:
+        raise ErroDeApi(
+            CodigoErro.LIMITE_CONTAS,
+            "Limite de criação de contas atingido. Tente novamente mais tarde.",
+            headers={"Retry-After": str(espera)},
+        )
     try:
         usuario = ServicoDeUsuarios(session, senhas).criar_operador(
             gerente, email=corpo.email, nome=corpo.nome, senha=corpo.senha

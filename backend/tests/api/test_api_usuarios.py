@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from src.api.dependencias import get_session
 from src.entities import Sessao, Usuario
 from src.entities.papel import PapelUsuario
+from src.services.limitador_contas import LimitadorDeContas
 from tests.auth_helpers import aplicar_credenciais, criar_sessao, criar_usuario
 
 _SENHA = "uma frase longa e bem diferente 2026"
@@ -133,6 +134,70 @@ def test_post_exige_csrf(client, session):
     resposta = client.post("/api/usuarios", json=_CORPO)
     assert resposta.status_code == 403
     assert resposta.json()["erro"]["codigo"] == "CSRF_INVALIDO"
+
+
+def test_criacao_de_contas_respeita_limite_por_gerente_e_janela(client, session):
+    """Cada gerente recupera sua própria cota quando a janela de uma hora fecha."""
+    agora = [0.0]
+    client.app.state.limitador_de_contas = LimitadorDeContas(
+        1, relogio=lambda: agora[0]
+    )
+    primeiro_gerente = _autenticar(client, session)
+
+    assert client.post("/api/usuarios", json=_CORPO).status_code == 201
+    bloqueada = client.post(
+        "/api/usuarios", json={**_CORPO, "email": "bloqueada@exemplo.com"}
+    )
+    assert bloqueada.status_code == 429
+    assert bloqueada.json()["erro"]["codigo"] == "LIMITE_CONTAS"
+    assert bloqueada.headers["Retry-After"] == "3601"
+
+    session.execute(
+        update(Usuario)
+        .where(Usuario.id == primeiro_gerente.id)
+        .values(papel=PapelUsuario.OPERADOR),
+        execution_options={"synchronize_session": False},
+    )
+    segundo_gerente = criar_usuario(
+        session,
+        client.app,
+        email="gerente-2@exemplo.com",
+        papel=PapelUsuario.GERENTE,
+    )
+    aplicar_credenciais(client, criar_sessao(session, client.app, segundo_gerente))
+    assert (
+        client.post(
+            "/api/usuarios", json={**_CORPO, "email": "outro-gerente@exemplo.com"}
+        ).status_code
+        == 201
+    )
+
+    agora[0] = 3600.0
+    aplicar_credenciais(client, criar_sessao(session, client.app, primeiro_gerente))
+    assert (
+        client.post(
+            "/api/usuarios", json={**_CORPO, "email": "janela-aberta@exemplo.com"}
+        ).status_code
+        == 403
+    )
+    session.execute(
+        update(Usuario)
+        .where(Usuario.id == segundo_gerente.id)
+        .values(papel=PapelUsuario.OPERADOR),
+        execution_options={"synchronize_session": False},
+    )
+    session.execute(
+        update(Usuario)
+        .where(Usuario.id == primeiro_gerente.id)
+        .values(papel=PapelUsuario.GERENTE),
+        execution_options={"synchronize_session": False},
+    )
+    assert (
+        client.post(
+            "/api/usuarios", json={**_CORPO, "email": "janela-aberta@exemplo.com"}
+        ).status_code
+        == 201
+    )
 
 
 @pytest.mark.parametrize(

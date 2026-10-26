@@ -15,6 +15,7 @@ from src.config.database import create_database_engine, create_session_factory
 from src.config.settings import Settings
 from src.inference.fabrica import criar_inferidor
 from src.services.limitador_analises import LimitadorDeAnalises
+from src.services.limitador_contas import LimitadorDeContas
 from src.services.senhas import ServicoDeSenhas
 
 
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     application.state.limitador_de_analises = LimitadorDeAnalises(
         settings.analises_por_minuto
     )
+    application.state.limitador_de_contas = LimitadorDeContas(settings.contas_por_hora)
     # A captura fica antes do CORS para que erros inesperados recebam seus cabeçalhos.
     registrar_handlers(application)
     # A proteção rejeita sem sessão, sem CSRF ou sem origem ANTES de o corpo ser lido.

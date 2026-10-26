@@ -155,6 +155,17 @@ def test_threshold_defaults_are_ten_and_twenty(
     assert settings.inference_threads == 1
 
 
+def test_limite_de_contas_tem_padrao_e_aceita_configuracao(
+    fake_environment: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Limita criações por gerente a vinte por hora, salvo configuração explícita."""
+    assert Settings().contas_por_hora == 20
+
+    monkeypatch.setenv("CONTAS_POR_HORA", "7")
+
+    assert Settings().contas_por_hora == 7
+
+
 def test_model_weights_path_has_the_container_default(
     fake_environment: None,
     monkeypatch: pytest.MonkeyPatch,
