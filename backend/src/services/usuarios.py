@@ -44,7 +44,10 @@ class ServicoDeUsuarios:
         email = normalizar_email(email)
         validar_politica(senha, email=email, nome=nome)
         usuario = self._usuarios.create(
-            email=email, nome=nome, senha_hash=self._senhas.gerar_hash(senha)
+            email=email,
+            nome=nome,
+            senha_hash=self._senhas.gerar_hash(senha),
+            troca_senha_pendente=True,
         )
         registrar_evento(
             "conta_criada", usuario_id=usuario.id, criado_por_id=criador.id

@@ -204,6 +204,7 @@ class ServicoDeAutenticacao:
             raise CredenciaisInvalidas
         validar_politica(senha_nova, email=usuario.email, nome=usuario.nome)
 
+        usuario.troca_senha_pendente = False
         self._usuarios.definir_senha_hash(
             usuario, self._senhas.gerar_hash(senha_nova), agora=agora
         )

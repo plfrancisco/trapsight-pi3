@@ -103,6 +103,7 @@ def test_criacao_e_lista_so_expoem_campos_publicos(client, session, caplog):
         == 0
     )
     assert session.get(Usuario, criado.id).senha_hash.startswith("$argon2id$")
+    assert criado.troca_senha_pendente is True
     lista = client.get("/api/usuarios")
     assert lista.status_code == 200
     assert lista.headers["Cache-Control"] == "no-store"
@@ -111,6 +112,7 @@ def test_criacao_e_lista_so_expoem_campos_publicos(client, session, caplog):
     )
     assert _SENHA not in resposta.text + lista.text + caplog.text
     assert "senha_hash" not in resposta.text + lista.text + caplog.text
+    assert criado.senha_hash not in resposta.text + lista.text + caplog.text
     assert "auth.conta_criada" in caplog.text
     assert f"criado_por_id={gerente.id}" in caplog.text
 
@@ -174,3 +176,113 @@ def test_login_e_me_devolvem_papel(client, session):
     assert resposta.status_code == 200
     assert resposta.json()["usuario"]["papel"] == "gerente"
     assert client.get("/api/auth/me").json()["usuario"]["papel"] == "gerente"
+
+
+@pytest.mark.parametrize(
+    "metodo,caminho",
+    [
+        ("GET", "/api/armadilhas"),
+        ("GET", "/api/usuarios"),
+        ("GET", "/api/analises/00000000-0000-0000-0000-000000000000/imagem"),
+        ("POST", "/api/armadilhas"),
+        ("DELETE", "/api/rota-futura"),
+        ("GET", "/api/auth/me/"),
+    ],
+)
+def test_troca_pendente_restringe_rotas_globalmente(client, session, metodo, caminho):
+    usuario = _autenticar(client, session)
+    session.execute(
+        update(Usuario)
+        .where(Usuario.id == usuario.id)
+        .values(troca_senha_pendente=True),
+        execution_options={"synchronize_session": False},
+    )
+    resposta = client.request(metodo, caminho)
+    assert resposta.status_code == 403
+    assert resposta.json()["erro"]["codigo"] == "TROCA_DE_SENHA_OBRIGATORIA"
+    assert resposta.headers["Cache-Control"] == "no-store"
+    assert client.get("/api/auth/me").json()["usuario"]["troca_senha_pendente"] is True
+
+
+def test_operador_novo_so_acessa_dados_apos_trocar_senha(client, session):
+    _autenticar(client, session)
+    assert client.post("/api/usuarios", json=_CORPO).status_code == 201
+    usuario = session.scalars(
+        select(Usuario).where(Usuario.email == _CORPO["email"])
+    ).one()
+    outra = criar_sessao(session, client.app, usuario)
+    client.cookies.clear()
+    login = client.post(
+        "/api/auth/login", json={"email": usuario.email, "senha": _SENHA}
+    )
+    assert login.status_code == 200
+    assert login.json()["usuario"]["troca_senha_pendente"] is True
+    assert login.json()["usuario"]["papel"] == "operador"
+    token_antigo = client.cookies.get("trapsight_sessao")
+    client.headers["X-CSRF-Token"] = login.json()["csrf_token"]
+    assert client.get("/api/armadilhas").status_code == 403
+    troca = client.post(
+        "/api/auth/senha",
+        json={
+            "senha_atual": _SENHA,
+            "senha_nova": "outra frase igualmente longa 2027",
+        },
+    )
+    assert troca.status_code == 200
+    assert client.get("/api/auth/me").json()["usuario"]["troca_senha_pendente"] is False
+    assert client.get("/api/armadilhas").status_code == 200
+    for token in (token_antigo, outra.token):
+        resposta = client.get(
+            "/api/auth/me", headers={"Cookie": f"trapsight_sessao={token}"}
+        )
+        assert resposta.status_code == 401
+    session.refresh(usuario)
+    assert usuario.troca_senha_pendente is False
+    assert (
+        session.scalar(
+            select(func.count())
+            .select_from(Sessao)
+            .where(Sessao.usuario_id == usuario.id, Sessao.revogada_em.is_not(None))
+        )
+        == 2
+    )
+
+
+@pytest.mark.parametrize(
+    "senha_atual,senha_nova,status",
+    [
+        ("incorreta", "outra frase igualmente longa 2027", 401),
+        (_SENHA, "curta", 422),
+    ],
+)
+def test_troca_recusada_mantem_pendencia(
+    client, session, senha_atual, senha_nova, status
+):
+    usuario = _autenticar(client, session)
+    usuario.troca_senha_pendente = True
+    session.flush()
+    resposta = client.post(
+        "/api/auth/senha",
+        json={
+            "senha_atual": senha_atual,
+            "senha_nova": senha_nova,
+        },
+    )
+    assert resposta.status_code == status
+    session.refresh(usuario)
+    assert usuario.troca_senha_pendente is True
+    assert (
+        client.get("/api/usuarios").json()["erro"]["codigo"]
+        == "TROCA_DE_SENHA_OBRIGATORIA"
+    )
+
+
+def test_pendencia_permite_logout_mas_nao_dispensa_csrf(client, session):
+    usuario = _autenticar(client, session)
+    usuario.troca_senha_pendente = True
+    session.flush()
+    token_csrf = client.headers.pop("X-CSRF-Token")
+    assert client.post("/api/auth/logout").json()["erro"]["codigo"] == "CSRF_INVALIDO"
+    client.headers["X-CSRF-Token"] = token_csrf
+    assert client.post("/api/auth/logout").status_code == 204
+    assert client.get("/api/auth/me").status_code == 401

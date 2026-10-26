@@ -44,6 +44,7 @@ class CodigoErro(StrEnum):
     SENHA_FRACA = "SENHA_FRACA"
     ACESSO_NEGADO = "ACESSO_NEGADO"
     EMAIL_JA_CADASTRADO = "EMAIL_JA_CADASTRADO"
+    TROCA_DE_SENHA_OBRIGATORIA = "TROCA_DE_SENHA_OBRIGATORIA"
 
 
 STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
@@ -71,6 +72,7 @@ STATUS_HTTP_POR_CODIGO: Mapping[CodigoErro, int] = MappingProxyType(
         CodigoErro.SENHA_FRACA: 422,
         CodigoErro.ACESSO_NEGADO: 403,
         CodigoErro.EMAIL_JA_CADASTRADO: 409,
+        CodigoErro.TROCA_DE_SENHA_OBRIGATORIA: 403,
     }
 )
 

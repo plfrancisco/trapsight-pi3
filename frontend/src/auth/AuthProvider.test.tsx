@@ -15,7 +15,7 @@ import { limparCsrf, notificarSessaoExpirada, obterCsrf } from '../services/sess
 import AuthProvider from './AuthProvider'
 import { useAuth } from './useAuth'
 
-const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
 function Sonda() {
   const auth = useAuth()
@@ -203,6 +203,19 @@ describe('AuthProvider', () => {
     await usuarioEvento.click(screen.getByRole('button', { name: 'trocar' }))
 
     await waitFor(() => expect(obterCsrf()).toBe('csrf-novo'))
+  })
+
+  it('pede nova verificação se a senha mudou mas consultar a sessão falhou', async () => {
+    vi.mocked(api.getSessao)
+      .mockResolvedValueOnce({ usuario, csrf_token: 'csrf-antigo' })
+      .mockRejectedValue(new ApiError('FALHA_DE_REDE', 'x', 0))
+    vi.mocked(api.changeSenha).mockResolvedValue({ csrf_token: 'csrf-novo' })
+    montar()
+    await waitFor(() => expect(estado()).toBe('autenticado'))
+    await userEvent.click(screen.getByRole('button', { name: 'trocar' }))
+    await waitFor(() => expect(estado()).toBe('erro'))
+    expect(api.changeSenha).toHaveBeenCalledTimes(1)
+    expect(obterCsrf()).toBe('csrf-novo')
   })
 
   it('não consulta a API e já se considera autenticado com a autenticação desligada', () => {

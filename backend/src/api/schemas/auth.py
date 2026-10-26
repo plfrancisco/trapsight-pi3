@@ -31,6 +31,7 @@ class UsuarioSaida(BaseModel):
     email: str
     nome: str
     papel: PapelUsuario
+    troca_senha_pendente: bool
 
 
 class SessaoSaida(BaseModel):

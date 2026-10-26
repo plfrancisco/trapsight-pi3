@@ -37,6 +37,13 @@ ROTA_DE_LOGIN = "/api/auth/login"
 ROTA_DE_ANALISE = "/api/analises"
 METODOS_SEGUROS = frozenset({"GET", "HEAD", "OPTIONS"})
 _CABECALHOS_SEM_CACHE = {"Cache-Control": "no-store"}
+_OPERACOES_COM_TROCA_PENDENTE = frozenset(
+    {
+        ("GET", "/api/auth/me"),
+        ("POST", "/api/auth/senha"),
+        ("POST", "/api/auth/logout"),
+    }
+)
 
 Receive = Callable[[], Awaitable[dict[str, Any]]]
 Send = Callable[[dict[str, Any]], Awaitable[None]]
@@ -52,6 +59,7 @@ class SessaoAutenticada:
     email: str
     nome: str
     papel: PapelUsuario
+    troca_senha_pendente: bool
     csrf_token: str
 
 
@@ -96,6 +104,7 @@ def _validar_sessao(
             email=valida.usuario.email,
             nome=valida.usuario.nome,
             papel=valida.usuario.papel,
+            troca_senha_pendente=valida.usuario.troca_senha_pendente,
             csrf_token=valida.sessao.csrf_token,
         )
         session.commit()
@@ -178,6 +187,16 @@ class ProtecaoDeSessaoMiddleware:
                 enviado.encode("utf-8"), autenticada.csrf_token.encode("utf-8")
             ):
                 return _recusa_csrf()
+
+        if (
+            autenticada.troca_senha_pendente
+            and (metodo, scope["path"]) not in _OPERACOES_COM_TROCA_PENDENTE
+        ):
+            return resposta_de_erro(
+                CodigoErro.TROCA_DE_SENHA_OBRIGATORIA,
+                "Troque a senha inicial antes de acessar o sistema.",
+                headers=_CABECALHOS_SEM_CACHE,
+            )
 
         if metodo == "POST" and scope["path"] == ROTA_DE_ANALISE:
             espera = aplicacao.state.limitador_de_analises.tentar(

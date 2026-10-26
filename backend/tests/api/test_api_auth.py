@@ -122,7 +122,9 @@ def test_login_valido_abre_sessao_com_cookie_restrito(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["usuario"]["email"] == EMAIL_DE_TESTE
-    assert "senha" not in resposta.text and "senha_hash" not in resposta.text
+    assert "senha" not in corpo and "senha" not in corpo["usuario"]
+    assert "senha_hash" not in resposta.text
+    assert SENHA_DE_TESTE not in resposta.text
     cookie = resposta.headers["set-cookie"].lower()
     assert "httponly" in cookie
     assert "samesite=strict" in cookie

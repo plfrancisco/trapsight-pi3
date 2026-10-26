@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 import Botao from '../components/Botao'
 import CampoFormulario from '../components/CampoFormulario'
@@ -62,13 +63,20 @@ export default function AlterarSenhaPage() {
         </p>
       </header>
 
+      {usuario?.troca_senha_pendente ? (
+        <p className="text-app-muted" role="status">
+          Para começar, substitua a senha inicial definida pelo gerente.
+        </p>
+      ) : null}
+
       {concluida ? (
-        <p
+        <div
           className="success-message"
           role="status"
         >
           Senha alterada. As outras sessões foram encerradas.
-        </p>
+          <Link className="ml-2 underline" to="/">Voltar ao painel</Link>
+        </div>
       ) : null}
 
       <form

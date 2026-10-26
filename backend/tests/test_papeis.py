@@ -13,6 +13,13 @@ def test_migration_cria_default_check_e_indice_parcial(engine):
     coluna = next(c for c in inspetor.get_columns("usuario") if c["name"] == "papel")
     assert not coluna["nullable"]
     assert "operador" in coluna["default"]
+    flag = next(
+        c
+        for c in inspetor.get_columns("usuario")
+        if c["name"] == "troca_senha_pendente"
+    )
+    assert not flag["nullable"]
+    assert "false" in flag["default"]
     assert any(
         c["name"] == "ck_usuario_papel"
         for c in inspetor.get_check_constraints("usuario")

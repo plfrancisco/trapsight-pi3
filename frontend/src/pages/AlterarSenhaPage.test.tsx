@@ -16,7 +16,7 @@ import { ApiError } from '../services/erros'
 import { limparCsrf, obterCsrf } from '../services/sessao'
 import AlterarSenhaPage from './AlterarSenhaPage'
 
-const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 const nova = 'uma frase bem longa e unica'
 
 const montar = () =>

@@ -196,3 +196,40 @@ def test_parser_cli_restringe_papeis():
         cli._parser().parse_args(
             ["definir-papel", "--email", "a@exemplo.com", "--papel", "admin"]
         )
+
+
+def test_despacho_cli_concede_papel_e_revoga_sessoes(
+    session, settings, senhas, monkeypatch
+):
+    monkeypatch.setattr(cli, "_ler_senha", lambda _stdin: _SENHA)
+    args = cli._parser().parse_args(
+        [
+            "criar-usuario",
+            "--email",
+            "chefe@exemplo.com",
+            "--nome",
+            "Chefe",
+            "--papel",
+            "gerente",
+        ]
+    )
+    cli._executar(args, session, settings, senhas, _AGORA)
+    usuario = UsuarioRepository(session).get_by_email("chefe@exemplo.com")
+    assert usuario.papel == PapelUsuario.GERENTE
+    assert usuario.troca_senha_pendente is False
+    sessao, _ = ServicoDeSessoes(session, settings).criar(
+        usuario, agora=_AGORA, ip=None, user_agent=None
+    )
+    args = cli._parser().parse_args(
+        [
+            "definir-papel",
+            "--email",
+            usuario.email,
+            "--papel",
+            "operador",
+        ]
+    )
+    cli._executar(args, session, settings, senhas, _AGORA)
+    session.refresh(sessao)
+    assert usuario.papel == PapelUsuario.OPERADOR
+    assert sessao.revogada_em == _AGORA

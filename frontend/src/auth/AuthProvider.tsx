@@ -11,6 +11,7 @@ import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import {
   assinarSessaoExpirada,
+  assinarTrocaObrigatoria,
   definirCsrf,
   limparCsrf,
 } from '../services/sessao'
@@ -35,6 +36,7 @@ type Acao =
   | { tipo: 'erro' }
   | { tipo: 'saiu' }
   | { tipo: 'expirou' }
+  | { tipo: 'troca_pendente' }
 
 function reduzir(situacao: SituacaoAuth, acao: Acao): SituacaoAuth {
   switch (acao.tipo) {
@@ -46,6 +48,10 @@ function reduzir(situacao: SituacaoAuth, acao: Acao): SituacaoAuth {
       return { ...situacao, estado: 'anonimo', usuario: null }
     case 'erro':
       return { ...situacao, estado: 'erro' }
+    case 'troca_pendente':
+      return situacao.usuario
+        ? { ...situacao, usuario: { ...situacao.usuario, troca_senha_pendente: true } }
+        : situacao
     case 'saiu':
       return { estado: 'anonimo', usuario: null, motivoSaida: 'saiu' }
     case 'expirou':
@@ -118,6 +124,11 @@ export default function AuthProvider({
     dispatch({ tipo: 'sessao', usuario: sessao.usuario })
   }, [])
 
+  useEffect(
+    () => assinarTrocaObrigatoria(() => dispatch({ tipo: 'troca_pendente' })),
+    [],
+  )
+
   const logout = useCallback(async () => {
     try {
       await api.logout()
@@ -132,6 +143,19 @@ export default function AuthProvider({
   const changeSenha = useCallback(async (senhaAtual: string, senhaNova: string) => {
     const renovada = await api.changeSenha(senhaAtual, senhaNova)
     definirCsrf(renovada.csrf_token)
+    try {
+      const sessao = await api.getSessao()
+      dispatch({ tipo: 'sessao', usuario: sessao.usuario })
+    } catch (falha: unknown) {
+      // A senha já mudou; uma falha de consulta deve pedir nova verificação,
+      // sem sugerir ao usuário que repita a troca com a senha anterior.
+      if (falha instanceof ApiError && falha.status === 401) {
+        limparCsrf()
+        dispatch({ tipo: 'anonimo' })
+      } else {
+        dispatch({ tipo: 'erro' })
+      }
+    }
   }, [])
 
   const recarregarSessao = useCallback(() => {

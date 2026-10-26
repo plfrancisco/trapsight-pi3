@@ -33,6 +33,7 @@ class UsuarioRepository:
         nome: str,
         senha_hash: str,
         papel: PapelUsuario = PapelUsuario.OPERADOR,
+        troca_senha_pendente: bool = False,
     ) -> Usuario:
         """Adiciona um usuário e envia a alteração ao banco para obter seu UUID.
 
@@ -41,6 +42,7 @@ class UsuarioRepository:
             nome: nome de exibição.
             senha_hash: string PHC do Argon2id.
             papel: papel concedido pelo administrador; padrão operador.
+            troca_senha_pendente: exige substituir a senha inicial antes de usar dados.
 
         Returns:
             O usuário persistido dentro da transação atual.
@@ -48,7 +50,13 @@ class UsuarioRepository:
         Raises:
             EmailDuplicado: se o e-mail já estiver cadastrado.
         """
-        usuario = Usuario(email=email, nome=nome, senha_hash=senha_hash, papel=papel)
+        usuario = Usuario(
+            email=email,
+            nome=nome,
+            senha_hash=senha_hash,
+            papel=papel,
+            troca_senha_pendente=troca_senha_pendente,
+        )
         try:
             # O savepoint preserva a transação do chamador quando a inserção falha.
             with self._session.begin_nested():

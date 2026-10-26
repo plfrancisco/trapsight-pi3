@@ -32,10 +32,10 @@ import * as api from '../services/auth'
 import { listArmadilhas } from '../services/armadilhas'
 import { listUsuarios } from '../services/usuarios'
 import { ApiError } from '../services/erros'
-import { limparCsrf, notificarSessaoExpirada } from '../services/sessao'
+import { limparCsrf, notificarSessaoExpirada, notificarTrocaObrigatoria } from '../services/sessao'
 import AuthProvider from './AuthProvider'
 
-const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
+const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
 function Local() {
   const { pathname, search } = useLocation()
@@ -66,6 +66,57 @@ beforeEach(() => {
 afterEach(() => limparCsrf())
 
 describe('fluxo de acesso', () => {
+  it('reage à exigência de troca recebida durante a navegação', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    montar('/')
+    await screen.findByRole('heading', { name: 'Dashboard', level: 1 })
+    act(() => notificarTrocaObrigatoria())
+    expect(await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })).toBeVisible()
+    expect(local()).toBe('/conta/senha')
+  })
+
+  it('encaminha gerente pendente para trocar senha antes de montar Contas', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { ...usuario, papel: 'gerente', troca_senha_pendente: true }, csrf_token: 'c',
+    })
+    montar('/contas')
+    expect(await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })).toBeVisible()
+    expect(local()).toBe('/conta/senha')
+    expect(screen.getByText(/substitua a senha inicial/)).toBeVisible()
+    expect(listUsuarios).not.toHaveBeenCalled()
+    expect(listArmadilhas).not.toHaveBeenCalled()
+  })
+
+  it('recupera a flag do servidor depois da troca e libera o painel', async () => {
+    vi.mocked(api.getSessao).mockResolvedValueOnce({
+      usuario: { ...usuario, troca_senha_pendente: true }, csrf_token: 'antigo',
+    }).mockResolvedValue({ usuario, csrf_token: 'novo' })
+    vi.mocked(api.changeSenha).mockResolvedValue({ csrf_token: 'novo' })
+    montar('/')
+    await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })
+    const pessoa = userEvent.setup()
+    await pessoa.type(screen.getByLabelText(/^Senha atual/), 'uma frase longa e segura')
+    await pessoa.type(screen.getByLabelText(/^Nova senha/), 'outra frase longa e segura')
+    await pessoa.type(screen.getByLabelText(/^Confirmar nova senha/), 'outra frase longa e segura')
+    await pessoa.click(screen.getByRole('button', { name: 'Alterar senha' }))
+    expect(await screen.findByText(/Senha alterada/)).toBeVisible()
+    expect(screen.queryByText(/substitua a senha inicial/)).not.toBeInTheDocument()
+    await pessoa.click(screen.getByRole('link', { name: 'Voltar ao painel' }))
+    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible()
+    expect(api.getSessao).toHaveBeenCalledTimes(2)
+  })
+
+  it('mantém logout disponível durante a troca pendente', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { ...usuario, troca_senha_pendente: true }, csrf_token: 'c',
+    })
+    vi.mocked(api.logout).mockResolvedValue(undefined)
+    montar('/')
+    await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })
+    await userEvent.click(screen.getByRole('button', { name: 'Sair' }))
+    expect(await screen.findByRole('heading', { name: 'Entrar', level: 1 })).toBeVisible()
+  })
+
   it('recusa URL de Contas ao operador sem carregar contas', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
     montar('/contas')

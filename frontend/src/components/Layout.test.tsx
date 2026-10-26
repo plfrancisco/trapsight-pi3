@@ -15,7 +15,7 @@ import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import Layout from './Layout'
 
-const usuario = { papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
+const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
 
 const montar = (ativa: boolean) =>
   render(

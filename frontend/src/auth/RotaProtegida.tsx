@@ -8,8 +8,15 @@ import { useAuth } from './useAuth'
  * @returns As rotas filhas, o estado de carga/erro ou o redirecionamento ao login.
  */
 export default function RotaProtegida() {
-  const { ativa, estado, motivoSaida, recarregarSessao } = useAuth()
+  const { ativa, estado, usuario, motivoSaida, recarregarSessao } = useAuth()
   const localizacao = useLocation()
+
+  if (
+    ativa && estado === 'autenticado' && usuario?.troca_senha_pendente
+    && localizacao.pathname !== '/conta/senha'
+  ) {
+    return <Navigate replace to="/conta/senha" />
+  }
 
   if (!ativa || estado === 'autenticado') return <Outlet />
 

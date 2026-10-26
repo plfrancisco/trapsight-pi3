@@ -115,6 +115,7 @@ def login(
             email=resultado.usuario.email,
             nome=resultado.usuario.nome,
             papel=resultado.usuario.papel,
+            troca_senha_pendente=resultado.usuario.troca_senha_pendente,
         ),
         csrf_token=resultado.sessao.csrf_token,
     )
@@ -135,6 +136,7 @@ def sessao_atual(
             email=autenticada.email,
             nome=autenticada.nome,
             papel=autenticada.papel,
+            troca_senha_pendente=autenticada.troca_senha_pendente,
         ),
         csrf_token=autenticada.csrf_token,
     )

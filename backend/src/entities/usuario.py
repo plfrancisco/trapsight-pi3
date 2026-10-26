@@ -52,6 +52,9 @@ class Usuario(UUIDTimestampMixin, Base):
     ativo: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    troca_senha_pendente: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     bloqueado_ate: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

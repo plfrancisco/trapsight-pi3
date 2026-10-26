@@ -1,6 +1,6 @@
 import { API_BASE } from '../config'
 import { ApiError } from './erros'
-import { notificarSessaoExpirada, obterCsrf } from './sessao'
+import { notificarSessaoExpirada, notificarTrocaObrigatoria, obterCsrf } from './sessao'
 
 const TIMEOUT_PADRAO_MS = 15_000
 const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -138,6 +138,7 @@ export async function request<T>(
     if (!resposta.ok) {
       const erroDaApi = interpretarEnvelopeDeErro(texto, resposta.status)
       if (erroDaApi.codigo === 'NAO_AUTENTICADO') notificarSessaoExpirada()
+      if (erroDaApi.codigo === 'TROCA_DE_SENHA_OBRIGATORIA') notificarTrocaObrigatoria()
       throw erroDaApi
     }
 

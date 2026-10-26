@@ -11,6 +11,18 @@ let tokenCsrf: string | null = null
 
 type Ouvinte = () => void
 const ouvintesDeExpiracao = new Set<Ouvinte>()
+const ouvintesDeTroca = new Set<Ouvinte>()
+
+/** Observa recusas do servidor que exigem substituir a senha inicial. */
+export function assinarTrocaObrigatoria(ouvinte: Ouvinte): () => void {
+  ouvintesDeTroca.add(ouvinte)
+  return () => { ouvintesDeTroca.delete(ouvinte) }
+}
+
+/** Propaga a exigência do servidor sem encerrar uma sessão ainda válida. */
+export function notificarTrocaObrigatoria(): void {
+  for (const ouvinte of [...ouvintesDeTroca]) ouvinte()
+}
 
 /** Guarda o token CSRF recebido no login, no `me` ou na troca de senha. */
 export function definirCsrf(token: string): void {

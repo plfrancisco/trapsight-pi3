@@ -130,6 +130,7 @@ export interface Usuario {
   email: string
   nome: string
   papel: 'gerente' | 'operador'
+  troca_senha_pendente: boolean
 }
 
 /** Campos aceitos ao criar uma conta de operador. */
@@ -140,7 +141,7 @@ export interface UsuarioEntrada {
 }
 
 /** Projeção pública de uma conta administrada pelo gerente. */
-export interface Conta extends Usuario {
+export interface Conta extends Omit<Usuario, 'troca_senha_pendente'> {
   ativo: boolean
   ultimo_login_em: string | null
   criado_em: string

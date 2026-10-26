@@ -1,8 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from './http'
-import { assinarSessaoExpirada, definirCsrf, limparCsrf } from './sessao'
+import { assinarSessaoExpirada, assinarTrocaObrigatoria, definirCsrf, limparCsrf } from './sessao'
 
 const fetchSimulado = vi.fn()
+
+it('propaga troca obrigatória recebida da API', async () => {
+  const ouvinte = vi.fn()
+  const cancelar = assinarTrocaObrigatoria(ouvinte)
+  fetchSimulado.mockResolvedValue(erroDaApi('TROCA_DE_SENHA_OBRIGATORIA', 403))
+  try {
+    await expect(request('armadilhas')).rejects.toMatchObject({
+      codigo: 'TROCA_DE_SENHA_OBRIGATORIA',
+    })
+    expect(ouvinte).toHaveBeenCalledTimes(1)
+  } finally {
+    cancelar()
+  }
+})
 
 function resposta(status: number, corpo: unknown = ''): Response {
   const texto = typeof corpo === 'string' ? corpo : JSON.stringify(corpo)
