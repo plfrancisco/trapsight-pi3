@@ -22,9 +22,7 @@ outra especialidade, mesmo quando há dependência entre elas — a dependência
 
 | Arquivo | Estado | Especialidade |
 |---|---|---|
-| `current_task_frontend.md` | ATIVA | Interface web — as 4 telas do MVP |
 | `current_task_modelo.md` | ATIVA | Especificação de treino, dataset sintético, baseline, treino da U-Net, avaliação |
-| `current_task_seed_demo.md` | ATIVA | Script de seed com os seis cenários de demonstração |
 | `current_task_externo.md` | ATIVA | Material da empresa parceira, entrevista, integrantes, prazo, provedor e domínio |
 | `current_task_autenticacao_hospedagem.md` | ATIVA | Login, proteção da API, hospedagem pública e verificação de segurança antes de publicar |
 
@@ -41,6 +39,8 @@ Não podem ser alterados sem autorização explícita.
 | `completed/current_task_ambiente.md` | Configuração local, arquivos de ambiente e verificação do ambiente completo | 2026-10-08 |
 | `completed/current_task_infra.md` | Ambiente Python, estrutura de pastas, Docker Compose | 2026-10-02 |
 | `completed/current_task_banco.md` | Migration, entidades ORM, regra de integridade do refil ativo | 2026-10-02 |
+| `completed/current_task_frontend.md` | Interface web — as 4 telas do MVP | 2026-10-22 |
+| `completed/current_task_seed_demo.md` | Script de seed com os seis cenários de demonstração | 2026-10-21 |
 
 ---
 

@@ -19,7 +19,7 @@ temporal do projeto.
 
 Cobre `armadilha`, `refil` e `analise`. Não cobre `estabelecimento`
 (Fase 2, fora do MVP) nem o script de seed de demonstração, que tem task
-própria (`../current_task_seed_demo.md`) por depender do gerador de dataset
+própria (`current_task_seed_demo.md`) por depender do gerador de dataset
 sintético.
 
 ---

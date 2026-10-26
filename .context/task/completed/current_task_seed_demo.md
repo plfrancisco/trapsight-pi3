@@ -17,7 +17,7 @@ esperar meses de uso real acumulado.
 # 2. Escopo
 
 Cobre apenas o script de seed. Não cobre o gerador de dataset sintético em
-si (`current_task_modelo.md`, ML02), do qual esta task depende para as
+si (`../current_task_modelo.md`, ML02), do qual esta task depende para as
 imagens.
 
 ---
@@ -35,13 +35,23 @@ imagens.
       recriar
 - [x] Imagens geradas correspondem ao percentual registrado em cada análise
 
-**Especificação:** `../plan/data/seed_demo.md`.
-**Dependências:** `completed/current_task_banco.md` (DB01), `current_task_modelo.md`
+**Especificação:** `../../plan/data/seed_demo.md`.
+**Dependências:** `current_task_banco.md` (DB01), `../current_task_modelo.md`
 (ML02).
 
 **Nota:** a correspondência entre imagem e percentual é obrigatória. Se as
 imagens forem aleatórias, o timelapse mostra uma placa que não bate com a
 curva do gráfico — na tela que deveria provar que o modelo funciona.
+
+**Pendências conhecidas (2026-10-26):**
+
+- Em Linux, 10 testes de `backend/tests/seed_demo/` falham porque a imagem de
+  `ARM-001` não converge para o percentual registrado; no Windows passam.
+  Acompanhado em `../current_task_modelo.md`, ML02C.
+- O seed recusa um banco de sprites dentro do repositório
+  (`TRAPSIGHT_TRAINING_DATA_DIR`), e o único banco existente está em
+  `dataset/apoio/sprites-final`, pasta do repositório ignorada pelo Git. Enquanto
+  isso não for resolvido, o script não roda com esse banco.
 
 ---
 

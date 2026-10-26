@@ -1,7 +1,7 @@
 # CURRENT TASK — FRONTEND — Projeto Integrador
 
 **Versão:** 1.0
-**Status:** ATIVA
+**Status:** CONCLUÍDA
 **Escopo:** interface web — as 4 telas definidas em `telas_spec.md`
 
 ---
@@ -17,7 +17,7 @@ detalhe da armadilha com gráfico e timelapse, nova análise, e cadastro.
 
 Cobre as 4 telas do MVP. Não cobre a tela de comparação com o baseline
 (explicitamente fora de escopo, `telas_spec.md`, seção 6). A tela de login e a
-sessão são cobertas por `current_task_autenticacao_hospedagem.md` (AUTH06).
+sessão são cobertas por `../current_task_autenticacao_hospedagem.md` (AUTH06).
 
 ---
 
@@ -28,8 +28,8 @@ sessão são cobertas por `current_task_autenticacao_hospedagem.md` (AUTH06).
 - [x] Vite + React + TypeScript + Tailwind configurados
 - [x] `VITE_API_URL` lido de variável de ambiente
 
-**Especificação:** `../plan/foundation/tech_stack.md`, seção 3.
-**Dependências:** `completed/current_task_infra.md` (INFRA02).
+**Especificação:** `../../plan/foundation/tech_stack.md`, seção 3.
+**Dependências:** `current_task_infra.md` (INFRA02).
 **Concluída em:** 2026-10-08.
 
 ## FE02 — Camada de serviços da API
@@ -40,7 +40,7 @@ sessão são cobertas por `current_task_autenticacao_hospedagem.md` (AUTH06).
 - [x] Infraestrutura de testes (Vitest + Testing Library) funcionando
 - [x] Base da interface: roteamento das 4 telas, layout, `StatusBadge` e formatadores
 
-**Especificação:** `../plan/api/api_spec.md`; `../plan/frontend/telas_spec.md`,
+**Especificação:** `../../plan/api/api_spec.md`; `../../plan/frontend/telas_spec.md`,
 seção 8.6.
 **Dependências:** FE01.
 **Concluída em:** 2026-10-16.
@@ -55,8 +55,8 @@ normalmente — a exceção é só nos dados vindos da API.
 - [x] Painel de alertas no topo, com contagem e lista de casos em `trocar`
 - [x] Estados de exceção: sem armadilhas, sem refil ativo, sem análises
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seções 4.1 e 6.
-**Dependências:** FE02, `completed/current_task_api.md` (API03).
+**Especificação:** `../../plan/frontend/telas_spec.md`, seções 4.1 e 6.
+**Dependências:** FE02, `current_task_api.md` (API03).
 **Concluída em:** 2026-10-16.
 
 ## FE04 — Detalhe da armadilha
@@ -66,7 +66,7 @@ normalmente — a exceção é só nos dados vindos da API.
 - [x] Lista de análises com miniatura, data, percentual e status
 - [x] Botão "Registrar troca de refil"
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.2.
+**Especificação:** `../../plan/frontend/telas_spec.md`, seção 4.2.
 **Dependências:** FE02.
 **Concluída em:** 2026-10-16.
 
@@ -77,7 +77,7 @@ normalmente — a exceção é só nos dados vindos da API.
 - [x] Alterna entre modo "refil ativo" e "histórico completo"
 - [x] Oculto com menos de duas análises
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.2.1 e seção 8.5.
+**Especificação:** `../../plan/frontend/telas_spec.md`, seção 4.2.1 e seção 8.5.
 **Dependências:** FE04.
 **Concluída em:** 2026-10-22.
 
@@ -88,8 +88,8 @@ normalmente — a exceção é só nos dados vindos da API.
       status e versão do modelo
 - [x] Bloqueia envio se armadilha sem refil ativo
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.3.
-**Dependências:** FE02, `completed/current_task_api.md` (API07).
+**Especificação:** `../../plan/frontend/telas_spec.md`, seção 4.3.
+**Dependências:** FE02, `current_task_api.md` (API07).
 **Concluída em:** 2026-10-16.
 
 ## FE07 — Cadastro de armadilha
@@ -97,7 +97,7 @@ normalmente — a exceção é só nos dados vindos da API.
 - [x] Formulário: identificador, modelo, localização, data de instalação
 - [x] Ao criar, oferece criação imediata do primeiro refil
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seção 4.4.
+**Especificação:** `../../plan/frontend/telas_spec.md`, seção 4.4.
 **Dependências:** FE02.
 **Concluída em:** 2026-10-16.
 
@@ -108,7 +108,7 @@ normalmente — a exceção é só nos dados vindos da API.
       sinais de atenção em âmbar ou vermelho
 - [x] Adaptar cartões e navegação principal para telas estreitas e áreas seguras
 
-**Especificação:** `../plan/frontend/telas_spec.md`, seções 4.1 e 8.4.
+**Especificação:** `../../plan/frontend/telas_spec.md`, seções 4.1 e 8.4.
 **Dependências:** FE03.
 **Concluída em:** 2026-10-21.
 
@@ -125,6 +125,11 @@ FE06 (depende do endpoint de análise estar pronto) e FE08 (depende de FE03).
 
 As 4 telas funcionam contra a API real (mesmo com stub de inferência),
 incluindo todos os estados de exceção documentados em `telas_spec.md`.
+
+**Concluída em:** 2026-10-22.
+
+**Verificação (2026-10-26):** `npm test` em `frontend/` — 45 arquivos de teste,
+269 testes passando.
 
 ---
 
