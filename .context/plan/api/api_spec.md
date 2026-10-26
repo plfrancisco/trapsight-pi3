@@ -33,7 +33,7 @@ interface não consuma.
 | `201` | Recurso criado |
 | `400` | Requisição malformada ou arquivo inválido |
 | `401` | Sem sessão válida ou credenciais inválidas |
-| `403` | Requisição recusada pela proteção contra CSRF (`Origin` ou token) |
+| `403` | CSRF inválido, papel insuficiente ou troca de senha pendente |
 | `404` | Recurso não encontrado |
 | `409` | Conflito de estado — ex.: análise em armadilha sem refil ativo |
 | `413` | Arquivo acima do limite de tamanho |
@@ -89,6 +89,9 @@ podem ser reescritas sem aviso, códigos não.
 | `LIMITE_TENTATIVAS` | 429 | Limite de falhas de login por IP; traz `Retry-After` |
 | `LIMITE_ANALISES` | 429 | Excesso de análises por usuário; traz `Retry-After` |
 | `SENHA_FRACA` | 422 | Senha fora da política (`login.md`, 5.2); o motivo vai em `detalhes` e a senha **nunca** é devolvida |
+| `ACESSO_NEGADO` | 403 | Papel atual do banco não autoriza a operação |
+| `EMAIL_JA_CADASTRADO` | 409 | E-mail normalizado duplicado; somente gerente |
+| `TROCA_DE_SENHA_OBRIGATORIA` | 403 | Conta deve substituir a senha inicial |
 
 ## 2.4 Restrições de upload
 
@@ -202,6 +205,8 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | `POST` | `/api/auth/logout` | Cabeçalho (sair) |
 | `GET` | `/api/auth/me` | Carga inicial do aplicativo |
 | `POST` | `/api/auth/senha` | Alterar senha |
+| `GET` | `/api/usuarios` | Contas (somente gerente) |
+| `POST` | `/api/usuarios` | Criar operador (somente gerente) |
 | `GET` | `/healthz` | Verificação de saúde (sem dados sensíveis, fora de `/api`) |
 
 ## 3.1 Endpoints de autenticação
@@ -209,7 +214,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 **`POST /api/auth/login`** — corpo `{ "email": "...", "senha": "..." }` (e-mail até
 254 caracteres, senha até 128).
 
-- `200`: `{ "usuario": { "id", "email", "nome" }, "csrf_token": "..." }` e `Set-Cookie`
+- `200`: usuario (id, email, nome, papel, troca_senha_pendente), csrf_token e Set-Cookie
   da sessão (token novo a cada login).
 - `401 CREDENCIAIS_INVALIDAS` com a mensagem única "E-mail ou senha inválidos." para
   qualquer falha de credencial, conta inativa ou bloqueada.
@@ -220,7 +225,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 **no servidor** e limpa o cookie.
 
 **`GET /api/auth/me`** — exige sessão. `200`:
-`{ "usuario": { "id", "email", "nome" }, "csrf_token": "..." }`; `401 NAO_AUTENTICADO`
+usuario (id, email, nome, papel, troca_senha_pendente) e csrf_token; `401 NAO_AUTENTICADO`
 sem sessão. O aplicativo o chama ao carregar para recuperar o estado.
 
 **`POST /api/auth/senha`** — exige sessão e `X-CSRF-Token`. Corpo
@@ -230,6 +235,34 @@ sem sessão. O aplicativo o chama ao carregar para recuperar o estado.
   outras sessões do usuário são revogadas.
 - `401 CREDENCIAIS_INVALIDAS` se a senha atual estiver errada; `422 SENHA_FRACA` se
   a nova violar a política (`login.md`, 5.2).
+
+---
+
+## 3.2 Contas de usuário
+
+GET e POST /api/usuarios exigem gerente: anônimo recebe 401 NAO_AUTENTICADO
+e operador, 403 ACESSO_NEGADO. POST exige CSRF e origem válidos.
+POST aceita somente email (3–254, normalizado NFKC/minúsculas/trim),
+nome (1–120 após trim) e senha (1–1024 antes da política).
+Campos extras, inclusive papel e flag de troca, geram 422 VALIDACAO_FALHOU.
+Cria operador ativo, sem sessão, com troca_senha_pendente=true.
+Responde 201 com id, email, nome, papel, ativo, ultimo_login_em e criado_em.
+GET responde 200 com array desses campos em ordem de email, sem paginação.
+Nunca retorna senha nem hash. Cache-Control: no-store.
+
+Novos códigos: ACESSO_NEGADO (403), EMAIL_JA_CADASTRADO (409) e
+TROCA_DE_SENHA_OBRIGATORIA (403). Reutiliza SENHA_FRACA (422),
+VALIDACAO_FALHOU (422), NAO_AUTENTICADO (401) e CSRF_INVALIDO (403).
+Colisões de email por caixa ou Unicode também geram EMAIL_JA_CADASTRADO;
+é aceitável revelar existência ao gerente autorizado a listar contas.
+Nenhuma outra operação de gestão de conta é exposta pela API.
+
+Login e GET /api/auth/me acrescentam papel e troca_senha_pendente ao objeto
+usuario. A flag pendente restringe globalmente as rotas sob /api a
+GET /api/auth/me, POST /api/auth/senha e POST /api/auth/logout.
+Demais rotas autenticadas geram TROCA_DE_SENHA_OBRIGATORIA; OPTIONS mantém
+CORS e login continua público. A troca válida limpa a flag e revoga
+sessões anteriores, emitindo novo cookie/CSRF.
 
 ---
 

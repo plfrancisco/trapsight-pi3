@@ -18,8 +18,8 @@ conforme `../plan/foundation/login.md` (aprovado em 2026-10-16).
 # 2. Escopo
 
 Cobre a implementação do login no backend e no frontend, a infraestrutura de
-produção e todo o ciclo de verificação de segurança. Não cobre MFA, perfis de
-acesso, recuperação de senha por e-mail nem provedor de identidade externo
+produção e todo o ciclo de verificação de segurança. Não cobre MFA, papel
+somente leitura, recuperação de senha por e-mail nem provedor de identidade externo
 (Fase 2, `login.md`, seção 12.3). A escolha do provedor de hospedagem e do
 domínio depende do usuário e está em `current_task_externo.md` (EXT04).
 
@@ -188,6 +188,19 @@ projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
 **Especificação:** `login.md`, seção 11; `../plan/frontend/telas_spec.md`.
 **Dependências:** AUTH03, AUTH04.
 **Verifica:** testes do frontend e a lista manual de `seguranca_testes.md`, seção 9.
+
+## AUTH07 — Criação de contas pelo gerente
+
+- [ ] Especificar dois papéis, gerente único e troca inicial obrigatória
+- [ ] Migration 0010 com papel, CHECK e gerente único; flag em migration própria
+- [ ] GET/POST /api/usuarios só para gerente, CSRF, erros estáveis e auditoria
+- [ ] CLI criar-usuario --papel e definir-papel com revogação de sessões
+- [ ] Tela Contas, menu condicionado e guarda contra acesso direto de operador
+- [ ] Troca pendente global no middleware e encaminhamento no frontend
+- [ ] Testes API, CLI, migrations e frontend; validação completa e produção
+
+**Especificação:** login.md, 4.3 e 5.4; api_spec.md, 3.2; telas_spec.md, 4.6.
+**Dependências:** AUTH01 a AUTH06. Conclusão depende de confirmação do usuário.
 
 ## HOST01 — Build e imagens de produção
 

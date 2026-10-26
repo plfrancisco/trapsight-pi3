@@ -34,6 +34,7 @@ fica no relatório, não na interface — ver seção 6.
 |---|---|---|
 | Dashboard | `/` | Estado atual de todas as armadilhas, ordenado por urgência |
 | Detalhe da armadilha | `/armadilhas/:id` | Série temporal, histórico e troca de refil |
+| Contas | `/contas` | Listar contas e criar operadores; somente gerente |
 | Nova análise | `/analises/nova` | Upload de imagem e resultado do modelo |
 | Cadastro de armadilha | `/armadilhas/nova`, `/armadilhas/:id/editar` | CRUD básico |
 | Login | `/login` | Autenticação (pública; as demais rotas exigem sessão) |
@@ -204,6 +205,24 @@ Nenhum token, senha ou `csrf_token` é guardado em `localStorage` ou
 
 ---
 
+## 4.6 Contas
+
+Rota /contas com item Contas nos menus desktop/móvel só para gerente.
+Operador que abre a URL vê Acesso negado; a tela não monta nem consulta
+contas. O servidor continua aplicando autorização independentemente da UI.
+Lista: nome, email, papel, situação, último login e criação.
+Formulário Criar operador: nome, email e senha inicial, sem seletor de papel,
+autocomplete=new-password e colagem permitida. Bloquear envio duplicado,
+limpar senha após sucesso, atualizar lista e mostrar confirmação sem senha.
+Prever carga, vazio, erro com nova tentativa e mensagens por código para
+EMAIL_JA_CADASTRADO, SENHA_FRACA, ACESSO_NEGADO e VALIDACAO_FALHOU.
+
+Conta com troca_senha_pendente=true segue para /conta/senha antes de exibir
+qualquer tela operacional, inclusive /contas. Mostrar o motivo da troca,
+permitir logout e consultar /auth/me após sucesso para atualizar o estado.
+
+---
+
 # 5. Estimativa de dias até saturar
 
 O valor exibido no dashboard é calculado no backend, não no frontend — é
@@ -300,7 +319,7 @@ O alerta **não é uma entidade persistida**. É derivado dos dados existentes:
 Uma tabela `alerta` apenas duplicaria informação já presente em `analise` e
 `refil`, com risco de dessincronização. O único ganho seria registrar que
 alguém visualizou ou ignorou o alerta, o que não é relevante nesta versão, com
-um único nível de acesso e sem rastreio por usuário.
+alertas operacionais visíveis a ambos os papéis e sem rastreio por usuário.
 
 ## 6.3 Apresentação
 
@@ -328,7 +347,7 @@ não há evento assíncrono a notificar.
 | Item | Motivo |
 |---|---|
 | Tela de comparação baseline vs. modelo | Serve à banca, não ao uso operacional. A comparação fica no relatório e nos notebooks de avaliação |
-| Perfis de acesso e múltiplos papéis | Fase 2 (`../foundation/login.md`, 4.3). A autenticação em si está especificada na seção 4.5 |
+| Papel somente leitura e permissões adicionais | Fase 2; gerente e operador estão especificados em 4.6 |
 | Cadastro de estabelecimento | Entidade prevista para a Fase 2 |
 | Responsividade completa das quatro telas e distribuição como PWA | O dashboard e a navegação principal se adaptam a celulares como primeira etapa; o restante da experiência mobile e a instalação PWA ficam para uma evolução futura |
 

@@ -140,6 +140,8 @@ erDiagram
         varchar email
         varchar nome
         varchar senha_hash
+        varchar papel
+        boolean troca_senha_pendente
         boolean ativo
         timestamptz bloqueado_ate
         timestamptz criado_em
@@ -231,14 +233,16 @@ Resultado de uma inferência do modelo sobre uma imagem.
 
 ## 6.5 `usuario`
 
-Conta com acesso ao sistema. Criada **somente pelo administrador**, por linha de
-comando; não há cadastro aberto (`login.md`, 5.4).
+Conta com acesso ao sistema. O gerente cria operadores pela interface e a CLI
+administra contas e papéis; não há cadastro aberto (`login.md`, 5.4).
 
 | Campo | Tipo | Regra |
 |---|---|---|
 | `id` | `uuid` | PK |
 | `email` | `varchar` | Obrigatório, **único**; normalizado (minúsculas, NFKC, sem espaços nas pontas) |
 | `nome` | `varchar` | Obrigatório; usado na exibição |
+| `papel` | `varchar` | Obrigatório; operador (padrão) ou gerente; gerente único |
+| `troca_senha_pendente` | `boolean` | Padrão false; true em criação pela API |
 | `senha_hash` | `varchar` | String PHC do Argon2id (carrega algoritmo, parâmetros e sal); **nunca** a senha |
 | `ativo` | `boolean` | Padrão `true`; `false` bloqueia o login e revoga as sessões |
 | `bloqueado_ate` | `timestamptz` | Nulo; preenchido no bloqueio temporário por tentativas |
@@ -247,6 +251,15 @@ comando; não há cadastro aberto (`login.md`, 5.4).
 | `criado_em` | `timestamptz` | Padrão `now()` |
 
 Usuários nunca são excluídos: são **desativados**, para preservar a auditoria.
+
+A conta tem papel varchar NOT NULL DEFAULT 'operador', CHECK
+papel IN ('gerente', 'operador') e índice único parcial sobre papel WHERE
+papel = 'gerente'. Inclui contas desativadas e permite zero gerentes.
+troca_senha_pendente boolean NOT NULL DEFAULT false é true nas contas
+criadas pela API e só é limpa após troca de senha válida. A migração
+preserva contas existentes como operadores sem troca pendente.
+A aplicação lê papel e flag do banco por requisição, sem guardá-los na
+tabela sessao.
 
 ## 6.6 `sessao`
 
@@ -375,6 +388,8 @@ a última barreira contra dado inconsistente.
 | `analise` | `CHECK (status IN ('ok', 'atencao', 'trocar'))` | Valores da seção 6.4; sem acento, conforme a seção 7.3 |
 | `analise` | índice em `(refil_id, analisado_em)` | Série temporal por refil, ordenada — a consulta central do sistema |
 | `usuario` | `UNIQUE (email)` | Uma conta por e-mail normalizado |
+| `usuario` | CHECK papel IN ('gerente', 'operador') | Recusa outros papéis |
+| `usuario` | UNIQUE (papel) WHERE papel = 'gerente' | No máximo um gerente, inclusive desativado |
 | `sessao` | FK `usuario_id` → `usuario.id`, `ON DELETE RESTRICT` | Usuários são desativados, não excluídos |
 | `sessao` | `UNIQUE (token_hash)` e `CHECK (token_hash ~ '^[0-9a-f]{64}$')` | O banco só aceita o SHA-256 em hexadecimal, nunca o token em claro |
 | `sessao` | índice em `(usuario_id, revogada_em)` | Consulta das sessões ativas e do limite por usuário |

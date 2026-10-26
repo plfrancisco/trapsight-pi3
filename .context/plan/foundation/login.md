@@ -111,11 +111,13 @@ então o cookie funciona; é preciso `credentials: 'include'` no frontend e
 
 ## 4.3 Autorização mínima
 
-Na v1 existe **um único nível de acesso**: todo usuário autenticado e ativo usa
-todo o sistema. Perfis (administrador, operador, somente leitura) ficam para a
-Fase 2. A administração de contas acontece por **linha de comando no
-servidor**, e não pela interface, o que elimina uma superfície inteira de
-ataque pública.
+Existem dois papéis: gerente e operador. O servidor consulta o papel no banco
+a cada requisição; não confia no corpo, no cookie nem no estado do frontend.
+Operadores usam o sistema operacional; só gerente lista e cria contas.
+O frontend apenas condiciona a navegação. Somente leitura fica para a Fase 2.
+O banco admite zero ou um gerente, inclusive entre contas desativadas,
+por CHECK de valores e índice único parcial WHERE papel = 'gerente'.
+Nenhuma conta é promovida automaticamente.
 
 ---
 
@@ -130,6 +132,8 @@ Tabela `usuario` (substantivos de domínio em português, conforme a regra 8.2):
 | `id` | `uuid` | PK |
 | `email` | `varchar` | Único; normalizado (minúsculas, NFKC, sem espaços nas pontas) |
 | `nome` | `varchar` | Exibição |
+| `papel` | `varchar` | operador por padrão ou gerente; gerente único, inclusive inativo |
+| `troca_senha_pendente` | `boolean` | false por padrão; true em criação pela API |
 | `senha_hash` | `varchar` | String PHC do Argon2id (carrega algoritmo, parâmetros e sal) |
 | `ativo` | `boolean` | Desativar bloqueia o login e revoga as sessões |
 | `bloqueado_ate` | `timestamptz` nulo | Bloqueio temporário por tentativas (seção 6) |
@@ -177,9 +181,9 @@ fora do ar. A lista local é a obrigatória; a consulta externa é um acréscimo
 | Atualização | `check_needs_rehash` no login bem-sucedido: se os parâmetros mudaram, o hash é regravado |
 | Em log, resposta ou erro | Nunca: nem a senha, nem o hash |
 
-## 5.4 Gestão de contas (linha de comando)
+## 5.4 Gestão de contas pelo gerente e pela CLI
 
-Comandos em `backend/src/cli/` (executados dentro do container do backend):
+Comandos por `python -m src.cli` (executados no ambiente do backend):
 
 | Comando | Função |
 |---|---|
@@ -195,6 +199,59 @@ credenciais.
 
 ---
 
+### 5.4.1 Criação e listagem pela interface
+
+POST /api/usuarios exige gerente, CSRF e origem válidos. O corpo JSON
+estrito aceita apenas email (3–254 caracteres, endereço com parte local e
+domínio), nome (1–120 após trim) e senha inicial no campo senha (1–1024
+antes da política). Campos extras, inclusive papel, ativo e flag de troca,
+geram 422 VALIDACAO_FALHOU. A política existente recebe nome e email
+normalizado por NFKC, minúsculas e trim; falhas geram 422 SENHA_FRACA.
+Colisões de email, inclusive Unicode/caixa, geram 409 EMAIL_JA_CADASTRADO.
+Revelar duplicidade é aceitável porque só o gerente confiável usa a rota
+e já pode listar essas contas.
+
+A conta nasce operador ativo, sem sessão e com troca_senha_pendente=true.
+POST responde 201 com id, email, nome, papel, ativo, ultimo_login_em e
+criado_em. GET /api/usuarios exige gerente e devolve array dos mesmos campos
+em ordem de email, sem paginação no MVP. Nunca senha ou hash.
+As respostas usam Cache-Control: no-store.
+
+Nos dois endpoints, anônimo recebe 401 NAO_AUTENTICADO, operador recebe
+403 ACESSO_NEGADO e gerente recebe sucesso. Em métodos não seguros, a
+verificação de CSRF/origem precede a autorização por papel.
+Não existem operações de edição, exclusão, ativação, desativação ou
+redefinição de senha na API. Auditoria: conta_criada com usuario_id e
+criado_por_id (null para CLI), acesso_negado com usuario_id; nunca registrar
+senha, hash ou corpo da requisição.
+
+### 5.4.2 Atribuição de papel
+
+Só a CLI concede gerente: criar-usuario --papel operador ou gerente
+(padrão operador) e definir-papel --email ... --papel operador ou gerente.
+Definir papel revoga todas as sessões da conta na mesma transação.
+O CHECK só admite gerente/operador; o índice parcial impede segundo gerente
+mesmo desativado. A colisão falha sem alterar contas ou sessões.
+Para transferir a função, rebaixar o atual e depois promover o próximo
+pela CLI. O primeiro gerente exige --papel gerente explicitamente.
+Sem usuário ou senha padrão; o seed não cria credenciais.
+
+### 5.4.3 Troca inicial obrigatória
+
+troca_senha_pendente tem padrão false para contas existentes e criadas pela
+CLI e true para contas criadas pela API. Login e /api/auth/me devolvem papel
+e a flag no objeto usuario. Ambos são lidos do banco a cada requisição.
+Enquanto pendente, o middleware só libera GET /api/auth/me,
+POST /api/auth/senha e POST /api/auth/logout; qualquer outra rota sob /api
+retorna 403 TROCA_DE_SENHA_OBRIGATORIA. OPTIONS conserva o tratamento CORS;
+login permanece público com verificação de origem.
+A troca exige senha atual e política existente, limpa a flag só após
+sucesso, revoga sessões anteriores e emite novo cookie/CSRF. Falhas mantêm
+a flag. O frontend encaminha a conta para /conta/senha antes de mostrar
+dados e consulta /auth/me após o sucesso.
+
+---
+
 # 6. Login
 
 ## 6.1 Contrato
@@ -203,7 +260,7 @@ credenciais.
 
 | Resultado | Resposta |
 |---|---|
-| Sucesso | `200` com `{ "usuario": { "id", "email", "nome" }, "csrf_token": "..." }` e `Set-Cookie` da sessão |
+| Sucesso | `200` com usuario (id, email, nome, papel, troca_senha_pendente), csrf_token e Set-Cookie da sessão |
 | Qualquer falha de credencial | `401` com código `CREDENCIAIS_INVALIDAS` e a mensagem **única** "E-mail ou senha inválidos." |
 | Limite por IP excedido | `429` com `LIMITE_TENTATIVAS` e cabeçalho `Retry-After` |
 | Corpo malformado | `422` `VALIDACAO_FALHOU` (padrão do projeto) |
@@ -523,7 +580,7 @@ suspeita de ataque (OWASP: monitorar falhas de autenticação).
 |---|---|---|
 | **Sem MFA** | O OWASP considera o MFA a melhor defesa contra ataques a senhas, mas exige fluxo de cadastro do segundo fator e recuperação | Senha mínima de 15 caracteres + lista de bloqueio + limites de tentativa. É o patamar que o NIST define para um fator só |
 | Sem recuperação de senha por e-mail | Não há servidor de e-mail; o público é pequeno | Redefinição pelo administrador via CLI |
-| Um único nível de acesso | Sem usuários com funções distintas ainda | Contas criadas manualmente |
+| Criação de contas pelo gerente | Necessária à operação; gerente é confiável | Papel do banco, CSRF, corpo estrito, gerente único e auditoria |
 | Sem CAPTCHA nem WAF | Dependência e custo desproporcionais | Limites por conta e por IP; Caddy e firewall |
 | Bloqueio temporário permite incomodar uma conta alvo | Preferível ao bloqueio permanente | 15 min de duração; desbloqueio pelo administrador |
 | Sem teste de intrusão independente | Fora do escopo acadêmico | Testes automatizados de segurança (seção 14) e este documento |
@@ -531,9 +588,9 @@ suspeita de ataque (OWASP: monitorar falhas de autenticação).
 ## 12.3 Fase 2 (gatilhos para revisar)
 
 - **MFA por TOTP** (aplicativo autenticador), obrigatório se entrarem dados
-  reais da empresa parceira em volume ou se houver perfil administrativo na
-  interface.
-- Perfis e autorização por papel.
+  reais da empresa parceira em volume. No fluxo inicial do gerente, o risco
+  de fator único é aceito com senha forte, CSRF, autorização e limites.
+- Papel somente leitura e permissões adicionais.
 - Tela de sessões ativas e de histórico de login.
 - Recuperação de senha por e-mail, com token de uso único e expiração curta.
 - Provedor de identidade gerenciado, se houver SSO ou crescimento de usuários.
