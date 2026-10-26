@@ -16,6 +16,38 @@ from training.treino.selecao import SelecaoMelhorPonto, chave_de_selecao
 PESOS = torch.tensor([0.5, 0.8, 4.0])
 
 
+def test_pixels_ignorados_nao_afetam_perda_metricas_nem_gradiente():
+    alvo = _alvo(30.0)
+    previsto = alvo.clone()
+    alvo[:, :, -3:] = 255
+    a = _logits(previsto).requires_grad_()
+    b = a.detach().clone()
+    b[:, :, :, -3:] = torch.randn_like(b[:, :, :, -3:]) * 50
+    b.requires_grad_()
+    perda = PerdaSegmentacao(PESOS, lambda_area=1.0)
+    primeira, segunda = perda(a, alvo), perda(b, alvo)
+    assert torch.allclose(primeira.total, segunda.total)
+    segunda.total.backward()
+    assert torch.count_nonzero(b.grad[:, :, :, -3:]) == 0
+    metricas = []
+    for logits in (a, b):
+        acumulador = AcumuladorMetricas()
+        acumulador.atualizar(logits.detach(), alvo, [20.0], ["a"])
+        metricas.append(acumulador.resultado())
+    assert metricas[0] == metricas[1]
+    assert metricas[0]["dice_coberta"] == 1.0
+
+
+def test_lote_inteiro_ignorado_tem_perda_zero_e_gradiente_finito():
+    logits = torch.randn(2, 3, 4, 4, requires_grad=True)
+    resultado = PerdaSegmentacao(PESOS, lambda_area=1)(
+        logits, torch.full((2, 4, 4), 255)
+    )
+    assert resultado.total.item() == 0
+    resultado.total.backward()
+    assert torch.count_nonzero(logits.grad) == 0
+
+
 def _logits(rotulos: torch.Tensor, margem: float = 12.0) -> torch.Tensor:
     """Logits que escolhem exatamente os rótulos dados."""
     return torch.nn.functional.one_hot(rotulos, 3).permute(0, 3, 1, 2).float() * margem
@@ -93,10 +125,10 @@ def test_percentual_suave_e_do_gabarito_concordam_com_predicao_perfeita():
 
 
 def test_status_respeita_as_fronteiras_do_modelo_spec():
-    assert derivar_status(39.99) == "ok"
-    assert derivar_status(40.0) == "atencao"
-    assert derivar_status(70.0) == "atencao"
-    assert derivar_status(70.01) == "trocar"
+    assert derivar_status(9.99) == "ok"
+    assert derivar_status(10.0) == "atencao"
+    assert derivar_status(20.0) == "atencao"
+    assert derivar_status(20.01) == "trocar"
 
 
 def test_metricas_de_predicao_perfeita():

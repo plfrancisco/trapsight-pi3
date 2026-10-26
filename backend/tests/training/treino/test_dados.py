@@ -6,6 +6,7 @@ import json
 
 import numpy as np
 import pytest
+from PIL import Image
 
 from training.treino.dados import (
     DatasetInvalido,
@@ -42,6 +43,43 @@ def test_semente_em_dois_conjuntos_impede_o_treino(criar_dataset):
     assert any("semente" in problema for problema in verificar_estrutura(info))
     with pytest.raises(DatasetInvalido):
         exigir_dataset_valido(info)
+
+
+@pytest.mark.parametrize(
+    "campos",
+    [
+        ("placa_base_id", "placa_base_id"),
+        ("placas_origem_recortes", "placas_origem_recortes"),
+        ("placa_base_id", "placas_origem_recortes"),
+    ],
+)
+def test_placa_compartilhada_entre_conjuntos_impede_treino(criar_dataset, campos):
+    raiz = criar_dataset()
+    caminho = raiz / "metadados.jsonl"
+    linhas = [json.loads(linha) for linha in caminho.read_text().splitlines()]
+    for conjunto, campo in zip(("treino", "validacao"), campos):
+        registro = next(r for r in linhas if r["conjunto"] == conjunto)
+        registro[campo] = (
+            ["placa_compartilhada"]
+            if campo == "placas_origem_recortes"
+            else "placa_compartilhada"
+        )
+    caminho.write_text("\n".join(json.dumps(r) for r in linhas))
+    with pytest.raises(DatasetInvalido, match="Placa de origem placa_compartilhada"):
+        exigir_dataset_valido(ler_dataset(raiz))
+
+
+def test_classe_ignorada_nao_entra_no_percentual_nem_nos_pesos(criar_dataset):
+    raiz = criar_dataset()
+    info = ler_dataset(raiz)
+    amostra = info.do_conjunto("treino")[0]
+    with Image.open(amostra.mascara) as imagem:
+        mascara = np.array(imagem)
+    mascara[0, 0] = 255
+    Image.fromarray(mascara).save(amostra.mascara)
+    assert verificar_mascaras([amostra]) == []
+    assert contar_pixels_por_classe([amostra]).sum() == mascara.size - 1
+    assert percentual_da_mascara(np.array([[1, 2, 255]], dtype=np.uint8)) == 50.0
 
 
 def test_faixa_ausente_no_treino_impede_o_treino(criar_dataset):

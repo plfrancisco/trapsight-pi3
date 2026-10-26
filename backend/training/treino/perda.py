@@ -30,12 +30,16 @@ class ResultadoPerda:
     area: torch.Tensor
 
 
-def percentual_suave(probabilidades: torch.Tensor) -> torch.Tensor:
+def percentual_suave(
+    probabilidades: torch.Tensor, validos: torch.Tensor | None = None
+) -> torch.Tensor:
     """Fração coberta por imagem, calculada sobre probabilidades suaves.
 
     O denominador é a área de placa prevista, como em modelo_spec.md, seção 5.
     Entrada `(B, 3, H, W)`; saída `(B,)` com valores entre 0 e 1.
     """
+    if validos is not None:
+        probabilidades = probabilidades * validos.unsqueeze(1)
     limpa = probabilidades[:, INDICE_PLACA_LIMPA].sum(dim=(1, 2))
     coberta = probabilidades[:, INDICE_PLACA_COBERTA].sum(dim=(1, 2))
     return coberta / (limpa + coberta).clamp_min(EPSILON)
@@ -63,11 +67,19 @@ class PerdaSegmentacao(nn.Module):
 
     def forward(self, logits: torch.Tensor, alvo: torch.Tensor) -> ResultadoPerda:
         logits = logits.float()
-        ce = F.cross_entropy(logits, alvo, weight=self.pesos_ce)
+        validos = alvo != 255
+        if not validos.any():
+            zero = logits.sum() * 0.0
+            return ResultadoPerda(zero, zero.detach(), zero.detach(), zero.detach())
+        ce = F.cross_entropy(logits, alvo, weight=self.pesos_ce, ignore_index=255)
 
         probabilidades = logits.softmax(dim=1)
-        um_quente = F.one_hot(alvo, num_classes=probabilidades.shape[1])
+        probabilidades = probabilidades * validos.unsqueeze(1)
+        um_quente = F.one_hot(
+            alvo.masked_fill(~validos, 0), num_classes=probabilidades.shape[1]
+        )
         um_quente = um_quente.permute(0, 3, 1, 2).float()
+        um_quente = um_quente * validos.unsqueeze(1)
         intersecao = (probabilidades * um_quente).sum(dim=(0, 2, 3))
         soma = probabilidades.sum(dim=(0, 2, 3)) + um_quente.sum(dim=(0, 2, 3))
         dice_por_classe = (2.0 * intersecao + EPSILON) / (soma + EPSILON)
@@ -76,7 +88,7 @@ class PerdaSegmentacao(nn.Module):
         if self.lambda_area > 0.0:
             area = (
                 (percentual_suave(probabilidades) - percentual_do_gabarito(alvo))
-                .abs()
+                .abs()[validos.flatten(1).any(dim=1)]
                 .mean()
             )
         else:

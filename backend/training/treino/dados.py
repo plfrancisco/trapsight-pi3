@@ -48,6 +48,8 @@ class Amostra:
     dominante_cor: str
     imagem: Path
     mascara: Path
+    placa_base_id: str | None = None
+    placas_origem_recortes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -121,6 +123,14 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
             identificador = str(dados["id"])
             if Path(identificador).name != identificador:
                 raise ValueError("identificador com caminho")
+            base = dados.get("placa_base_id")
+            origens = dados.get("placas_origem_recortes", [])
+            if base is not None and (not isinstance(base, str) or not base.strip()):
+                raise ValueError("placa_base_id inválida")
+            if not isinstance(origens, list) or any(
+                not isinstance(origem, str) or not origem.strip() for origem in origens
+            ):
+                raise ValueError("placas_origem_recortes inválidas")
             amostras.append(
                 Amostra(
                     identificador=identificador,
@@ -132,6 +142,8 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
                     dominante_cor=str(dados.get("dominante_cor", "")),
                     imagem=raiz / "imagens" / f"{identificador}.png",
                     mascara=raiz / "mascaras" / f"{identificador}.png",
+                    placa_base_id=base,
+                    placas_origem_recortes=tuple(origens),
                 )
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as erro:
@@ -181,6 +193,20 @@ def verificar_estrutura(info: InfoDataset) -> list[str]:
             f"{len(compartilhadas)} semente(s) aparecem em mais de um conjunto."
         )
 
+    conjuntos_por_placa: dict[str, set[str]] = {}
+    for amostra in info.amostras:
+        fontes = set(amostra.placas_origem_recortes)
+        if amostra.placa_base_id is not None:
+            fontes.add(amostra.placa_base_id)
+        for placa in fontes:
+            conjuntos_por_placa.setdefault(placa, set()).add(amostra.conjunto)
+    for placa, conjuntos in sorted(conjuntos_por_placa.items()):
+        if len(conjuntos) > 1:
+            problemas.append(
+                f"Placa de origem {placa} aparece em mais de um conjunto: "
+                f"{', '.join(sorted(conjuntos))}."
+            )
+
     for conjunto in CONJUNTOS:
         do_conjunto = info.do_conjunto(conjunto)
         if not do_conjunto:
@@ -212,7 +238,7 @@ def verificar_mascaras(amostras: Sequence[Amostra]) -> list[str]:
         except (OSError, FileNotFoundError):
             problemas.append(f"Máscara ilegível: {amostra.identificador}.")
             continue
-        if mascara.max() > INDICE_PLACA_COBERTA:
+        if not np.isin(mascara, (0, 1, 2, 255)).all():
             problemas.append(f"Máscara com classe inválida: {amostra.identificador}.")
             continue
         percentual = percentual_da_mascara(mascara)

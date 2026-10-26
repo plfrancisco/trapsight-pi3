@@ -47,7 +47,9 @@ class AcumuladorMetricas:
     """Acumula predições de um conjunto e calcula as métricas ao final."""
 
     def __init__(self) -> None:
-        self._confusao = MulticlassConfusionMatrix(num_classes=len(CLASSES))
+        self._confusao = MulticlassConfusionMatrix(
+            num_classes=len(CLASSES), ignore_index=255
+        )
         self._imagens: list[dict[str, Any]] = []
 
     def atualizar(
@@ -60,10 +62,13 @@ class AcumuladorMetricas:
         """Soma um lote: `logits` `(B, 3, H, W)`, `alvo` `(B, H, W)`."""
         previsto = logits.argmax(dim=1)
         self._confusao.update(previsto.cpu(), alvo.cpu())
-        pixels = previsto.shape[1] * previsto.shape[2]
         for i in range(previsto.shape[0]):
-            prev_limpa = int((previsto[i] == INDICE_PLACA_LIMPA).sum())
-            prev_coberta = int((previsto[i] == INDICE_PLACA_COBERTA).sum())
+            validos = alvo[i] != 255
+            pixels = int(validos.sum())
+            if pixels == 0:
+                continue
+            prev_limpa = int(((previsto[i] == INDICE_PLACA_LIMPA) & validos).sum())
+            prev_coberta = int(((previsto[i] == INDICE_PLACA_COBERTA) & validos).sum())
             real_limpa = int((alvo[i] == INDICE_PLACA_LIMPA).sum())
             real_coberta = int((alvo[i] == INDICE_PLACA_COBERTA).sum())
             area_prevista = prev_limpa + prev_coberta
