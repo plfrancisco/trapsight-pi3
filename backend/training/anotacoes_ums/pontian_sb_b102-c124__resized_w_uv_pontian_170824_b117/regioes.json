@@ -1,0 +1,7170 @@
+{
+  "versao": "decisoes_v5_original",
+  "estruturas_sha256": "7b31f6c1d7ad58175211f4984c8299abede29b8ad7fab94faaf377cea24c4cc5",
+  "mascara_original_sha256": "fae28450a688171bf221d2866cbac82e0daebaf1276857eda71a8a96b7af2073",
+  "revisao_visual": "aprovada",
+  "regioes": [
+    {
+      "id": 1,
+      "caixa": [
+        341,
+        128,
+        37,
+        33
+      ],
+      "area_candidata_px": 588,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1263,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7432.7,
+              6310.38,
+              604.99,
+              573.77
+            ],
+            "bbox_reduzida_xyxy": [
+              345.20776693496686,
+              127.29107647058825,
+              376.5957119452952,
+              160.38758823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7595,
+          6444,
+          7851,
+          6700
+        ],
+        "tamanho_candidata_original_px": [
+          676.3580729166666,
+          603.2258064516129
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "caixa": [
+        126,
+        137,
+        4,
+        3
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1218,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7771.5,
+              2180.78,
+              105.8,
+              248.22
+            ],
+            "bbox_reduzida_xyxy": [
+              119.29902699622481,
+              136.06535294117646,
+              132.8778403020158,
+              141.85323529411764
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7705,
+          2212,
+          7961,
+          2468
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "caixa": [
+        176,
+        137,
+        7,
+        3
+      ],
+      "area_candidata_px": 12,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1219,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7773.67,
+              3186.09,
+              139.93,
+              203.01
+            ],
+            "bbox_reduzida_xyxy": [
+              174.29426027494836,
+              134.07952941176467,
+              185.39987178573975,
+              141.73452352941175
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7705,
+          3153,
+          7961,
+          3409
+        ],
+        "tamanho_candidata_original_px": [
+          127.95963541666667,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "caixa": [
+        123,
+        138,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1218,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7771.5,
+              2180.78,
+              105.8,
+              248.22
+            ],
+            "bbox_reduzida_xyxy": [
+              119.29902699622481,
+              136.06535294117646,
+              132.8778403020158,
+              141.85323529411764
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7696,
+          2130,
+          7952,
+          2386
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "caixa": [
+        325,
+        139,
+        5,
+        6
+      ],
+      "area_candidata_px": 18,
+      "decisao": "sujeira",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7641,
+          5859,
+          7897,
+          6115
+        ],
+        "tamanho_candidata_original_px": [
+          91.39973958333333,
+          109.6774193548387
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "caixa": [
+        215,
+        144,
+        8,
+        4
+      ],
+      "area_candidata_px": 24,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1220,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7616.27,
+              3869.28,
+              193.43,
+              253.22
+            ],
+            "bbox_reduzida_xyxy": [
+              211.66799914523827,
+              139.76347058823526,
+              225.5203362062825,
+              150.34522941176468
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7568,
+          3875,
+          7824,
+          4131
+        ],
+        "tamanho_candidata_original_px": [
+          146.23958333333334,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "caixa": [
+        375,
+        147,
+        3,
+        4
+      ],
+      "area_candidata_px": 9,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1263,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7432.7,
+              6310.38,
+              604.99,
+              573.77
+            ],
+            "bbox_reduzida_xyxy": [
+              345.20776693496686,
+              127.29107647058825,
+              376.5957119452952,
+              160.38758823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7513,
+          6754,
+          7769,
+          7010
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          145,
+          374,
+          378
+        ],
+        [
+          146,
+          375,
+          379
+        ],
+        [
+          147,
+          375,
+          380
+        ],
+        [
+          148,
+          375,
+          380
+        ],
+        [
+          149,
+          376,
+          380
+        ],
+        [
+          150,
+          376,
+          379
+        ],
+        [
+          151,
+          377,
+          379
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          7360,
+          6592,
+          7872,
+          7104
+        ],
+        "caixa_local_xyxy": [
+          220.30107526881693,
+          238.98046875,
+          341.4193548387102,
+          341.8203125
+        ],
+        "ponto_local": [
+          280.86021505376357,
+          290.400390625
+        ],
+        "negativos": [
+          [
+            220.30107526881693,
+            238.98046875
+          ],
+          [
+            341.4193548387102,
+            238.98046875
+          ],
+          [
+            220.30107526881693,
+            341.8203125
+          ],
+          [
+            341.4193548387102,
+            341.8203125
+          ]
+        ]
+      },
+      "score_sam": 0.9303233027458191,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.036670684814453125
+    },
+    {
+      "id": 8,
+      "caixa": [
+        116,
+        150,
+        3,
+        4
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1271,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7461.72,
+              2044.03,
+              181.18,
+              153.27
+            ],
+            "bbox_reduzida_xyxy": [
+              111.81815229004916,
+              148.88841176470584,
+              120.20274948358146,
+              158.80002352941173
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7458,
+          2020,
+          7714,
+          2276
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "caixa": [
+        365,
+        151,
+        46,
+        36
+      ],
+      "area_candidata_px": 795,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1264,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7112.94,
+              6680.55,
+              488.66,
+              412.95
+            ],
+            "bbox_reduzida_xyxy": [
+              365.457824631384,
+              151.1477647058824,
+              388.0481515777477,
+              177.8803411764706
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          },
+          {
+            "anotacao_id": 1265,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6888.13,
+              7041.0,
+              508.07,
+              500.15
+            ],
+            "bbox_reduzida_xyxy": [
+              385.1761521475889,
+              162.38435294117647,
+              412.5367333855687,
+              190.1787705882353
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7147,
+          6965,
+          7403,
+          7221
+        ],
+        "tamanho_candidata_original_px": [
+          840.8776041666666,
+          658.0645161290323
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "caixa": [
+        556,
+        150,
+        30,
+        34
+      ],
+      "area_candidata_px": 557,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1252,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7028.9,
+              10126.3,
+              592.08,
+              533.6
+            ],
+            "bbox_reduzida_xyxy": [
+              553.9567205641428,
+              150.08756470588236,
+              583.1471757247666,
+              182.47782352941178
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7184,
+          10310,
+          7440,
+          10566
+        ],
+        "tamanho_candidata_original_px": [
+          548.3984375,
+          621.505376344086
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "caixa": [
+        219,
+        152,
+        3,
+        4
+      ],
+      "area_candidata_px": 8,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1228,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7497.5,
+              4003.28,
+              93.69,
+              80.72
+            ],
+            "bbox_reduzida_xyxy": [
+              218.99843578602466,
+              151.7172529411765,
+              223.4142032908327,
+              156.84264705882353
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7421,
+          3903,
+          7677,
+          4159
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "caixa": [
+        432,
+        155,
+        7,
+        7
+      ],
+      "area_candidata_px": 22,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "mascara_sam_rle": [
+        [
+          154,
+          432,
+          440
+        ],
+        [
+          155,
+          432,
+          440
+        ],
+        [
+          156,
+          432,
+          440
+        ],
+        [
+          157,
+          432,
+          440
+        ],
+        [
+          158,
+          432,
+          439
+        ],
+        [
+          159,
+          432,
+          438
+        ],
+        [
+          160,
+          432,
+          437
+        ],
+        [
+          161,
+          432,
+          436
+        ],
+        [
+          162,
+          433,
+          435
+        ]
+      ],
+      "prompt_sam": {
+        "caixa_xyxy": [
+          429,
+          152,
+          442,
+          165
+        ],
+        "positivo": [
+          435,
+          156
+        ],
+        "negativos": [
+          [
+            429,
+            152
+          ],
+          [
+            442,
+            152
+          ],
+          [
+            429,
+            165
+          ],
+          [
+            442,
+            165
+          ]
+        ]
+      },
+      "score_sam": 0.8764723539352417,
+      "revisao_silhueta": "pendente",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7339,
+          7833,
+          7595,
+          8089
+        ],
+        "tamanho_candidata_original_px": [
+          127.95963541666667,
+          127.95698924731182
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "caixa": [
+        114,
+        156,
+        2,
+        1
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1271,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7461.72,
+              2044.03,
+              181.18,
+              153.27
+            ],
+            "bbox_reduzida_xyxy": [
+              111.81815229004916,
+              148.88841176470584,
+              120.20274948358146,
+              158.80002352941173
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7376,
+          1974,
+          7632,
+          2230
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "caixa": [
+        321,
+        161,
+        4,
+        2
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1274,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              7355.8,
+              5831.0,
+              112.54,
+              163.7
+            ],
+            "bbox_reduzida_xyxy": [
+              318.98340337630884,
+              158.43787058823528,
+              327.93857112329937,
+              164.59447058823528
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7275,
+          5776,
+          7531,
+          6032
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          161,
+          321,
+          325
+        ],
+        [
+          162,
+          322,
+          325
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          7104,
+          5696,
+          7616,
+          6208
+        ],
+        "caixa_local_xyxy": [
+          256.94623655913983,
+          147.86328125,
+          341.50537634408647,
+          268.98307291666697
+        ],
+        "ponto_local": [
+          299.2258064516127,
+          208.42317708333303
+        ],
+        "negativos": [
+          [
+            256.94623655913983,
+            147.86328125
+          ],
+          [
+            341.50537634408647,
+            147.86328125
+          ],
+          [
+            256.94623655913983,
+            268.98307291666697
+          ],
+          [
+            341.50537634408647,
+            268.98307291666697
+          ]
+        ]
+      },
+      "score_sam": 0.9571609497070312,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.008579254150390625
+    },
+    {
+      "id": 15,
+      "caixa": [
+        272,
+        167,
+        5,
+        6
+      ],
+      "area_candidata_px": 19,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1221,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              7196.5,
+              4839.59,
+              163.5,
+              231.91
+            ],
+            "bbox_reduzida_xyxy": [
+              264.74856613718924,
+              164.36470588235295,
+              277.43514495334426,
+              173.30911764705883
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7129,
+          4890,
+          7385,
+          5146
+        ],
+        "tamanho_candidata_original_px": [
+          91.39973958333333,
+          109.6774193548387
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          166,
+          275,
+          276
+        ],
+        [
+          167,
+          274,
+          279
+        ],
+        [
+          168,
+          273,
+          279
+        ],
+        [
+          169,
+          271,
+          279
+        ],
+        [
+          170,
+          271,
+          279
+        ],
+        [
+          171,
+          272,
+          279
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6976,
+          4800,
+          7488,
+          5312
+        ],
+        "caixa_local_xyxy": [
+          202.15053763440847,
+          148.14583333333303,
+          359.82795698924747,
+          287.54557291666697
+        ],
+        "ponto_local": [
+          280.98924731182797,
+          217.845703125
+        ],
+        "negativos": [
+          [
+            202.15053763440847,
+            148.14583333333303
+          ],
+          [
+            359.82795698924747,
+            148.14583333333303
+          ],
+          [
+            202.15053763440847,
+            287.54557291666697
+          ],
+          [
+            359.82795698924747,
+            287.54557291666697
+          ]
+        ]
+      },
+      "score_sam": 0.9480807781219482,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.04587554931640625
+    },
+    {
+      "id": 16,
+      "caixa": [
+        98,
+        170,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1212,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              7192.22,
+              1761.35,
+              85.13,
+              73.22
+            ],
+            "bbox_reduzida_xyxy": [
+              96.35421326305291,
+              168.8861470588235,
+              100.35969513498112,
+              173.54325882352938
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7111,
+          1682,
+          7367,
+          1938
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          169,
+          96,
+          97
+        ],
+        [
+          170,
+          96,
+          100
+        ],
+        [
+          171,
+          96,
+          100
+        ],
+        [
+          172,
+          96,
+          98
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6976,
+          1600,
+          7488,
+          2112
+        ],
+        "caixa_local_xyxy": [
+          220.43010752688133,
+          167.43489583333326,
+          304.98924731182797,
+          251.99479166666674
+        ],
+        "ponto_local": [
+          262.7096774193542,
+          209.71484375
+        ],
+        "negativos": [
+          [
+            220.43010752688133,
+            167.43489583333326
+          ],
+          [
+            304.98924731182797,
+            167.43489583333326
+          ],
+          [
+            220.43010752688133,
+            251.99479166666674
+          ],
+          [
+            304.98924731182797,
+            251.99479166666674
+          ]
+        ]
+      },
+      "score_sam": 0.922594428062439,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01141357421875
+    },
+    {
+      "id": 17,
+      "caixa": [
+        278,
+        173,
+        4,
+        5
+      ],
+      "area_candidata_px": 12,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1270,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              7095.15,
+              5066.1,
+              163.45,
+              176.1
+            ],
+            "bbox_reduzida_xyxy": [
+              277.1397392976708,
+              169.9118823529412,
+              286.7732459576893,
+              178.85355882352943
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          7028,
+          4990,
+          7284,
+          5246
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          91.39784946236558
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          171,
+          281,
+          283
+        ],
+        [
+          172,
+          280,
+          282
+        ],
+        [
+          172,
+          283,
+          284
+        ],
+        [
+          173,
+          279,
+          282
+        ],
+        [
+          174,
+          279,
+          282
+        ],
+        [
+          175,
+          279,
+          281
+        ],
+        [
+          176,
+          279,
+          282
+        ],
+        [
+          177,
+          279,
+          280
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6848,
+          4800,
+          7360,
+          5312
+        ],
+        "caixa_local_xyxy": [
+          238.75268817204324,
+          257.82552083333303,
+          378.15053763440847,
+          378.9453125
+        ],
+        "ponto_local": [
+          308.4516129032254,
+          318.38541666666697
+        ],
+        "negativos": [
+          [
+            238.75268817204324,
+            257.82552083333303
+          ],
+          [
+            378.15053763440847,
+            257.82552083333303
+          ],
+          [
+            238.75268817204324,
+            378.9453125
+          ],
+          [
+            378.15053763440847,
+            378.9453125
+          ]
+        ]
+      },
+      "score_sam": 0.9590447545051575,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.0227508544921875
+    },
+    {
+      "id": 18,
+      "caixa": [
+        98,
+        183,
+        2,
+        3
+      ],
+      "area_candidata_px": 4,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1213,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              6935.43,
+              1754.89,
+              85.12,
+              73.22
+            ],
+            "bbox_reduzida_xyxy": [
+              96.00082057126576,
+              182.93461764705881,
+              100.00630244319396,
+              187.59118235294116
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6864,
+          1682,
+          7120,
+          1938
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          183,
+          96,
+          99
+        ],
+        [
+          184,
+          96,
+          100
+        ],
+        [
+          185,
+          96,
+          99
+        ],
+        [
+          186,
+          96,
+          99
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6720,
+          1600,
+          7232,
+          2112
+        ],
+        "caixa_local_xyxy": [
+          220.5161290322576,
+          167.43489583333326,
+          323.354838709678,
+          251.99479166666674
+        ],
+        "ponto_local": [
+          271.9354838709678,
+          209.71484375
+        ],
+        "negativos": [
+          [
+            220.5161290322576,
+            167.43489583333326
+          ],
+          [
+            323.354838709678,
+            167.43489583333326
+          ],
+          [
+            220.5161290322576,
+            251.99479166666674
+          ],
+          [
+            323.354838709678,
+            251.99479166666674
+          ]
+        ]
+      },
+      "score_sam": 0.9100902080535889,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.013599395751953125
+    },
+    {
+      "id": 19,
+      "caixa": [
+        579,
+        182,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6900,
+          10465,
+          7156,
+          10721
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "caixa": [
+        316,
+        184,
+        6,
+        7
+      ],
+      "area_candidata_px": 16,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1268,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6847.43,
+              5707.6,
+              240.57,
+              203.64
+            ],
+            "bbox_reduzida_xyxy": [
+              312.23283709665935,
+              179.24470588235295,
+              323.3729126006126,
+              192.40529999999998
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6809,
+          5703,
+          7065,
+          5959
+        ],
+        "tamanho_candidata_original_px": [
+          109.6796875,
+          127.95698924731182
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          183,
+          317,
+          318
+        ],
+        [
+          184,
+          316,
+          319
+        ],
+        [
+          185,
+          316,
+          320
+        ],
+        [
+          186,
+          315,
+          320
+        ],
+        [
+          186,
+          321,
+          323
+        ],
+        [
+          187,
+          315,
+          320
+        ],
+        [
+          188,
+          315,
+          319
+        ],
+        [
+          188,
+          320,
+          321
+        ],
+        [
+          189,
+          315,
+          319
+        ],
+        [
+          190,
+          315,
+          320
+        ],
+        [
+          191,
+          318,
+          319
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6720,
+          5568,
+          7232,
+          6080
+        ],
+        "caixa_local_xyxy": [
+          129.11827956989237,
+          184.46354166666697,
+          305.07526881720423,
+          342.14322916666697
+        ],
+        "ponto_local": [
+          217.0967741935483,
+          263.30338541666697
+        ],
+        "negativos": [
+          [
+            129.11827956989237,
+            184.46354166666697
+          ],
+          [
+            305.07526881720423,
+            184.46354166666697
+          ],
+          [
+            129.11827956989237,
+            342.14322916666697
+          ],
+          [
+            305.07526881720423,
+            342.14322916666697
+          ]
+        ]
+      },
+      "score_sam": 0.9412564039230347,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.042758941650390625
+    },
+    {
+      "id": 21,
+      "caixa": [
+        147,
+        189,
+        2,
+        1
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1210,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              6855.6,
+              2658.26,
+              107.7,
+              95.84
+            ],
+            "bbox_reduzida_xyxy": [
+              145.41945152788662,
+              186.0665294117647,
+              150.6623548685804,
+              191.95835294117646
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6773,
+          2577,
+          7029,
+          2833
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          188,
+          147,
+          149
+        ],
+        [
+          189,
+          146,
+          149
+        ],
+        [
+          190,
+          146,
+          149
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6592,
+          2496,
+          7104,
+          3008
+        ],
+        "caixa_local_xyxy": [
+          275.39784946236614,
+          167.15234375,
+          341.677419354839,
+          251.71223958333348
+        ],
+        "ponto_local": [
+          308.53763440860166,
+          209.43229166666652
+        ],
+        "negativos": [
+          [
+            275.39784946236614,
+            167.15234375
+          ],
+          [
+            341.677419354839,
+            167.15234375
+          ],
+          [
+            275.39784946236614,
+            251.71223958333348
+          ],
+          [
+            341.677419354839,
+            251.71223958333348
+          ]
+        ]
+      },
+      "score_sam": 0.8841583728790283,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01116180419921875
+    },
+    {
+      "id": 22,
+      "caixa": [
+        742,
+        188,
+        3,
+        4
+      ],
+      "area_candidata_px": 9,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6763,
+          13463,
+          7019,
+          13719
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          185,
+          745,
+          746
+        ],
+        [
+          186,
+          744,
+          746
+        ],
+        [
+          187,
+          744,
+          746
+        ],
+        [
+          188,
+          743,
+          746
+        ],
+        [
+          189,
+          743,
+          745
+        ],
+        [
+          190,
+          742,
+          746
+        ],
+        [
+          191,
+          742,
+          744
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6592,
+          13376,
+          7104,
+          13888
+        ],
+        "caixa_local_xyxy": [
+          238.8387096774195,
+          163.72135416666606,
+          359.95698924731187,
+          266.56119791666606
+        ],
+        "ponto_local": [
+          299.39784946236614,
+          215.14127604166606
+        ],
+        "negativos": [
+          [
+            238.8387096774195,
+            163.72135416666606
+          ],
+          [
+            359.95698924731187,
+            163.72135416666606
+          ],
+          [
+            238.8387096774195,
+            266.56119791666606
+          ],
+          [
+            359.95698924731187,
+            266.56119791666606
+          ]
+        ]
+      },
+      "score_sam": 0.9512066841125488,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.019153594970703125
+    },
+    {
+      "id": 23,
+      "caixa": [
+        416,
+        194,
+        2,
+        8
+      ],
+      "area_candidata_px": 11,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1261,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6623.3,
+              7577.61,
+              208.96,
+              215.39
+            ],
+            "bbox_reduzida_xyxy": [
+              414.5312686088752,
+              193.23518823529412,
+              426.3141249376736,
+              204.66652941176469
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6617,
+          7495,
+          6873,
+          7751
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          146.23655913978496
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "caixa": [
+        423,
+        197,
+        2,
+        4
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1261,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6623.3,
+              7577.61,
+              208.96,
+              215.39
+            ],
+            "bbox_reduzida_xyxy": [
+              414.5312686088752,
+              193.23518823529412,
+              426.3141249376736,
+              204.66652941176469
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6599,
+          7623,
+          6855,
+          7879
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "caixa": [
+        100,
+        203,
+        4,
+        4
+      ],
+      "area_candidata_px": 10,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1240,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              6521.2,
+              1790.07,
+              164.46,
+              206.33
+            ],
+            "bbox_reduzida_xyxy": [
+              97.92533371322745,
+              201.2550705882353,
+              109.21256499750695,
+              210.252
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6489,
+          1737,
+          6745,
+          1993
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          201,
+          100,
+          101
+        ],
+        [
+          203,
+          100,
+          102
+        ],
+        [
+          204,
+          99,
+          104
+        ],
+        [
+          205,
+          99,
+          105
+        ],
+        [
+          206,
+          100,
+          105
+        ],
+        [
+          207,
+          102,
+          103
+        ],
+        [
+          207,
+          104,
+          105
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6336,
+          1600,
+          6848,
+          2112
+        ],
+        "caixa_local_xyxy": [
+          220.645161290322,
+          203.99479166666674,
+          341.76344086021527,
+          325.11458333333326
+        ],
+        "ponto_local": [
+          281.20430107526863,
+          264.5546875
+        ],
+        "negativos": [
+          [
+            220.645161290322,
+            203.99479166666674
+          ],
+          [
+            341.76344086021527,
+            203.99479166666674
+          ],
+          [
+            220.645161290322,
+            325.11458333333326
+          ],
+          [
+            341.76344086021527,
+            325.11458333333326
+          ]
+        ]
+      },
+      "score_sam": 0.9300780296325684,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.02890777587890625
+    },
+    {
+      "id": 26,
+      "caixa": [
+        279,
+        204,
+        9,
+        13
+      ],
+      "area_candidata_px": 41,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1269,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6392.79,
+              5045.2,
+              247.21,
+              243.51
+            ],
+            "bbox_reduzida_xyxy": [
+              275.9964100007123,
+              203.75294117647059,
+              289.3175639290548,
+              217.27678235294118
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6389,
+          5054,
+          6645,
+          5310
+        ],
+        "tamanho_candidata_original_px": [
+          164.51953125,
+          237.63440860215053
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "caixa": [
+        671,
+        205,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1250,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6556.03,
+              12231.6,
+              87.17,
+              89.3
+            ],
+            "bbox_reduzida_xyxy": [
+              669.126632951065,
+              203.5778823529412,
+              674.0117672198874,
+              208.34659411764707
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6480,
+          12147,
+          6736,
+          12403
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          204,
+          672,
+          673
+        ],
+        [
+          205,
+          670,
+          673
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6336,
+          11968,
+          6848,
+          12480
+        ],
+        "caixa_local_xyxy": [
+          238.92473118279577,
+          273.84505208333394,
+          305.20430107526863,
+          340.125
+        ],
+        "ponto_local": [
+          272.0645161290322,
+          306.98502604166606
+        ],
+        "negativos": [
+          [
+            238.92473118279577,
+            273.84505208333394
+          ],
+          [
+            305.20430107526863,
+            273.84505208333394
+          ],
+          [
+            238.92473118279577,
+            340.125
+          ],
+          [
+            305.20430107526863,
+            340.125
+          ]
+        ]
+      },
+      "score_sam": 0.891231119632721,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.005802154541015625
+    },
+    {
+      "id": 28,
+      "caixa": [
+        223,
+        209,
+        3,
+        3
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1227,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6464.89,
+              4033.52,
+              105.31,
+              103.98
+            ],
+            "bbox_reduzida_xyxy": [
+              220.65270745779614,
+              207.57141176470586,
+              226.34090747204218,
+              213.3324882352941
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6389,
+          3976,
+          6645,
+          4232
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          208,
+          223,
+          227
+        ],
+        [
+          209,
+          221,
+          227
+        ],
+        [
+          210,
+          221,
+          227
+        ],
+        [
+          211,
+          222,
+          227
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6208,
+          3904,
+          6720,
+          4416
+        ],
+        "caixa_local_xyxy": [
+          257.24731182795676,
+          148.42838541666652,
+          360.08602150537627,
+          251.26822916666697
+        ],
+        "ponto_local": [
+          308.66666666666606,
+          199.84830729166697
+        ],
+        "negativos": [
+          [
+            257.24731182795676,
+            148.42838541666652
+          ],
+          [
+            360.08602150537627,
+            148.42838541666652
+          ],
+          [
+            257.24731182795676,
+            251.26822916666697
+          ],
+          [
+            360.08602150537627,
+            251.26822916666697
+          ]
+        ]
+      },
+      "score_sam": 0.9208910465240479,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.02584075927734375
+    },
+    {
+      "id": 29,
+      "caixa": [
+        357,
+        209,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6398,
+          6407,
+          6654,
+          6663
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          208,
+          356,
+          358
+        ],
+        [
+          209,
+          356,
+          358
+        ],
+        [
+          210,
+          357,
+          359
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6208,
+          6336,
+          6720,
+          6848
+        ],
+        "caixa_local_xyxy": [
+          275.52688172043054,
+          165.94140625,
+          360.08602150537627,
+          232.22135416666697
+        ],
+        "ponto_local": [
+          317.8064516129034,
+          199.08138020833303
+        ],
+        "negativos": [
+          [
+            275.52688172043054,
+            165.94140625
+          ],
+          [
+            360.08602150537627,
+            165.94140625
+          ],
+          [
+            275.52688172043054,
+            232.22135416666697
+          ],
+          [
+            360.08602150537627,
+            232.22135416666697
+          ]
+        ]
+      },
+      "score_sam": 0.9366973042488098,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.006694793701171875
+    },
+    {
+      "id": 30,
+      "caixa": [
+        136,
+        212,
+        2,
+        3
+      ],
+      "area_candidata_px": 4,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1241,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              6404.0,
+              2462.65,
+              125.4,
+              161.65
+            ],
+            "bbox_reduzida_xyxy": [
+              134.71865517487,
+              209.8034117647059,
+              143.56167818220672,
+              216.6635294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6334,
+          2376,
+          6590,
+          2632
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 31,
+      "caixa": [
+        140,
+        213,
+        2,
+        4
+      ],
+      "area_candidata_px": 6,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1241,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              6404.0,
+              2462.65,
+              125.4,
+              161.65
+            ],
+            "bbox_reduzida_xyxy": [
+              134.71865517487,
+              209.8034117647059,
+              143.56167818220672,
+              216.6635294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6306,
+          2449,
+          6562,
+          2705
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "caixa": [
+        177,
+        212,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6343,
+          3126,
+          6599,
+          3382
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          211,
+          176,
+          180
+        ],
+        [
+          212,
+          175,
+          180
+        ],
+        [
+          213,
+          175,
+          179
+        ],
+        [
+          214,
+          176,
+          181
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6208,
+          3008,
+          6720,
+          3520
+        ],
+        "caixa_local_xyxy": [
+          220.68817204301013,
+          203.55078125,
+          305.24731182795676,
+          288.1106770833335
+        ],
+        "ponto_local": [
+          262.9677419354839,
+          245.83072916666652
+        ],
+        "negativos": [
+          [
+            220.68817204301013,
+            203.55078125
+          ],
+          [
+            305.24731182795676,
+            203.55078125
+          ],
+          [
+            220.68817204301013,
+            288.1106770833335
+          ],
+          [
+            305.24731182795676,
+            288.1106770833335
+          ]
+        ]
+      },
+      "score_sam": 0.8683777451515198,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.019817352294921875
+    },
+    {
+      "id": 33,
+      "caixa": [
+        173,
+        215,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1208,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              6377.54,
+              3129.85,
+              85.13,
+              73.23
+            ],
+            "bbox_reduzida_xyxy": [
+              171.21766507586008,
+              213.45393529411763,
+              175.22369399529882,
+              218.11104705882354
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6297,
+          3044,
+          6553,
+          3300
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          214,
+          174,
+          175
+        ],
+        [
+          215,
+          172,
+          176
+        ],
+        [
+          216,
+          174,
+          175
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6208,
+          2880,
+          6720,
+          3392
+        ],
+        "caixa_local_xyxy": [
+          184.1290322580644,
+          258.4309895833335,
+          250.40860215053726,
+          324.7109375
+        ],
+        "ponto_local": [
+          217.26881720430174,
+          291.5709635416665
+        ],
+        "negativos": [
+          [
+            184.1290322580644,
+            258.4309895833335
+          ],
+          [
+            250.40860215053726,
+            258.4309895833335
+          ],
+          [
+            184.1290322580644,
+            324.7109375
+          ],
+          [
+            250.40860215053726,
+            324.7109375
+          ]
+        ]
+      },
+      "score_sam": 0.9102161526679993,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.009418487548828125
+    },
+    {
+      "id": 34,
+      "caixa": [
+        158,
+        218,
+        2,
+        3
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1209,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              6277.4,
+              2868.21,
+              120.67,
+              73.23
+            ],
+            "bbox_reduzida_xyxy": [
+              156.90471401096946,
+              216.98793529411765,
+              160.91074293040813,
+              223.58929411764709
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6224,
+          2779,
+          6480,
+          3035
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          218,
+          157,
+          160
+        ],
+        [
+          219,
+          158,
+          160
+        ],
+        [
+          220,
+          158,
+          161
+        ],
+        [
+          221,
+          158,
+          161
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          6080,
+          2624,
+          6592,
+          3136
+        ],
+        "caixa_local_xyxy": [
+          220.73118279569826,
+          240.23177083333348,
+          323.56989247311867,
+          324.7916666666665
+        ],
+        "ponto_local": [
+          272.15053763440847,
+          282.51171875
+        ],
+        "negativos": [
+          [
+            220.73118279569826,
+            240.23177083333348
+          ],
+          [
+            323.56989247311867,
+            240.23177083333348
+          ],
+          [
+            220.73118279569826,
+            324.7916666666665
+          ],
+          [
+            323.56989247311867,
+            324.7916666666665
+          ]
+        ]
+      },
+      "score_sam": 0.9193496108055115,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01277923583984375
+    },
+    {
+      "id": 35,
+      "caixa": [
+        623,
+        227,
+        7,
+        6
+      ],
+      "area_candidata_px": 22,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1251,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6064.39,
+              11323.9,
+              198.21,
+              196.0
+            ],
+            "bbox_reduzida_xyxy": [
+              619.4711304223947,
+              224.39894117647057,
+              630.193261628321,
+              235.24219411764705
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          6032,
+          11324,
+          6288,
+          11580
+        ],
+        "tamanho_candidata_original_px": [
+          127.95963541666667,
+          109.6774193548387
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          227,
+          623,
+          624
+        ],
+        [
+          228,
+          621,
+          622
+        ],
+        [
+          228,
+          623,
+          625
+        ],
+        [
+          228,
+          626,
+          628
+        ],
+        [
+          229,
+          623,
+          628
+        ],
+        [
+          230,
+          623,
+          629
+        ],
+        [
+          231,
+          623,
+          629
+        ],
+        [
+          232,
+          624,
+          627
+        ],
+        [
+          233,
+          624,
+          626
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5952,
+          11200,
+          6464,
+          11712
+        ],
+        "caixa_local_xyxy": [
+          129.37634408602207,
+          164.40755208333394,
+          287.05376344086017,
+          340.3671875
+        ],
+        "ponto_local": [
+          208.21505376344066,
+          252.38736979166606
+        ],
+        "negativos": [
+          [
+            129.37634408602207,
+            164.40755208333394
+          ],
+          [
+            287.05376344086017,
+            164.40755208333394
+          ],
+          [
+            129.37634408602207,
+            340.3671875
+          ],
+          [
+            287.05376344086017,
+            340.3671875
+          ]
+        ]
+      },
+      "score_sam": 0.96639084815979,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.036159515380859375
+    },
+    {
+      "id": 36,
+      "caixa": [
+        248,
+        230,
+        6,
+        4
+      ],
+      "area_candidata_px": 16,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1226,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              6048.59,
+              4519.6,
+              135.61,
+              129.55
+            ],
+            "bbox_reduzida_xyxy": [
+              247.2435928484935,
+              228.68788235294116,
+              254.3305933471045,
+              236.1065470588235
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5996,
+          4460,
+          6252,
+          4716
+        ],
+        "tamanho_candidata_original_px": [
+          109.6796875,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "caixa": [
+        743,
+        232,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5987,
+          13463,
+          6243,
+          13719
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 38,
+      "caixa": [
+        280,
+        234,
+        3,
+        4
+      ],
+      "area_candidata_px": 8,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1206,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              6005.86,
+              5104.24,
+              85.13,
+              73.22
+            ],
+            "bbox_reduzida_xyxy": [
+              279.22617850274236,
+              233.78701764705883,
+              283.2316603746706,
+              238.44412941176472
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5923,
+          5018,
+          6179,
+          5274
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          234,
+          281,
+          283
+        ],
+        [
+          235,
+          281,
+          283
+        ],
+        [
+          236,
+          279,
+          282
+        ],
+        [
+          237,
+          280,
+          282
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5824,
+          4928,
+          6336,
+          5440
+        ],
+        "caixa_local_xyxy": [
+          165.97849462365593,
+          166.38541666666697,
+          287.0967741935483,
+          269.22526041666697
+        ],
+        "ponto_local": [
+          226.53763440860257,
+          217.80533854166697
+        ],
+        "negativos": [
+          [
+            165.97849462365593,
+            166.38541666666697
+          ],
+          [
+            287.0967741935483,
+            166.38541666666697
+          ],
+          [
+            165.97849462365593,
+            269.22526041666697
+          ],
+          [
+            287.0967741935483,
+            269.22526041666697
+          ]
+        ]
+      },
+      "score_sam": 0.9205322265625,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01087188720703125
+    },
+    {
+      "id": 39,
+      "caixa": [
+        140,
+        237,
+        3,
+        1
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1211,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              5980.24,
+              2554.89,
+              85.13,
+              73.23
+            ],
+            "bbox_reduzida_xyxy": [
+              139.76462141178146,
+              235.18858235294118,
+              143.77065033122017,
+              239.84569411764707
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5895,
+          2459,
+          6151,
+          2715
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          236,
+          141,
+          142
+        ],
+        [
+          237,
+          139,
+          143
+        ],
+        [
+          238,
+          139,
+          142
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5824,
+          2368,
+          6336,
+          2880
+        ],
+        "caixa_local_xyxy": [
+          165.97849462365593,
+          167.19270833333348,
+          232.2580645161288,
+          270.0325520833335
+        ],
+        "ponto_local": [
+          199.11827956989237,
+          218.61263020833348
+        ],
+        "negativos": [
+          [
+            165.97849462365593,
+            167.19270833333348
+          ],
+          [
+            232.2580645161288,
+            167.19270833333348
+          ],
+          [
+            165.97849462365593,
+            270.0325520833335
+          ],
+          [
+            232.2580645161288,
+            270.0325520833335
+          ]
+        ]
+      },
+      "score_sam": 0.9179846048355103,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.00891876220703125
+    },
+    {
+      "id": 40,
+      "caixa": [
+        338,
+        238,
+        4,
+        2
+      ],
+      "area_candidata_px": 8,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1267,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              5829.94,
+              6101.1,
+              221.26,
+              180.31
+            ],
+            "bbox_reduzida_xyxy": [
+              333.759156635088,
+              235.96376470588234,
+              343.6229702970298,
+              248.06798823529417
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5868,
+          6087,
+          6124,
+          6343
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          238,
+          339,
+          342
+        ],
+        [
+          239,
+          337,
+          341
+        ],
+        [
+          240,
+          337,
+          341
+        ],
+        [
+          241,
+          337,
+          339
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5696,
+          5952,
+          6208,
+          6464
+        ],
+        "caixa_local_xyxy": [
+          257.4193548387093,
+          202.62239583333303,
+          341.97849462365593,
+          323.7421875
+        ],
+        "ponto_local": [
+          299.69892473118307,
+          263.18229166666697
+        ],
+        "negativos": [
+          [
+            257.4193548387093,
+            202.62239583333303
+          ],
+          [
+            341.97849462365593,
+            202.62239583333303
+          ],
+          [
+            257.4193548387093,
+            323.7421875
+          ],
+          [
+            341.97849462365593,
+            323.7421875
+          ]
+        ]
+      },
+      "score_sam": 0.9078606963157654,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01790618896484375
+    },
+    {
+      "id": 41,
+      "caixa": [
+        336,
+        244,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1267,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              5829.94,
+              6101.1,
+              221.26,
+              180.31
+            ],
+            "bbox_reduzida_xyxy": [
+              333.759156635088,
+              235.96376470588234,
+              343.6229702970298,
+              248.06798823529417
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5758,
+          6032,
+          6014,
+          6288
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          242,
+          338,
+          339
+        ],
+        [
+          243,
+          337,
+          339
+        ],
+        [
+          244,
+          337,
+          338
+        ],
+        [
+          245,
+          336,
+          338
+        ],
+        [
+          246,
+          335,
+          336
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5568,
+          5952,
+          6080,
+          6464
+        ],
+        "caixa_local_xyxy": [
+          275.7419354838712,
+          166.0625,
+          360.30107526881693,
+          250.62239583333303
+        ],
+        "ponto_local": [
+          318.02150537634407,
+          208.34244791666697
+        ],
+        "negativos": [
+          [
+            275.7419354838712,
+            166.0625
+          ],
+          [
+            360.30107526881693,
+            166.0625
+          ],
+          [
+            275.7419354838712,
+            250.62239583333303
+          ],
+          [
+            360.30107526881693,
+            250.62239583333303
+          ]
+        ]
+      },
+      "score_sam": 0.7757838368415833,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.008899688720703125
+    },
+    {
+      "id": 42,
+      "caixa": [
+        103,
+        246,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5721,
+          1773,
+          5977,
+          2029
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 43,
+      "caixa": [
+        105,
+        246,
+        31,
+        26
+      ],
+      "area_candidata_px": 439,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1225,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              5403.22,
+              1951.2,
+              463.48,
+              573.77
+            ],
+            "bbox_reduzida_xyxy": [
+              106.73991025001781,
+              246.05699999999993,
+              138.1278552603462,
+              271.4120823529411
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5502,
+          2075,
+          5758,
+          2331
+        ],
+        "tamanho_candidata_original_px": [
+          566.6783854166666,
+          475.26881720430106
+        ]
+      }
+    },
+    {
+      "id": 44,
+      "caixa": [
+        96,
+        248,
+        9,
+        8
+      ],
+      "area_candidata_px": 19,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5630,
+          1709,
+          5886,
+          1965
+        ],
+        "tamanho_candidata_original_px": [
+          164.51953125,
+          146.23655913978496
+        ]
+      }
+    },
+    {
+      "id": 45,
+      "caixa": [
+        223,
+        252,
+        2,
+        4
+      ],
+      "area_candidata_px": 6,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1207,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              5663.5,
+              4034.05,
+              115.77,
+              116.85
+            ],
+            "bbox_reduzida_xyxy": [
+              220.681700975853,
+              250.83993529411762,
+              227.07395113612083,
+              257.17323529411766
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5594,
+          3967,
+          5850,
+          4223
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          252,
+          222,
+          224
+        ],
+        [
+          253,
+          222,
+          226
+        ],
+        [
+          254,
+          222,
+          226
+        ],
+        [
+          255,
+          222,
+          226
+        ],
+        [
+          256,
+          223,
+          226
+        ],
+        [
+          257,
+          225,
+          226
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          5440,
+          3776,
+          5952,
+          4288
+        ],
+        "caixa_local_xyxy": [
+          220.94623655913983,
+          276.4283854166665,
+          342.0645161290322,
+          360.98828125
+        ],
+        "ponto_local": [
+          281.50537634408647,
+          318.7083333333335
+        ],
+        "negativos": [
+          [
+            220.94623655913983,
+            276.4283854166665
+          ],
+          [
+            342.0645161290322,
+            276.4283854166665
+          ],
+          [
+            220.94623655913983,
+            360.98828125
+          ],
+          [
+            342.0645161290322,
+            360.98828125
+          ]
+        ]
+      },
+      "score_sam": 0.922974705696106,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.0225067138671875
+    },
+    {
+      "id": 46,
+      "caixa": [
+        104,
+        259,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5484,
+          1782,
+          5740,
+          2038
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 47,
+      "caixa": [
+        394,
+        258,
+        11,
+        10
+      ],
+      "area_candidata_px": 70,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "mascara_sam_rle": [
+        [
+          257,
+          399,
+          401
+        ],
+        [
+          258,
+          397,
+          403
+        ],
+        [
+          259,
+          397,
+          404
+        ],
+        [
+          260,
+          396,
+          405
+        ],
+        [
+          261,
+          396,
+          406
+        ],
+        [
+          262,
+          396,
+          406
+        ],
+        [
+          263,
+          395,
+          406
+        ],
+        [
+          264,
+          395,
+          406
+        ],
+        [
+          265,
+          394,
+          405
+        ],
+        [
+          266,
+          393,
+          405
+        ],
+        [
+          267,
+          393,
+          403
+        ],
+        [
+          268,
+          394,
+          395
+        ]
+      ],
+      "prompt_sam": {
+        "caixa_xyxy": [
+          391,
+          255,
+          408,
+          271
+        ],
+        "positivo": [
+          400,
+          263
+        ],
+        "negativos": [
+          [
+            391,
+            255
+          ],
+          [
+            408,
+            255
+          ],
+          [
+            391,
+            271
+          ],
+          [
+            408,
+            271
+          ]
+        ]
+      },
+      "score_sam": 0.8982431888580322,
+      "revisao_silhueta": "pendente",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1262,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              5424.36,
+              7162.3,
+              255.84,
+              279.09
+            ],
+            "bbox_reduzida_xyxy": [
+              391.8118384500321,
+              256.25964705882353,
+              407.0793874207565,
+              270.2556
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5429,
+          7175,
+          5685,
+          7431
+        ],
+        "tamanho_candidata_original_px": [
+          201.07942708333334,
+          182.79569892473117
+        ]
+      }
+    },
+    {
+      "id": 48,
+      "caixa": [
+        384,
+        278,
+        3,
+        2
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1243,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              5230.2,
+              7000.6,
+              58.2,
+              85.3
+            ],
+            "bbox_reduzida_xyxy": [
+              382.9660802051429,
+              277.6934117647059,
+              387.6323954697628,
+              280.87729411764707
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5137,
+          6919,
+          5393,
+          7175
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 49,
+      "caixa": [
+        743,
+        279,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          5127,
+          13463,
+          5383,
+          13719
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 50,
+      "caixa": [
+        350,
+        287,
+        19,
+        27
+      ],
+      "area_candidata_px": 325,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1260,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4637.35,
+              6405.5,
+              463.49,
+              392.89
+            ],
+            "bbox_reduzida_xyxy": [
+              350.4112828549042,
+              287.9540470588235,
+              371.904232495192,
+              313.3096764705882
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4744,
+          6444,
+          5000,
+          6700
+        ],
+        "tamanho_candidata_original_px": [
+          347.3190104166667,
+          493.5483870967742
+        ]
+      }
+    },
+    {
+      "id": 51,
+      "caixa": [
+        279,
+        288,
+        10,
+        5
+      ],
+      "area_candidata_px": 37,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1222,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4972.4,
+              5074.76,
+              139.19,
+              267.24
+            ],
+            "bbox_reduzida_xyxy": [
+              277.61348244176935,
+              287.3659588235294,
+              292.23278011254365,
+              294.98047058823533
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4926,
+          5064,
+          5182,
+          5320
+        ],
+        "tamanho_candidata_original_px": [
+          182.79947916666666,
+          91.39784946236558
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          288,
+          280,
+          288
+        ],
+        [
+          289,
+          279,
+          289
+        ],
+        [
+          290,
+          279,
+          286
+        ],
+        [
+          291,
+          279,
+          282
+        ],
+        [
+          291,
+          283,
+          285
+        ],
+        [
+          291,
+          286,
+          288
+        ],
+        [
+          292,
+          283,
+          285
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4800,
+          4928,
+          5312,
+          5440
+        ],
+        "caixa_local_xyxy": [
+          184.60215053763477,
+          148.10546875,
+          324.0,
+          378.90494791666697
+        ],
+        "ponto_local": [
+          254.30107526881693,
+          263.50520833333303
+        ],
+        "negativos": [
+          [
+            184.60215053763477,
+            148.10546875
+          ],
+          [
+            324.0,
+            148.10546875
+          ],
+          [
+            184.60215053763477,
+            378.90494791666697
+          ],
+          [
+            324.0,
+            378.90494791666697
+          ]
+        ]
+      },
+      "score_sam": 0.9515469670295715,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.043025970458984375
+    },
+    {
+      "id": 52,
+      "caixa": [
+        560,
+        303,
+        4,
+        2
+      ],
+      "area_candidata_px": 6,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1254,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4683.92,
+              10183.5,
+              201.88,
+              172.6
+            ],
+            "bbox_reduzida_xyxy": [
+              557.0858323242396,
+              299.718,
+              566.5278723555809,
+              310.76202352941175
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4680,
+          10145,
+          4936,
+          10401
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          301,
+          561,
+          562
+        ],
+        [
+          302,
+          559,
+          561
+        ],
+        [
+          303,
+          559,
+          562
+        ],
+        [
+          303,
+          564,
+          565
+        ],
+        [
+          304,
+          561,
+          564
+        ],
+        [
+          305,
+          562,
+          564
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4544,
+          10048,
+          5056,
+          10560
+        ],
+        "caixa_local_xyxy": [
+          221.24731182795676,
+          164.77083333333394,
+          305.8064516129034,
+          285.890625
+        ],
+        "ponto_local": [
+          263.52688172043054,
+          225.33072916666606
+        ],
+        "negativos": [
+          [
+            221.24731182795676,
+            164.77083333333394
+          ],
+          [
+            305.8064516129034,
+            164.77083333333394
+          ],
+          [
+            221.24731182795676,
+            285.890625
+          ],
+          [
+            305.8064516129034,
+            285.890625
+          ]
+        ]
+      },
+      "score_sam": 0.9378682971000671,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.016094207763671875
+    },
+    {
+      "id": 53,
+      "caixa": [
+        132,
+        304,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1215,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              4739.2,
+              2402.41,
+              92.06,
+              87.19
+            ],
+            "bbox_reduzida_xyxy": [
+              131.42324097157916,
+              302.7016588235294,
+              136.19294821568485,
+              307.73788235294114
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4661,
+          2303,
+          4917,
+          2559
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 54,
+      "caixa": [
+        139,
+        305,
+        8,
+        16
+      ],
+      "area_candidata_px": 36,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1224,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4245.11,
+              2505.35,
+              498.7,
+              809.27
+            ],
+            "bbox_reduzida_xyxy": [
+              137.0545480447325,
+              307.48568823529416,
+              181.32546192748774,
+              334.7675117647059
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4515,
+          2486,
+          4771,
+          2742
+        ],
+        "tamanho_candidata_original_px": [
+          146.23958333333334,
+          292.4731182795699
+        ]
+      }
+    },
+    {
+      "id": 55,
+      "caixa": [
+        338,
+        305,
+        3,
+        2
+      ],
+      "area_candidata_px": 4,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1249,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4749.65,
+              6159.7,
+              56.05,
+              85.33
+            ],
+            "bbox_reduzida_xyxy": [
+              336.9648550466557,
+              304.09994117647057,
+              341.6328114538073,
+              307.166205882353
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4643,
+          6078,
+          4899,
+          6334
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          305,
+          338,
+          341
+        ],
+        [
+          306,
+          339,
+          340
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4544,
+          5952,
+          5056,
+          6464
+        ],
+        "caixa_local_xyxy": [
+          184.68817204301104,
+          202.62239583333303,
+          269.24731182795676,
+          305.46223958333303
+        ],
+        "ponto_local": [
+          226.9677419354839,
+          254.04231770833303
+        ],
+        "negativos": [
+          [
+            184.68817204301104,
+            202.62239583333303
+          ],
+          [
+            269.24731182795676,
+            202.62239583333303
+          ],
+          [
+            184.68817204301104,
+            305.46223958333303
+          ],
+          [
+            269.24731182795676,
+            305.46223958333303
+          ]
+        ]
+      },
+      "score_sam": 0.9256098866462708,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.004627227783203125
+    },
+    {
+      "id": 56,
+      "caixa": [
+        386,
+        304,
+        4,
+        6
+      ],
+      "area_candidata_px": 12,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "mascara_sam_rle": [
+        [
+          301,
+          384,
+          386
+        ],
+        [
+          302,
+          384,
+          387
+        ],
+        [
+          303,
+          384,
+          388
+        ],
+        [
+          304,
+          384,
+          390
+        ],
+        [
+          305,
+          385,
+          391
+        ],
+        [
+          306,
+          386,
+          391
+        ],
+        [
+          307,
+          386,
+          390
+        ],
+        [
+          308,
+          386,
+          390
+        ],
+        [
+          309,
+          386,
+          389
+        ],
+        [
+          310,
+          387,
+          388
+        ]
+      ],
+      "prompt_sam": {
+        "caixa_xyxy": [
+          383,
+          301,
+          393,
+          313
+        ],
+        "positivo": [
+          388,
+          307
+        ],
+        "negativos": [
+          [
+            383,
+            301
+          ],
+          [
+            393,
+            301
+          ],
+          [
+            383,
+            313
+          ],
+          [
+            393,
+            313
+          ]
+        ]
+      },
+      "score_sam": 0.8191357254981995,
+      "revisao_silhueta": "pendente",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4625,
+          6965,
+          4881,
+          7221
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          109.6774193548387
+        ]
+      }
+    },
+    {
+      "id": 57,
+      "caixa": [
+        166,
+        306,
+        2,
+        1
+      ],
+      "area_candidata_px": 2,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4634,
+          2925,
+          4890,
+          3181
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 58,
+      "caixa": [
+        563,
+        306,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1254,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4683.92,
+              10183.5,
+              201.88,
+              172.6
+            ],
+            "bbox_reduzida_xyxy": [
+              557.0858323242396,
+              299.718,
+              566.5278723555809,
+              310.76202352941175
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4634,
+          10173,
+          4890,
+          10429
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          305,
+          563,
+          564
+        ],
+        [
+          306,
+          561,
+          564
+        ],
+        [
+          307,
+          562,
+          564
+        ],
+        [
+          308,
+          563,
+          565
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4544,
+          10048,
+          5056,
+          10560
+        ],
+        "caixa_local_xyxy": [
+          184.68817204301104,
+          219.61067708333394,
+          250.9677419354839,
+          285.890625
+        ],
+        "ponto_local": [
+          217.82795698924747,
+          252.75065104166606
+        ],
+        "negativos": [
+          [
+            184.68817204301104,
+            219.61067708333394
+          ],
+          [
+            250.9677419354839,
+            219.61067708333394
+          ],
+          [
+            184.68817204301104,
+            285.890625
+          ],
+          [
+            250.9677419354839,
+            285.890625
+          ]
+        ]
+      },
+      "score_sam": 0.8951336145401001,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.011272430419921875
+    },
+    {
+      "id": 59,
+      "caixa": [
+        151,
+        310,
+        32,
+        26
+      ],
+      "area_candidata_px": 414,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1224,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4245.11,
+              2505.35,
+              498.7,
+              809.27
+            ],
+            "bbox_reduzida_xyxy": [
+              137.0545480447325,
+              307.48568823529416,
+              181.32546192748774,
+              334.7675117647059
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4332,
+          2925,
+          4588,
+          3181
+        ],
+        "tamanho_candidata_original_px": [
+          584.9583333333334,
+          475.26881720430106
+        ]
+      }
+    },
+    {
+      "id": 60,
+      "caixa": [
+        356,
+        311,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1260,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4637.35,
+              6405.5,
+              463.49,
+              392.89
+            ],
+            "bbox_reduzida_xyxy": [
+              350.4112828549042,
+              287.9540470588235,
+              371.904232495192,
+              313.3096764705882
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4533,
+          6398,
+          4789,
+          6654
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          311,
+          356,
+          357
+        ],
+        [
+          312,
+          356,
+          357
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4416,
+          6208,
+          4928,
+          6720
+        ],
+        "caixa_local_xyxy": [
+          203.01075268817203,
+          275.66145833333303,
+          287.56989247311867,
+          360.22135416666697
+        ],
+        "ponto_local": [
+          245.2903225806449,
+          317.94140625
+        ],
+        "negativos": [
+          [
+            203.01075268817203,
+            275.66145833333303
+          ],
+          [
+            287.56989247311867,
+            275.66145833333303
+          ],
+          [
+            203.01075268817203,
+            360.22135416666697
+          ],
+          [
+            287.56989247311867,
+            360.22135416666697
+          ]
+        ]
+      },
+      "score_sam": 0.9018343091011047,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.00238800048828125
+    },
+    {
+      "id": 61,
+      "caixa": [
+        100,
+        313,
+        7,
+        5
+      ],
+      "area_candidata_px": 19,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1238,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4522.23,
+              1813.29,
+              142.17,
+              164.51
+            ],
+            "bbox_reduzida_xyxy": [
+              99.1955780326234,
+              311.8298823529412,
+              108.19505662796495,
+              319.6074176470588
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4469,
+          1764,
+          4725,
+          2020
+        ],
+        "tamanho_candidata_original_px": [
+          127.95963541666667,
+          91.39784946236558
+        ]
+      }
+    },
+    {
+      "id": 62,
+      "caixa": [
+        144,
+        317,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1224,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4245.11,
+              2505.35,
+              498.7,
+              809.27
+            ],
+            "bbox_reduzida_xyxy": [
+              137.0545480447325,
+              307.48568823529416,
+              181.32546192748774,
+              334.7675117647059
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4424,
+          2523,
+          4680,
+          2779
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 63,
+      "caixa": [
+        220,
+        322,
+        4,
+        7
+      ],
+      "area_candidata_px": 19,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1232,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4324.3,
+              3937.83,
+              245.4,
+              234.27
+            ],
+            "bbox_reduzida_xyxy": [
+              215.41800982975994,
+              317.0105294117647,
+              228.23369185839448,
+              330.43535294117646
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4287,
+          3930,
+          4543,
+          4186
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          127.95698924731182
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          321,
+          224,
+          225
+        ],
+        [
+          322,
+          218,
+          220
+        ],
+        [
+          322,
+          221,
+          223
+        ],
+        [
+          322,
+          224,
+          225
+        ],
+        [
+          323,
+          218,
+          220
+        ],
+        [
+          323,
+          221,
+          224
+        ],
+        [
+          323,
+          225,
+          226
+        ],
+        [
+          324,
+          219,
+          224
+        ],
+        [
+          325,
+          220,
+          224
+        ],
+        [
+          325,
+          225,
+          226
+        ],
+        [
+          326,
+          220,
+          223
+        ],
+        [
+          327,
+          221,
+          223
+        ],
+        [
+          328,
+          222,
+          223
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4160,
+          3776,
+          4672,
+          4288
+        ],
+        "caixa_local_xyxy": [
+          166.53763440860257,
+          221.58854166666652,
+          342.49462365591353,
+          342.7083333333335
+        ],
+        "ponto_local": [
+          254.5161290322585,
+          282.1484375
+        ],
+        "negativos": [
+          [
+            166.53763440860257,
+            221.58854166666652
+          ],
+          [
+            342.49462365591353,
+            221.58854166666652
+          ],
+          [
+            166.53763440860257,
+            342.7083333333335
+          ],
+          [
+            342.49462365591353,
+            342.7083333333335
+          ]
+        ]
+      },
+      "score_sam": 0.9450308084487915,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.03672027587890625
+    },
+    {
+      "id": 64,
+      "caixa": [
+        197,
+        324,
+        2,
+        3
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1233,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4388.85,
+              3569.95,
+              86.25,
+              86.75
+            ],
+            "bbox_reduzida_xyxy": [
+              195.29322601324878,
+              322.1857058823529,
+              200.0388631668922,
+              326.90408823529407
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4287,
+          3491,
+          4543,
+          3747
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          323,
+          197,
+          198
+        ],
+        [
+          324,
+          197,
+          199
+        ],
+        [
+          325,
+          196,
+          200
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4160,
+          3392,
+          4672,
+          3904
+        ],
+        "caixa_local_xyxy": [
+          203.0967741935483,
+          185.14973958333348,
+          305.9354838709678,
+          269.7096354166665
+        ],
+        "ponto_local": [
+          254.5161290322585,
+          227.4296875
+        ],
+        "negativos": [
+          [
+            203.0967741935483,
+            185.14973958333348
+          ],
+          [
+            305.9354838709678,
+            185.14973958333348
+          ],
+          [
+            203.0967741935483,
+            269.7096354166665
+          ],
+          [
+            305.9354838709678,
+            269.7096354166665
+          ]
+        ]
+      },
+      "score_sam": 0.9419552087783813,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.009220123291015625
+    },
+    {
+      "id": 65,
+      "caixa": [
+        532,
+        326,
+        6,
+        9
+      ],
+      "area_candidata_px": 22,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1253,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              4205.22,
+              9689.3,
+              240.58,
+              157.1
+            ],
+            "bbox_reduzida_xyxy": [
+              530.050744355011,
+              323.7885882352941,
+              538.6448607450673,
+              336.9497294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4195,
+          9652,
+          4451,
+          9908
+        ],
+        "tamanho_candidata_original_px": [
+          109.6796875,
+          164.51612903225808
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          327,
+          534,
+          537
+        ],
+        [
+          328,
+          533,
+          537
+        ],
+        [
+          329,
+          533,
+          537
+        ],
+        [
+          330,
+          532,
+          536
+        ],
+        [
+          331,
+          532,
+          535
+        ],
+        [
+          332,
+          532,
+          535
+        ],
+        [
+          333,
+          531,
+          534
+        ],
+        [
+          334,
+          531,
+          533
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          4032,
+          9536,
+          4544,
+          10048
+        ],
+        "caixa_local_xyxy": [
+          184.86021505376357,
+          164.93229166666606,
+          397.37634408602116,
+          322.61197916666606
+        ],
+        "ponto_local": [
+          291.11827956989237,
+          243.77213541666606
+        ],
+        "negativos": [
+          [
+            184.86021505376357,
+            164.93229166666606
+          ],
+          [
+            397.37634408602116,
+            164.93229166666606
+          ],
+          [
+            184.86021505376357,
+            322.61197916666606
+          ],
+          [
+            397.37634408602116,
+            322.61197916666606
+          ]
+        ]
+      },
+      "score_sam": 0.944616436958313,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.0345306396484375
+    },
+    {
+      "id": 66,
+      "caixa": [
+        122,
+        337,
+        4,
+        3
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1237,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4103.61,
+              2181.68,
+              144.89,
+              203.52
+            ],
+            "bbox_reduzida_xyxy": [
+              119.34826127217036,
+              334.5820588235294,
+              130.48177220599757,
+              342.5083941176471
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4049,
+          2139,
+          4305,
+          2395
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 67,
+      "caixa": [
+        207,
+        337,
+        3,
+        2
+      ],
+      "area_candidata_px": 4,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1234,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              4145.47,
+              3773.0,
+              85.13,
+              73.22
+            ],
+            "bbox_reduzida_xyxy": [
+              206.4010257140822,
+              335.56129411764704,
+              210.4065075860104,
+              340.2184058823529
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4058,
+          3683,
+          4314,
+          3939
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 68,
+      "caixa": [
+        184,
+        339,
+        3,
+        3
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1235,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4086.69,
+              3245.08,
+              147.61,
+              194.32
+            ],
+            "bbox_reduzida_xyxy": [
+              177.52129353942587,
+              335.3588823529412,
+              188.15152076358717,
+              343.4340176470588
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4012,
+          3263,
+          4268,
+          3519
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 69,
+      "caixa": [
+        128,
+        340,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1237,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4103.61,
+              2181.68,
+              144.89,
+              203.52
+            ],
+            "bbox_reduzida_xyxy": [
+              119.34826127217036,
+              334.5820588235294,
+              130.48177220599757,
+              342.5083941176471
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4012,
+          2221,
+          4268,
+          2477
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 70,
+      "caixa": [
+        146,
+        340,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1216,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              4080.97,
+              2640.65,
+              104.53,
+              106.15
+            ],
+            "bbox_reduzida_xyxy": [
+              144.45610086188475,
+              338.0285294117647,
+              150.2630101859107,
+              343.7469352941177
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          4003,
+          2559,
+          4259,
+          2815
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 71,
+      "caixa": [
+        181,
+        341,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1235,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              4086.69,
+              3245.08,
+              147.61,
+              194.32
+            ],
+            "bbox_reduzida_xyxy": [
+              177.52129353942587,
+              335.3588823529412,
+              188.15152076358717,
+              343.4340176470588
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3994,
+          3190,
+          4250,
+          3446
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 72,
+      "caixa": [
+        369,
+        341,
+        3,
+        2
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1244,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              4071.57,
+              6727.66,
+              67.63,
+              89.34
+            ],
+            "bbox_reduzida_xyxy": [
+              368.03496545337987,
+              340.5614117647059,
+              372.9222879122445,
+              344.2611705882353
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3985,
+          6645,
+          4241,
+          6901
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 73,
+      "caixa": [
+        565,
+        340,
+        30,
+        32
+      ],
+      "area_candidata_px": 570,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1255,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              3592.18,
+              10333.04,
+              657.32,
+              531.16
+            ],
+            "bbox_reduzida_xyxy": [
+              565.266380796353,
+              334.52735294117645,
+              594.3233563644135,
+              370.48662352941176
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3729,
+          10474,
+          3985,
+          10730
+        ],
+        "tamanho_candidata_original_px": [
+          548.3984375,
+          584.9462365591398
+        ]
+      }
+    },
+    {
+      "id": 74,
+      "caixa": [
+        128,
+        354,
+        2,
+        2
+      ],
+      "area_candidata_px": 3,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1217,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              3838.72,
+              2297.61,
+              85.12,
+              127.49
+            ],
+            "bbox_reduzida_xyxy": [
+              125.69018306147161,
+              352.34287058823526,
+              132.6644917729183,
+              356.9994352941177
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3747,
+          2230,
+          4003,
+          2486
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          354,
+          127,
+          130
+        ],
+        [
+          355,
+          127,
+          129
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          3648,
+          2112,
+          4160,
+          2624
+        ],
+        "caixa_local_xyxy": [
+          184.98924731182797,
+          203.83333333333348,
+          269.5483870967746,
+          288.3932291666665
+        ],
+        "ponto_local": [
+          227.26881720430083,
+          246.11328125
+        ],
+        "negativos": [
+          [
+            184.98924731182797,
+            203.83333333333348
+          ],
+          [
+            269.5483870967746,
+            203.83333333333348
+          ],
+          [
+            184.98924731182797,
+            288.3932291666665
+          ],
+          [
+            269.5483870967746,
+            288.3932291666665
+          ]
+        ]
+      },
+      "score_sam": 0.9184581637382507,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.006839752197265625
+    },
+    {
+      "id": 75,
+      "caixa": [
+        463,
+        367,
+        32,
+        49
+      ],
+      "area_candidata_px": 882,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1258,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              2631.2,
+              8524.87,
+              637.9,
+              520.23
+            ],
+            "bbox_reduzida_xyxy": [
+              466.3508910891089,
+              388.16099999999994,
+              494.80994372818583,
+              423.0578823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3080,
+          8628,
+          3336,
+          8884
+        ],
+        "tamanho_candidata_original_px": [
+          584.9583333333334,
+          895.6989247311828
+        ]
+      }
+    },
+    {
+      "id": 76,
+      "caixa": [
+        165,
+        368,
+        8,
+        3
+      ],
+      "area_candidata_px": 20,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1236,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              3521.88,
+              2937.86,
+              171.32,
+              239.14
+            ],
+            "bbox_reduzida_xyxy": [
+              160.71489992164683,
+              364.9602352941176,
+              173.79699408789799,
+              374.3324470588235
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3482,
+          2961,
+          3738,
+          3217
+        ],
+        "tamanho_candidata_original_px": [
+          146.23958333333334,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 77,
+      "caixa": [
+        234,
+        369,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1231,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              3472.18,
+              4198.2,
+              181.22,
+              130.33
+            ],
+            "bbox_reduzida_xyxy": [
+              229.66148586081627,
+              367.1375294117647,
+              236.7911560652468,
+              377.0513294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3473,
+          4159,
+          3729,
+          4415
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      }
+    },
+    {
+      "id": 78,
+      "caixa": [
+        196,
+        373,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3409,
+          3464,
+          3665,
+          3720
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 79,
+      "caixa": [
+        231,
+        373,
+        2,
+        4
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1231,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              3472.18,
+              4198.2,
+              181.22,
+              130.33
+            ],
+            "bbox_reduzida_xyxy": [
+              229.66148586081627,
+              367.1375294117647,
+              236.7911560652468,
+              377.0513294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3382,
+          4113,
+          3638,
+          4369
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          73.11827956989248
+        ]
+      }
+    },
+    {
+      "id": 80,
+      "caixa": [
+        569,
+        373,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3409,
+          10282,
+          3665,
+          10538
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 81,
+      "caixa": [
+        522,
+        382,
+        2,
+        2
+      ],
+      "area_candidata_px": 4,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1276,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              3311.87,
+              9510.87,
+              93.13,
+              86.73
+            ],
+            "bbox_reduzida_xyxy": [
+              520.2897756250445,
+              380.7264705882353,
+              525.0343186836669,
+              385.8212294117647
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3235,
+          9432,
+          3491,
+          9688
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          382,
+          521,
+          524
+        ],
+        [
+          383,
+          521,
+          524
+        ],
+        [
+          384,
+          524,
+          525
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          3136,
+          9280,
+          3648,
+          9792
+        ],
+        "caixa_local_xyxy": [
+          185.1612903225805,
+          238.1328125,
+          269.72043010752714,
+          322.69270833333394
+        ],
+        "ponto_local": [
+          227.44086021505336,
+          280.41276041666606
+        ],
+        "negativos": [
+          [
+            185.1612903225805,
+            238.1328125
+          ],
+          [
+            269.72043010752714,
+            238.1328125
+          ],
+          [
+            185.1612903225805,
+            322.69270833333394
+          ],
+          [
+            269.72043010752714,
+            322.69270833333394
+          ]
+        ]
+      },
+      "score_sam": 0.9235711097717285,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.0081939697265625
+    },
+    {
+      "id": 82,
+      "caixa": [
+        564,
+        392,
+        4,
+        4
+      ],
+      "area_candidata_px": 10,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1256,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              3103.8,
+              10247.8,
+              153.4,
+              176.4
+            ],
+            "bbox_reduzida_xyxy": [
+              560.603347816796,
+              388.81199999999995,
+              570.2532659021298,
+              397.2038823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          3034,
+          10218,
+          3290,
+          10474
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          73.11827956989248
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          390,
+          563,
+          564
+        ],
+        [
+          391,
+          564,
+          565
+        ],
+        [
+          392,
+          564,
+          567
+        ],
+        [
+          393,
+          564,
+          568
+        ],
+        [
+          394,
+          566,
+          568
+        ],
+        [
+          395,
+          564,
+          566
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          2880,
+          10048,
+          3392,
+          10560
+        ],
+        "caixa_local_xyxy": [
+          221.8064516129034,
+          237.890625,
+          342.92473118279577,
+          359.01041666666606
+        ],
+        "ponto_local": [
+          282.36559139784913,
+          298.45052083333394
+        ],
+        "negativos": [
+          [
+            221.8064516129034,
+            237.890625
+          ],
+          [
+            342.92473118279577,
+            237.890625
+          ],
+          [
+            221.8064516129034,
+            359.01041666666606
+          ],
+          [
+            342.92473118279577,
+            359.01041666666606
+          ]
+        ]
+      },
+      "score_sam": 0.9327724575996399,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.016765594482421875
+    },
+    {
+      "id": 83,
+      "caixa": [
+        412,
+        401,
+        6,
+        8
+      ],
+      "area_candidata_px": 22,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1223,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              2873.67,
+              7494.4,
+              186.73,
+              153.8
+            ],
+            "bbox_reduzida_xyxy": [
+              409.97928627395106,
+              399.57811764705883,
+              418.3928769855402,
+              409.79334705882354
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2833,
+          7458,
+          3089,
+          7714
+        ],
+        "tamanho_candidata_original_px": [
+          109.6796875,
+          146.23655913978496
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          402,
+          413,
+          416
+        ],
+        [
+          403,
+          412,
+          417
+        ],
+        [
+          404,
+          412,
+          416
+        ],
+        [
+          404,
+          417,
+          418
+        ],
+        [
+          405,
+          412,
+          418
+        ],
+        [
+          406,
+          412,
+          419
+        ],
+        [
+          407,
+          413,
+          418
+        ],
+        [
+          408,
+          416,
+          418
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          2752,
+          7360,
+          3264,
+          7872
+        ],
+        "caixa_local_xyxy": [
+          112.17204301075253,
+          147.33854166666697,
+          306.40860215053726,
+          305.01822916666697
+        ],
+        "ponto_local": [
+          209.2903225806449,
+          226.17838541666697
+        ],
+        "negativos": [
+          [
+            112.17204301075253,
+            147.33854166666697
+          ],
+          [
+            306.40860215053726,
+            147.33854166666697
+          ],
+          [
+            112.17204301075253,
+            305.01822916666697
+          ],
+          [
+            306.40860215053726,
+            305.01822916666697
+          ]
+        ]
+      },
+      "score_sam": 0.9469790458679199,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.04578399658203125
+    },
+    {
+      "id": 84,
+      "caixa": [
+        645,
+        402,
+        10,
+        7
+      ],
+      "area_candidata_px": 46,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1273,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              2875.1,
+              11778.33,
+              141.4,
+              225.97
+            ],
+            "bbox_reduzida_xyxy": [
+              644.3306104423392,
+              401.97970588235296,
+              656.6922430372532,
+              409.7151176470588
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2824,
+          11754,
+          3080,
+          12010
+        ],
+        "tamanho_candidata_original_px": [
+          182.79947916666666,
+          127.95698924731182
+        ]
+      }
+    },
+    {
+      "id": 85,
+      "caixa": [
+        743,
+        402,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2870,
+          13463,
+          3126,
+          13719
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          402,
+          743,
+          745
+        ],
+        [
+          403,
+          743,
+          745
+        ],
+        [
+          404,
+          743,
+          745
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          2752,
+          13376,
+          3264,
+          13888
+        ],
+        "caixa_local_xyxy": [
+          203.56989247311867,
+          182.00130208333394,
+          288.1290322580644,
+          248.28125
+        ],
+        "ponto_local": [
+          245.84946236559153,
+          215.14127604166606
+        ],
+        "negativos": [
+          [
+            203.56989247311867,
+            182.00130208333394
+          ],
+          [
+            288.1290322580644,
+            182.00130208333394
+          ],
+          [
+            203.56989247311867,
+            248.28125
+          ],
+          [
+            288.1290322580644,
+            248.28125
+          ]
+        ]
+      },
+      "score_sam": 0.9484286308288574,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.006809234619140625
+    },
+    {
+      "id": 86,
+      "caixa": [
+        485,
+        414,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1258,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              2631.2,
+              8524.87,
+              637.9,
+              520.23
+            ],
+            "bbox_reduzida_xyxy": [
+              466.3508910891089,
+              388.16099999999994,
+              494.80994372818583,
+              423.0578823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2660,
+          8747,
+          2916,
+          9003
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      }
+    },
+    {
+      "id": 87,
+      "caixa": [
+        475,
+        417,
+        1,
+        1
+      ],
+      "area_candidata_px": 1,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1258,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              2631.2,
+              8524.87,
+              637.9,
+              520.23
+            ],
+            "bbox_reduzida_xyxy": [
+              466.3508910891089,
+              388.16099999999994,
+              494.80994372818583,
+              423.0578823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2605,
+          8564,
+          2861,
+          8820
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          415,
+          475,
+          477
+        ],
+        [
+          416,
+          475,
+          477
+        ],
+        [
+          417,
+          475,
+          477
+        ],
+        [
+          418,
+          474,
+          478
+        ],
+        [
+          419,
+          474,
+          477
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          2496,
+          8384,
+          3008,
+          8896
+        ],
+        "caixa_local_xyxy": [
+          203.65591397849494,
+          274.97526041666606,
+          269.9354838709678,
+          341.25520833333394
+        ],
+        "ponto_local": [
+          236.79569892473137,
+          308.115234375
+        ],
+        "negativos": [
+          [
+            203.65591397849494,
+            274.97526041666606
+          ],
+          [
+            269.9354838709678,
+            274.97526041666606
+          ],
+          [
+            203.65591397849494,
+            341.25520833333394
+          ],
+          [
+            269.9354838709678,
+            341.25520833333394
+          ]
+        ]
+      },
+      "score_sam": 0.9039407968521118,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01714324951171875
+    },
+    {
+      "id": 88,
+      "caixa": [
+        486,
+        416,
+        1,
+        3
+      ],
+      "area_candidata_px": 3,
+      "decisao": "ambigua",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1258,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              2631.2,
+              8524.87,
+              637.9,
+              520.23
+            ],
+            "bbox_reduzida_xyxy": [
+              466.3508910891089,
+              388.16099999999994,
+              494.80994372818583,
+              423.0578823529412
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2605,
+          8765,
+          2861,
+          9021
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 89,
+      "caixa": [
+        296,
+        429,
+        3,
+        3
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1247,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              2450.97,
+              5388.27,
+              88.33,
+              91.03
+            ],
+            "bbox_reduzida_xyxy": [
+              294.763968943657,
+              428.08535294117655,
+              299.74374243179716,
+              432.91752352941177
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2367,
+          5310,
+          2623,
+          5566
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 90,
+      "caixa": [
+        319,
+        431,
+        4,
+        3
+      ],
+      "area_candidata_px": 7,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1246,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              2418.42,
+              5820.2,
+              77.08,
+              92.08
+            ],
+            "bbox_reduzida_xyxy": [
+              318.3925920649619,
+              430.4814705882353,
+              323.42980554170526,
+              434.6982
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2331,
+          5740,
+          2587,
+          5996
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 91,
+      "caixa": [
+        221,
+        432,
+        4,
+        3
+      ],
+      "area_candidata_px": 10,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1230,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              2381.95,
+              3997.38,
+              103.05,
+              122.62
+            ],
+            "bbox_reduzida_xyxy": [
+              218.67567775482584,
+              431.0558823529412,
+              225.3835743286559,
+              436.6933235294118
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2312,
+          3948,
+          2568,
+          4204
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      }
+    },
+    {
+      "id": 92,
+      "caixa": [
+        448,
+        440,
+        3,
+        2
+      ],
+      "area_candidata_px": 5,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1242,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              2267.8,
+              8161.81,
+              67.61,
+              112.29
+            ],
+            "bbox_reduzida_xyxy": [
+              446.48978417266187,
+              439.2393352941176,
+              452.6325806681388,
+              442.938
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          2175,
+          8089,
+          2431,
+          8345
+        ],
+        "tamanho_candidata_original_px": [
+          54.83984375,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          440,
+          449,
+          450
+        ],
+        [
+          441,
+          447,
+          451
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          1984,
+          8000,
+          2496,
+          8512
+        ],
+        "caixa_local_xyxy": [
+          276.94623655913983,
+          165.41666666666697,
+          361.50537634408647,
+          268.25651041666606
+        ],
+        "ponto_local": [
+          319.2258064516127,
+          216.83658854166606
+        ],
+        "negativos": [
+          [
+            276.94623655913983,
+            165.41666666666697
+          ],
+          [
+            361.50537634408647,
+            165.41666666666697
+          ],
+          [
+            276.94623655913983,
+            268.25651041666606
+          ],
+          [
+            361.50537634408647,
+            268.25651041666606
+          ]
+        ]
+      },
+      "score_sam": 0.9131491780281067,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.00864410400390625
+    },
+    {
+      "id": 93,
+      "caixa": [
+        217,
+        463,
+        31,
+        11
+      ],
+      "area_candidata_px": 244,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1229,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              1687.04,
+              3941.57,
+              217.46,
+              664.03
+            ],
+            "bbox_reduzida_xyxy": [
+              215.62260559868938,
+              462.81264705882353,
+              251.94820143884894,
+              474.7089882352941
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          1673,
+          4122,
+          1929,
+          4378
+        ],
+        "tamanho_candidata_original_px": [
+          566.6783854166666,
+          201.0752688172043
+        ]
+      }
+    },
+    {
+      "id": 94,
+      "caixa": [
+        292,
+        463,
+        4,
+        3
+      ],
+      "area_candidata_px": 8,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1248,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              1822.49,
+              5272.7,
+              103.51,
+              185.76
+            ],
+            "bbox_reduzida_xyxy": [
+              288.4417408647339,
+              461.6364705882353,
+              298.6036954199017,
+              467.29907647058826
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          1746,
+          5246,
+          2002,
+          5502
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          463,
+          290,
+          294
+        ],
+        [
+          464,
+          290,
+          296
+        ],
+        [
+          465,
+          290,
+          296
+        ],
+        [
+          466,
+          290,
+          291
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          1600,
+          5056,
+          2112,
+          5568
+        ],
+        "caixa_local_xyxy": [
+          222.23655913978473,
+          257.74479166666697,
+          325.07526881720514,
+          378.86458333333303
+        ],
+        "ponto_local": [
+          273.65591397849494,
+          318.3046875
+        ],
+        "negativos": [
+          [
+            222.23655913978473,
+            257.74479166666697
+          ],
+          [
+            325.07526881720514,
+            257.74479166666697
+          ],
+          [
+            222.23655913978473,
+            378.86458333333303
+          ],
+          [
+            325.07526881720514,
+            378.86458333333303
+          ]
+        ]
+      },
+      "score_sam": 0.9304942488670349,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01882171630859375
+    },
+    {
+      "id": 95,
+      "caixa": [
+        290,
+        465,
+        1,
+        2
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1248,
+            "taxon": "Hymenoptera",
+            "bbox_original_xywh": [
+              1822.49,
+              5272.7,
+              103.51,
+              185.76
+            ],
+            "bbox_reduzida_xyxy": [
+              288.4417408647339,
+              461.6364705882353,
+              298.6036954199017,
+              467.29907647058826
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          1718,
+          5182,
+          1974,
+          5438
+        ],
+        "tamanho_candidata_original_px": [
+          18.279947916666668,
+          36.55913978494624
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          463,
+          290,
+          291
+        ],
+        [
+          464,
+          289,
+          292
+        ],
+        [
+          465,
+          289,
+          292
+        ],
+        [
+          466,
+          289,
+          291
+        ],
+        [
+          467,
+          290,
+          291
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          1600,
+          5056,
+          2112,
+          5568
+        ],
+        "caixa_local_xyxy": [
+          203.95698924731187,
+          221.18489583333303,
+          288.5161290322576,
+          287.46484375
+        ],
+        "ponto_local": [
+          246.23655913978473,
+          254.32486979166697
+        ],
+        "negativos": [
+          [
+            203.95698924731187,
+            221.18489583333303
+          ],
+          [
+            288.5161290322576,
+            221.18489583333303
+          ],
+          [
+            203.95698924731187,
+            287.46484375
+          ],
+          [
+            288.5161290322576,
+            287.46484375
+          ]
+        ]
+      },
+      "score_sam": 0.8835749626159668,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.01287078857421875
+    },
+    {
+      "id": 96,
+      "caixa": [
+        490,
+        468,
+        4,
+        3
+      ],
+      "area_candidata_px": 9,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1257,
+            "taxon": "Diptera",
+            "bbox_original_xywh": [
+              1715.53,
+              8871.3,
+              108.77,
+              199.76
+            ],
+            "bbox_reduzida_xyxy": [
+              485.3022579955837,
+              467.20005882352945,
+              496.23007906546053,
+              473.1504176470588
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          1654,
+          8866,
+          1910,
+          9122
+        ],
+        "tamanho_candidata_original_px": [
+          73.11979166666667,
+          54.83870967741935
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          467,
+          491,
+          493
+        ],
+        [
+          468,
+          491,
+          494
+        ],
+        [
+          469,
+          490,
+          494
+        ],
+        [
+          470,
+          490,
+          495
+        ],
+        [
+          471,
+          489,
+          490
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          1472,
+          8768,
+          1984,
+          9280
+        ],
+        "caixa_local_xyxy": [
+          258.8387096774186,
+          165.17447916666606,
+          361.677419354839,
+          286.29427083333394
+        ],
+        "ponto_local": [
+          310.2580645161288,
+          225.734375
+        ],
+        "negativos": [
+          [
+            258.8387096774186,
+            165.17447916666606
+          ],
+          [
+            361.677419354839,
+            165.17447916666606
+          ],
+          [
+            258.8387096774186,
+            286.29427083333394
+          ],
+          [
+            361.677419354839,
+            286.29427083333394
+          ]
+        ]
+      },
+      "score_sam": 0.9176115989685059,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.022434234619140625
+    },
+    {
+      "id": 97,
+      "caixa": [
+        537,
+        471,
+        2,
+        1
+      ],
+      "area_candidata_px": 2,
+      "decisao": "inseto",
+      "origem_decisao": "revisao_visual_no_original_256px_com_contexto_e_evidencia_coco",
+      "revisao_visual": "aprovada",
+      "evidencia": {
+        "coco": [
+          {
+            "anotacao_id": 1272,
+            "taxon": "Psocoptera",
+            "bbox_original_xywh": [
+              1702.37,
+              9791.61,
+              60.93,
+              73.23
+            ],
+            "bbox_reduzida_xyxy": [
+              535.6475874350025,
+              470.5371176470589,
+              539.6536163544412,
+              473.8703470588236
+            ],
+            "centro_na_caixa": true,
+            "tipo": "proposta_baseada_em_anotacao_humana"
+          }
+        ],
+        "coco_sha256": "ee83da175a7437782547f1ffeaf03ec534f4ba24ea5a3a0882a71663ba305e61",
+        "recorte_original_xyxy": [
+          1618,
+          9707,
+          1874,
+          9963
+        ],
+        "tamanho_candidata_original_px": [
+          36.559895833333336,
+          18.27956989247312
+        ]
+      },
+      "mascara_sam_rle": [
+        [
+          471,
+          536,
+          539
+        ],
+        [
+          472,
+          535,
+          540
+        ],
+        [
+          473,
+          538,
+          539
+        ]
+      ],
+      "prompt_sam": {
+        "escala": "original",
+        "recorte_original_xyxy": [
+          1472,
+          9536,
+          1984,
+          10048
+        ],
+        "caixa_local_xyxy": [
+          240.55913978494573,
+          256.33203125,
+          306.8387096774186,
+          340.89192708333394
+        ],
+        "ponto_local": [
+          273.69892473118307,
+          298.61197916666606
+        ],
+        "negativos": [
+          [
+            240.55913978494573,
+            256.33203125
+          ],
+          [
+            306.8387096774186,
+            256.33203125
+          ],
+          [
+            240.55913978494573,
+            340.89192708333394
+          ],
+          [
+            306.8387096774186,
+            340.89192708333394
+          ]
+        ]
+      },
+      "score_sam": 0.9359723925590515,
+      "revisao_silhueta": "pendente",
+      "fracao_recorte_sam": 0.010715484619140625
+    }
+  ],
+  "checkpoint_sha256": "ec2df62732614e57411cdcf32a23ffdf28910380d03139ee0f4fcbe91eb8c912",
+  "regioes_arquivadas_como_estrutura": []
+}
