@@ -95,19 +95,30 @@ def criar_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--mascaras-bases",
         type=Path,
-        help="Máscaras complementares revisadas das seis bases; preserva as originais.",
+        help="Diretório de máscaras v5, com configuracao.json no pai.",
+    )
+    parser.add_argument(
+        "--recortes-reais",
+        type=Path,
+        help="Biblioteca COCO/SAM de recortes com catálogo de proveniência.",
     )
     parser.add_argument(
         "--intensidade-aglomeracao",
         type=float,
-        default=0.70,
-        help="Fração da área nova concentrada em grupos (padrão: 0.70).",
+        default=0.0,
+        help="Fração da área nova concentrada em grupos (padrão: 0.0, uniforme).",
+    )
+    parser.add_argument(
+        "--fator-escala-recorte",
+        type=float,
+        default=1.0,
+        help="Fator de escala para calibrar colagens reais (padrão: 1.0).",
     )
     parser.add_argument(
         "--limite-reuso-recorte",
         type=int,
         default=None,
-        help="Máximo de vezes por recorte e amostra (real: 12; legado: 2).",
+        help="Máximo de vezes por recorte e amostra (padrão: 2).",
     )
     parser.add_argument(
         "--proporcao-placas-avaliacao",
@@ -172,16 +183,42 @@ def main(argumentos: list[str] | None = None) -> int:
     opcoes = parser.parse_args(argumentos)
     try:
         dados_externos = diretorio_dados_configurado()
-        if not opcoes.saida.resolve().is_relative_to(dados_externos):
-            raise ValueError("A saída precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR.")
+        raiz_repo = Path(__file__).resolve().parents[2]
+
+        def dentro_dos_dados(caminho: Path | None) -> bool:
+            if caminho is None:
+                return True
+            caminho_resolvido = caminho.resolve()
+            return caminho_resolvido.is_relative_to(dados_externos) or (
+                caminho_resolvido.is_relative_to(raiz_repo / "dataset")
+            )
+
+        if not dentro_dos_dados(opcoes.saida):
+            raise ValueError(
+                "A saída precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR ou dataset/."
+            )
         if opcoes.sprites is not None:
-            if not opcoes.sprites.resolve().is_relative_to(dados_externos):
+            if not dentro_dos_dados(opcoes.sprites):
                 raise ValueError(
                     "O banco de sprites precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR."
                 )
             sprites = load_sprite_catalog(opcoes.sprites)
         else:
+            if not dentro_dos_dados(opcoes.placas_reais):
+                raise ValueError(
+                    "As placas reais precisam ficar nos dados de treino ou em dataset/."
+                )
             sprites = ()
+        if not dentro_dos_dados(opcoes.mascaras_bases) or not dentro_dos_dados(
+            opcoes.recortes_reais
+        ):
+            raise ValueError(
+                "Máscaras e recortes precisam ficar nos dados de treino ou em dataset/."
+            )
+        if opcoes.mascaras_bases is not None and opcoes.recortes_reais is None:
+            raise ValueError(
+                "Máscaras v5 exigem a biblioteca de recortes COCO/SAM correspondente."
+            )
         configuracao = ConfiguracaoDataset(
             diretorio_saida=opcoes.saida,
             semente=opcoes.semente,
@@ -197,11 +234,13 @@ def main(argumentos: list[str] | None = None) -> int:
             k_escala_max=opcoes.k_escala_max,
             diretorio_placas_reais=opcoes.placas_reais,
             diretorio_mascaras_bases=opcoes.mascaras_bases,
+            diretorio_recortes_reais=opcoes.recortes_reais,
             proporcao_bases_reais=opcoes.proporcao_bases_reais,
             intensidade_aglomeracao=opcoes.intensidade_aglomeracao,
+            fator_escala_recorte=opcoes.fator_escala_recorte,
             limite_reuso_recorte=opcoes.limite_reuso_recorte
             if opcoes.limite_reuso_recorte is not None
-            else (12 if opcoes.placas_reais else 2),
+            else 2,
             proporcao_placas_avaliacao=opcoes.proporcao_placas_avaliacao,
         )
         inicio = time.perf_counter()

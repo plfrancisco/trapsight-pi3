@@ -114,9 +114,9 @@ def converter_catalogo(
         identificador = _campo_texto(registro, "id", "manifesto da Amazônia")
         classe_ums = CLASSE_UMS_EQUIVALENTE.get(classe)
         distribuicao = tamanhos_por_classe.get(classe_ums or "", tamanhos_ums)
-        tamanho_mm = random.Random(_semente_identificador(semente, identificador)).choice(
-            distribuicao
-        )
+        tamanho_mm = random.Random(
+            _semente_identificador(semente, identificador)
+        ).choice(distribuicao)
         grupo = CLASSE_AMAZONIA_GRUPO.get(classe)
         if grupo is None:
             grupo = _grupo_ums(classe_ums or "Rara", tamanho_mm)
@@ -234,7 +234,9 @@ def _ler_procedencia_ums(caminho: Path) -> tuple[str, str, str]:
     try:
         meta = json.loads(caminho.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as erro:
-        raise ValueError(f"Não foi possível ler a procedência UMS em {caminho}.") from erro
+        raise ValueError(
+            f"Não foi possível ler a procedência UMS em {caminho}."
+        ) from erro
     licenca = meta.get("license", {}).get("name") if isinstance(meta, dict) else None
     doi = meta.get("doi") if isinstance(meta, dict) else None
     autores = meta.get("authors", []) if isinstance(meta, dict) else []

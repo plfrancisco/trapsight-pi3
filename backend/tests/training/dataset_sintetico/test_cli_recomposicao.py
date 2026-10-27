@@ -1,4 +1,4 @@
-"""Os tetos do modo real não alteram a configuração legada."""
+"""Confere os tetos de composição e reutilização por modo."""
 
 import pytest
 
@@ -6,7 +6,7 @@ from training import gerar_dataset
 
 
 @pytest.mark.parametrize(
-    "origem,limite,reuso", [("--placas-reais", 12000, 12), ("--sprites", 3000, 2)]
+    "origem,limite,reuso", [("--placas-reais", 12000, 2), ("--sprites", 3000, 2)]
 )
 def test_cli_escolhe_tetos_por_modalidade(tmp_path, monkeypatch, origem, limite, reuso):
     capturadas = []

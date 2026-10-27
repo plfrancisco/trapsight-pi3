@@ -7,12 +7,15 @@ import random
 from pathlib import Path
 
 import numpy as np
+import pytest
 from PIL import Image, ImageDraw
 
+import training.dataset_sintetico as modulo_dataset
 from training.dataset_sintetico import (
     NOMES_BASES_REAIS,
     BasePlacaReal,
     ConfiguracaoDataset,
+    _carregar_recortes_coco,
     _compor_recortes_reais,
     _criar_base_sintetica,
     _desenhar_distratores,
@@ -211,6 +214,53 @@ def test_recomposicao_real_e_deterministica(tmp_path: Path) -> None:
     assert arquivos_primeiros == arquivos_segundos
 
 
+def test_recomposicao_real_retorna_do_checkpoint_sem_mudar_resultado(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
+    interrompida = tmp_path / "retomar"
+    referencia = tmp_path / "referencia"
+    configuracao = _configurar_saida(fonte, interrompida, quantidade=6)
+    compor_original = modulo_dataset._compor_recortes_reais
+    chamadas = 0
+
+    def interromper_segunda_amostra(*args, **kwargs):
+        nonlocal chamadas
+        chamadas += 1
+        if chamadas == 2:
+            raise RuntimeError("interrupção simulada")
+        return compor_original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        modulo_dataset, "_compor_recortes_reais", interromper_segunda_amostra
+    )
+    with pytest.raises(RuntimeError, match="interrupção simulada"):
+        generate_dataset(configuracao)
+    assert (
+        json.loads((interrompida / ".progresso.json").read_text())[
+            "amostras_concluidas"
+        ]
+        == 1
+    )
+
+    monkeypatch.setattr(modulo_dataset, "_compor_recortes_reais", compor_original)
+    retomadas = generate_dataset(configuracao)
+    completas = generate_dataset(_configurar_saida(fonte, referencia, quantidade=6))
+
+    arquivos_retomados = {
+        caminho.relative_to(interrompida): caminho.read_bytes()
+        for caminho in interrompida.rglob("*")
+        if caminho.is_file()
+    }
+    arquivos_completos = {
+        caminho.relative_to(referencia): caminho.read_bytes()
+        for caminho in referencia.rglob("*")
+        if caminho.is_file()
+    }
+    assert arquivos_retomados == arquivos_completos
+    assert retomadas == completas
+
+
 def test_seis_bases_particionadas_em_quatro_um_um_antes_da_composicao(tmp_path):
     fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
     composicao, _ = _dividir_placas_reais(fonte, 19, 0.25)
@@ -218,6 +268,73 @@ def test_seis_bases_particionadas_em_quatro_um_um_antes_da_composicao(tmp_path):
     assert [len(g) for g in grupos.values()] == [4, 1, 1]
     assert set().union(*map(set, grupos.values())) == set(composicao)
     assert sum(map(len, grupos.values())) == len(composicao)
+
+
+def test_particao_reduzida_distribui_quatro_bases_elegiveis_sem_cruzamento(tmp_path):
+    fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
+    composicao, _ = _dividir_placas_reais(fonte, 19, 0.25)
+    elegiveis = {Path(nome).stem for nome in NOMES_BASES_REAIS[:4]}
+
+    grupos = _particionar_fontes(composicao, 19, elegiveis)
+
+    assert [sum(p.stem in elegiveis for p in grupos[n]) for n in grupos] == [2, 1, 1]
+    assert set().union(*map(set, grupos.values())) == set(composicao)
+    assert all(
+        set(grupos[a]).isdisjoint(grupos[b])
+        for a, b in (
+            ("treino", "validacao"),
+            ("treino", "teste"),
+            ("validacao", "teste"),
+        )
+    )
+
+
+def test_biblioteca_coco_carrega_so_recortes_aprovados_e_preserva_proveniencia(
+    tmp_path: Path,
+):
+    biblioteca = tmp_path / "recortes"
+    (biblioteca / "catalogos").mkdir(parents=True)
+    (biblioteca / "placa_a").mkdir()
+    imagem = Image.new("RGBA", (10, 8), (42, 30, 20, 0))
+    ImageDraw.Draw(imagem).rectangle((2, 2, 4, 5), fill=(42, 30, 20, 255))
+    imagem.save(biblioteca / "placa_a" / "00000001.png")
+    (biblioteca / "catalogos" / "placa_a.jsonl").write_text(
+        "\n".join(
+            (
+                json.dumps(
+                    {
+                        "placa_origem": "placa_a",
+                        "anotacao_coco_id": 1,
+                        "taxon": "Diptera",
+                        "aprovada": True,
+                        "arquivo": "placa_a/00000001.png",
+                        "area_projetada_px": 12,
+                    }
+                ),
+                json.dumps(
+                    {
+                        "placa_origem": "placa_a",
+                        "anotacao_coco_id": 2,
+                        "taxon": "Coleoptera",
+                        "aprovada": False,
+                        "arquivo": None,
+                        "area_projetada_px": 0,
+                    }
+                ),
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recortes, encontrados, aceitos = _carregar_recortes_coco(biblioteca, {"placa_a"})
+
+    assert encontrados == {"placa_a": 2}
+    assert aceitos == {"placa_a": 1}
+    assert len(recortes) == 1
+    assert recortes[0].identificador == "placa_a__coco1"
+    assert recortes[0].taxon == "Diptera"
+    assert recortes[0].area_px == 12
 
 
 def test_distratores_modificam_a_imagem_e_permanecem_em_placa_limpa():
