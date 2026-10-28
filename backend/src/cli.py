@@ -11,6 +11,7 @@ import getpass
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timezone
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -18,7 +19,11 @@ from src.config.database import create_database_engine, create_session_factory
 from src.config.settings import Settings
 from src.entities import Usuario
 from src.entities.papel import PapelUsuario
-from src.repositories import EmailDuplicado, UsuarioRepository
+from src.repositories import (
+    AuditoriaCLIRepository,
+    EmailDuplicado,
+    UsuarioRepository,
+)
 from src.repositories.exceptions import GerenteJaExiste
 from src.services.auditoria import configurar_auditoria, registrar_evento
 from src.services.autenticacao import normalizar_email
@@ -37,6 +42,147 @@ _MOTIVOS = {
 
 class ErroDeComando(Exception):
     """Falha esperada de um comando; a mensagem é mostrada ao operador."""
+
+
+_EVENTOS_AUDITAVEIS = frozenset(
+    {
+        "criar-usuario",
+        "definir-papel",
+        "redefinir-senha",
+        "ativar-usuario",
+        "desativar-usuario",
+        "desbloquear-usuario",
+    }
+)
+
+
+def _executor_atual() -> str:
+    """Identifica o usuário do sistema operacional sem depender de um terminal."""
+    try:
+        return getpass.getuser()[:255] or "desconhecido"
+    except OSError:
+        return "desconhecido"
+
+
+def _conta_alvo(session: Session, args: argparse.Namespace) -> UUID | None:
+    """Obtém o UUID da conta sem persistir o endereço digitado na CLI."""
+    email = getattr(args, "email", None)
+    if email is None:
+        return None
+    usuario = UsuarioRepository(session).get_by_email(normalizar_email(email))
+    return usuario.id if usuario is not None else None
+
+
+def _detalhe_sucesso(args: argparse.Namespace) -> str:
+    """Retorna detalhes curtos e limitados a atributos não sensíveis."""
+    if args.comando == "criar-usuario":
+        return f"conta criada; papel={args.papel.value}"
+    if args.comando == "definir-papel":
+        return f"papel definido; papel={args.papel.value}"
+    if args.comando == "redefinir-senha":
+        return "credencial redefinida; sessões encerradas"
+    if args.comando == "ativar-usuario":
+        return "conta ativada"
+    if args.comando == "desativar-usuario":
+        return "conta desativada; sessões encerradas"
+    return "bloqueio removido"
+
+
+def _registrar_auditoria_cli(
+    session: Session,
+    args: argparse.Namespace,
+    *,
+    resultado: str,
+    detalhe: str,
+    conta_alvo: UUID | None,
+) -> None:
+    AuditoriaCLIRepository(session).registrar(
+        ocorrido_em=datetime.now(timezone.utc),
+        evento=args.comando,
+        executor=_executor_atual(),
+        conta_alvo=conta_alvo,
+        resultado=resultado,
+        detalhe=detalhe,
+    )
+
+
+def _registrar_evento_stdout(
+    args: argparse.Namespace,
+    *,
+    resultado: str,
+    detalhe: str,
+    conta_alvo: UUID | None,
+) -> None:
+    """Mantém a linha estruturada da CLI depois de persistir o registro."""
+    evento = f"cli_{args.comando.replace('-', '_')}_{resultado}"
+    registrar_evento(evento, usuario_id=conta_alvo, motivo=detalhe)
+
+
+def _executar_com_auditoria(
+    args: argparse.Namespace,
+    session: Session,
+    settings: Settings,
+    senhas: ServicoDeSenhas,
+    agora: datetime,
+) -> list[str]:
+    """Executa a ação e persiste sucesso ou falha antes de retornar."""
+    try:
+        saida = _executar(args, session, settings, senhas, agora)
+        # Em criação, o UUID só existe depois de inserir a conta.
+        alvo = _conta_alvo(session, args)
+        _registrar_auditoria_cli(
+            session,
+            args,
+            resultado="sucesso",
+            detalhe=_detalhe_sucesso(args),
+            conta_alvo=alvo,
+        )
+        session.commit()
+    except Exception as erro:
+        session.rollback()
+        try:
+            alvo = _conta_alvo(session, args)
+            _registrar_auditoria_cli(
+                session,
+                args,
+                resultado="falha",
+                detalhe=(
+                    "comando rejeitado"
+                    if isinstance(erro, ErroDeComando)
+                    else "falha durante a execução do comando"
+                ),
+                conta_alvo=alvo,
+            )
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise ErroDeComando(
+                "Não foi possível registrar a auditoria no banco; comando cancelado."
+            ) from None
+
+        _registrar_evento_stdout(
+            args,
+            resultado="falha",
+            detalhe=(
+                "comando rejeitado"
+                if isinstance(erro, ErroDeComando)
+                else "falha durante a execução do comando"
+            ),
+            conta_alvo=alvo,
+        )
+        if isinstance(erro, ErroDeComando):
+            raise
+        raise ErroDeComando(
+            f"Falha inesperada durante o comando ({type(erro).__name__})."
+        ) from None
+
+    _registrar_evento_stdout(
+        args,
+        resultado="sucesso",
+        detalhe=_detalhe_sucesso(args),
+        conta_alvo=alvo,
+    )
+    return saida
 
 
 def _buscar(repositorio: UsuarioRepository, email: str) -> Usuario:
@@ -91,7 +237,6 @@ def criar_usuario(
         raise ErroDeComando(
             "Já existe um gerente. Rebaixe a conta atual antes."
         ) from None
-    registrar_evento("conta_criada", usuario_id=usuario.id, criado_por_id=None)
     return usuario
 
 
@@ -116,7 +261,6 @@ def definir_papel(
             "Já existe um gerente. Rebaixe a conta atual antes."
         ) from None
     ServicoDeSessoes(session, settings).revogar_todas(usuario, agora=agora)
-    registrar_evento("papel_alterado", usuario_id=usuario.id, motivo=papel.value)
     return usuario
 
 
@@ -154,7 +298,6 @@ def redefinir_senha(
     repositorio.definir_senha_hash(usuario, senhas.gerar_hash(senha), agora=agora)
     repositorio.definir_bloqueio(usuario, None)
     ServicoDeSessoes(session, settings).revogar_todas(usuario, agora=agora)
-    registrar_evento("senha_redefinida", usuario_id=usuario.id)
     return usuario
 
 
@@ -186,9 +329,6 @@ def alterar_ativo(
     repositorio.definir_ativo(usuario, ativo=ativo)
     if not ativo:
         ServicoDeSessoes(session, settings).revogar_todas(usuario, agora=agora)
-    registrar_evento(
-        "conta_ativada" if ativo else "conta_desativada", usuario_id=usuario.id
-    )
     return usuario
 
 
@@ -208,7 +348,6 @@ def desbloquear(session: Session, *, email: str) -> Usuario:
     repositorio = UsuarioRepository(session)
     usuario = _buscar(repositorio, email)
     repositorio.definir_bloqueio(usuario, None)
-    registrar_evento("conta_desbloqueada", usuario_id=usuario.id)
     return usuario
 
 
@@ -294,11 +433,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         with create_session_factory(engine)() as session:
             try:
-                saida = _executar(args, session, settings, senhas, agora)
-                session.commit()
+                if args.comando in _EVENTOS_AUDITAVEIS:
+                    saida = _executar_com_auditoria(
+                        args, session, settings, senhas, agora
+                    )
+                else:
+                    saida = _executar(args, session, settings, senhas, agora)
+                    session.commit()
             except ErroDeComando as erro:
                 session.rollback()
                 print(f"Erro: {erro}", file=sys.stderr)
+                return 1
+            except Exception:
+                session.rollback()
+                print("Erro: Falha ao acessar o banco de dados.", file=sys.stderr)
                 return 1
     finally:
         engine.dispose()

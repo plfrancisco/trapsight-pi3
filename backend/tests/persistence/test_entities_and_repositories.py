@@ -255,6 +255,7 @@ def test_entity_metadata_matches_migrated_schema(session: Session) -> None:
         "sessao",
         "tentativa_login",
         "modelo_armadilha",
+        "auditoria_cli",
     }
     assert {constraint.name for constraint in Armadilha.__table__.constraints} == {
         "pk_armadilha",

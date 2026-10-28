@@ -2,6 +2,7 @@
 
 from src.repositories.analise_repository import AnaliseRepository
 from src.repositories.armadilha_repository import ArmadilhaRepository
+from src.repositories.auditoria_cli_repository import AuditoriaCLIRepository
 from src.repositories.exceptions import (
     DataTrocaInvalida,
     EmailDuplicado,
@@ -18,6 +19,7 @@ from src.repositories.usuario_repository import UsuarioRepository
 __all__ = [
     "AnaliseRepository",
     "ArmadilhaRepository",
+    "AuditoriaCLIRepository",
     "DataTrocaInvalida",
     "EmailDuplicado",
     "ErroDeDominio",

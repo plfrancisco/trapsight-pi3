@@ -241,6 +241,8 @@ def test_despacho_cli_concede_papel_e_revoga_sessoes(
 
 def test_main_configura_auditoria_cli_no_stdout(settings, monkeypatch, capfd) -> None:
     """A entrada da CLI configura auditoria antes de executar o comando."""
+    from src.services.auditoria import registrar_evento
+
     monkeypatch.setattr(cli, "Settings", lambda: settings)
     engine = MagicMock()
     monkeypatch.setattr(cli, "create_database_engine", lambda _url: engine)
@@ -251,7 +253,7 @@ def test_main_configura_auditoria_cli_no_stdout(settings, monkeypatch, capfd) ->
     )
 
     def executar(*_args):
-        cli.registrar_evento("papel_alterado", usuario_id=uuid4(), motivo="gerente")
+        registrar_evento("papel_alterado", usuario_id=uuid4(), motivo="gerente")
         return []
 
     monkeypatch.setattr(cli, "_executar", executar)

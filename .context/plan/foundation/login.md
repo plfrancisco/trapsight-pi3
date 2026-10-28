@@ -577,11 +577,16 @@ e acessos negados. Identificar o usuário pelo `id`; para e-mail inexistente,
 registrar apenas um hash curto, nunca o e-mail digitado, para não gravar
 senhas digitadas no campo errado. Os logs são revisados quando houver
 suspeita de ataque (OWASP: monitorar falhas de autenticação).
-Na CLI, o destino imediato é o stdout do processo do administrador, com o
-mesmo formato estruturado e horário UTC. Esse stdout não é armazenamento
-durável quando a CLI roda em `docker exec`; persistir os eventos da CLI em uma
-tabela de auditoria ou coletor central continua pendente para uma implantação
-operacional.
+Na CLI, cada tentativa de `criar-usuario`, `definir-papel`, `redefinir-senha`,
+`ativar-usuario`, `desativar-usuario` e `desbloquear-usuario` é gravada
+na tabela `auditoria_cli`, em UTC, com executor do sistema operacional, UUID da
+conta alvo quando identificável, resultado e detalhe curto sem credenciais. A
+CLI também emite o evento estruturado em stdout após a gravação no banco.
+Contas não identificadas ficam com `conta_alvo` nulo; o endereço digitado não é
+persistido. Sucesso e falha são registrados; se o banco não permitir registrar
+o evento, a CLI cancela o comando. O papel de execução pode inserir e consultar
+esses registros, mas não atualizá-los ou removê-los. Os eventos da API continuam
+somente no stdout estruturado; a persistência durável cobre apenas a CLI.
 
 ## 12.2 Riscos aceitos na v1
 
