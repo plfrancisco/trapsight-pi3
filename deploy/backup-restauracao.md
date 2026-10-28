@@ -103,6 +103,18 @@ chmod 600 ~/.trapsight-backup/chave_privada.pem
 No Git Bash, o `openssl` nativo do Windows não entende caminhos `/c/...`:
 envolva cada caminho em `$(cygpath -m ...)` ou rode o comando no WSL.
 
+No Windows o `chmod` acima não restringe nada — o NTFS ignora os bits de
+permissão do POSIX, e a chave fica legível por qualquer conta da máquina. A
+restrição real é feita por ACL:
+
+```bash
+icacls "$(cygpath -w ~/.trapsight-backup)" /inheritance:r \
+  /grant:r "$USERNAME:(OI)(CI)F"
+```
+
+Confira o resultado com `icacls "$(cygpath -w ~/.trapsight-backup)"`: só a sua
+conta deve aparecer.
+
 Commite **apenas** `security/cifra/backup-certificado.pem`. A chave privada não
 entra no repositório em nenhuma circunstância; se isso acontecer por engano, ela
 está comprometida e o par precisa ser trocado, com novo backup de tudo.
@@ -150,9 +162,16 @@ caso do Compose de produção), informe `BACKUP_DOCKER_REDE`.
 ## Como testar a restauração
 
 ```bash
-scripts/testar-restauracao.sh          # cifra CMS (padrão)
+scripts/testar-restauracao.sh              # cifra CMS, par descartável
 TESTE_CIFRA=gpg scripts/testar-restauracao.sh
+TESTE_PAR=projeto scripts/testar-restauracao.sh   # usa o par real do backup
 ```
+
+Por padrão o teste gera um par de chaves próprio, para rodar em qualquer máquina
+sem depender da chave privada do projeto. `TESTE_PAR=projeto` exercita o par
+real — é o que confirma que o certificado commitado e a chave em
+`~/.trapsight-backup` funcionam de ponta a ponta; vale rodar uma vez depois de
+gerar ou trocar o par.
 
 O teste sobe um PostgreSQL próprio (`pi-backup-restauracao-db`), aplica as
 migrações, cria um gerente, um operador e análises com imagem, gera o backup,

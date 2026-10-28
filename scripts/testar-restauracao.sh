@@ -14,6 +14,10 @@
 #
 # Variáveis de ambiente:
 #   TESTE_CIFRA   cms (padrão, convenção do repositório) ou gpg
+#   TESTE_PAR     descartavel (padrão) gera um par de chaves só para o teste;
+#                 projeto usa o par real do backup, para conferir os caminhos
+#                 que valem em produção. O padrão não exige a chave privada do
+#                 projeto, de modo que o teste rode em qualquer máquina.
 #
 # Uso (na raiz do repositório, com o Docker ativo):
 #   scripts/testar-restauracao.sh
@@ -30,6 +34,18 @@ CIFRA="${TESTE_CIFRA:-cms}"
 case "$CIFRA" in
   cms | gpg) ;;
   *) echo "TESTE_CIFRA aceita apenas cms ou gpg." >&2; exit 64 ;;
+esac
+
+PAR="${TESTE_PAR:-descartavel}"
+case "$PAR" in
+  descartavel) ;;
+  projeto)
+    if [ "$CIFRA" != cms ]; then
+      echo "TESTE_PAR=projeto só vale com TESTE_CIFRA=cms." >&2
+      exit 64
+    fi
+    ;;
+  *) echo "TESTE_PAR aceita apenas descartavel ou projeto." >&2; exit 64 ;;
 esac
 
 # Nomes próprios, distintos dos de qualquer outra pilha do projeto, para que o
@@ -51,6 +67,8 @@ SENHA_OPERADOR="$(gerar_senha)"
 TMP="$(mktemp -d)"
 chmod 700 "$TMP"
 COFRE="$TMP/cofre"
+# Sobrescrita pelo ramo de cifra escolhido; o ramo gpg não a usa.
+CHAVE_TESTE="$TMP/chave.pem"
 
 limpar() {
   docker rm -f "$BANCO" >/dev/null 2>&1 || true
@@ -203,7 +221,7 @@ ANTES_CONTAGENS="$(sql "$(consulta_contagens)")"
 ANTES_IMAGENS="$(sql "$CONSULTA_IMAGENS")"
 printf '%s\n' "$ANTES_CONTAGENS" | sed 's/^/    /'
 
-echo "==> 5/9 chave pública descartável e backup cifrado ($CIFRA)"
+echo "==> 5/9 par de chaves ($PAR) e backup cifrado ($CIFRA)"
 mkdir -p "$COFRE"
 if [ "$CIFRA" = gpg ]; then
   export GNUPGHOME="$TMP/gnupg"
@@ -217,16 +235,32 @@ if [ "$CIFRA" = gpg ]; then
     BACKUP_DOCKER_REDE="$REDE" BACKUP_GPG_DESTINATARIO="$DESTINATARIO" \
       bash "$RAIZ/scripts/backup-banco.sh"
   )"
+elif [ "$PAR" = projeto ]; then
+  CERTIFICADO_TESTE="$RAIZ/security/cifra/backup-certificado.pem"
+  CHAVE_TESTE="$HOME/.trapsight-backup/chave_privada.pem"
+  for arquivo in "$CERTIFICADO_TESTE" "$CHAVE_TESTE"; do
+    [ -f "$arquivo" ] || {
+      echo "TESTE_PAR=projeto exige o par real; ausente: $arquivo" >&2
+      exit 66
+    }
+  done
+  SAIDA_BACKUP="$(
+    BACKUP_DATABASE_URL="$URL_BANCO" BACKUP_DIR="$COFRE" \
+    BACKUP_DOCKER_REDE="$REDE" BACKUP_CERTIFICADO="$CERTIFICADO_TESTE" \
+      bash "$RAIZ/scripts/backup-banco.sh"
+  )"
 else
   # Par descartável no formato do repositório (openssl cms): a chave privada do
   # projeto não participa do teste.
+  CERTIFICADO_TESTE="$TMP/certificado.pem"
+  CHAVE_TESTE="$TMP/chave.pem"
   openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=teste-restauracao" \
-    -keyout "$(winpath "$TMP/chave.pem")" \
-    -out "$(winpath "$TMP/certificado.pem")" 2>/dev/null
-  chmod 600 "$TMP/chave.pem"
+    -keyout "$(winpath "$CHAVE_TESTE")" \
+    -out "$(winpath "$CERTIFICADO_TESTE")" 2>/dev/null
+  chmod 600 "$CHAVE_TESTE"
   SAIDA_BACKUP="$(
     BACKUP_DATABASE_URL="$URL_BANCO" BACKUP_DIR="$COFRE" \
-    BACKUP_DOCKER_REDE="$REDE" BACKUP_CERTIFICADO="$TMP/certificado.pem" \
+    BACKUP_DOCKER_REDE="$REDE" BACKUP_CERTIFICADO="$CERTIFICADO_TESTE" \
       bash "$RAIZ/scripts/backup-banco.sh"
   )"
 fi
@@ -236,7 +270,7 @@ ARQUIVO="$(printf '%s\n' "$SAIDA_BACKUP" | sed -n 's/^Backup cifrado: //p')"
 
 echo "==> 6/9 a restauração recusa banco com tabelas"
 if RESTORE_DATABASE_URL="$URL_BANCO" RESTORE_DOCKER_REDE="$REDE" \
-   RESTORE_CHAVE_PRIVADA="$TMP/chave.pem" \
+   RESTORE_CHAVE_PRIVADA="$CHAVE_TESTE" \
      bash "$RAIZ/scripts/restaurar-banco.sh" "$ARQUIVO" >/dev/null 2>&1; then
   echo "A restauração aceitou um banco já populado; o teste falha aqui." >&2
   exit 70
@@ -254,7 +288,7 @@ echo "    tabelas no banco recriado: $(sql "SELECT count(*) FROM pg_class c
 
 echo "==> 8/9 restaurando"
 RESTORE_DATABASE_URL="$URL_BANCO" RESTORE_DOCKER_REDE="$REDE" \
-RESTORE_CHAVE_PRIVADA="$TMP/chave.pem" \
+RESTORE_CHAVE_PRIVADA="$CHAVE_TESTE" \
   bash "$RAIZ/scripts/restaurar-banco.sh" "$ARQUIVO" | sed 's/^/    /'
 
 echo "==> 9/9 conferindo"
@@ -320,7 +354,7 @@ if [ "$falhou" -ne 0 ]; then
   exit 70
 fi
 LINHAS="$(printf '%s\n' "$DEPOIS_CONTAGENS" | awk -F'|' '{soma += $2} END {print soma}')"
-echo "TESTE DE RESTAURAÇÃO: OK (cifra $CIFRA)"
+echo "TESTE DE RESTAURAÇÃO: OK (cifra $CIFRA, par $PAR)"
 echo "Tabelas conferidas: $(printf '%s\n' "$DEPOIS_CONTAGENS" | grep -c '')"
 echo "Linhas conferidas: $LINHAS"
 echo "Análises com imagem conferidas por SHA-256: $(printf '%s\n' "$DEPOIS_IMAGENS" | grep -c '')"
