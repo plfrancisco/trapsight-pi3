@@ -106,28 +106,32 @@ tokens de IA.
       execução que impede o uso de qualquer recorte ou base de avaliação
 - [x] Amostra de 30 imagens gerada e conferida: 29 dos 30 alvos de cobertura
       atingidos, correlação entre idade e cobertura de 0,048
-- [ ] Completar o rótulo das 6 placas usadas como base: hoje 142 das 456
+- [x] Completar o rótulo das 6 placas usadas como base: hoje 142 das 456
       manchas escuras visíveis (31,1%) estão em `placa_coberta`; meta acima de
       90%, e o que continuar ambíguo vai para uma classe ignorada pela perda,
-      nunca para `placa_limpa`
-- [ ] Particionar treino, validação e teste **por placa base** e pela placa de
+      nunca para `placa_limpa`. Atendido pelo método v5 (SAM nos originais em
+      alta resolução): o ambíguo vai para a classe 255, em 0,13–0,98% da área
+      das bases elegíveis; a B117 (1,56%) foi excluída como base
+- [x] Particionar treino, validação e teste **por placa base** e pela placa de
       origem dos recortes, com guarda em tempo de execução; hoje a divisão é
       por índice da amostra e uma mesma base aparece em dois conjuntos
-- [ ] Calibrar a cobertura contra a referência das placas reais (300 colagens:
+- [x] Calibrar a cobertura contra a referência das placas reais (300 colagens:
       20,38% contra 14,38%; 900: 40,99% contra 34,65%; 2.200: 57,28%, com só
       2.036 posicionadas, contra 62,62%) e fazer o acúmulo variar de forma
       contínua, sem ilhas de borda nítida
-- [ ] Gerar o dataset definitivo e conferir os critérios da seção 9 da
+- [x] Gerar o dataset definitivo e conferir os critérios da seção 9 da
       especificação
 
 **Especificação:** `../plan/data/dataset_sintetico.md`, seções 5.4, 7 e 9.
 **Dependências:** ML02, ML02A e as máscaras das placas reais geradas por
 `backend/training/teste_real_ums.py`.
 
-**Estado (2026-10-26):** implementado em `backend/training/dataset_sintetico.py`
-e `backend/training/gerar_dataset.py`. Os dois primeiros itens em aberto
-bloqueiam o treino: o primeiro contamina o rótulo e o segundo, a métrica de
-validação.
+**Estado (2026-10-28):** concluída. Dataset v5 de 3.000 imagens em
+`dataset/recomposicao-real-v5-3000-20261027` (2.100/450/450), com os critérios
+P, L, D, C, T, K, R e I aceitos em `relatorio-validacao.json`. Limitações
+registradas em `../plan/data/dataset_sintetico.md`: 3/1/1 bases reais por
+conjunto, referência de espalhamento da faixa 4–8% com só 4 placas e rótulo
+incompleto nas 14 placas de avaliação.
 
 ## ML02C — Convergência do gerador em Linux
 

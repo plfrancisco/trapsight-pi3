@@ -203,10 +203,13 @@ projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
 **Dependências:** AUTH01 a AUTH06.
 **Concluída em:** 2026-10-26, confirmada pelo usuário.
 
-**Pendências conhecidas:** a persistência durável dos eventos de auditoria da CLI (hoje
-saem no stdout do processo, que não é durável em `docker exec`) e a execução da suíte
-de segurança em homologação (SEG03), que inclui os testes novos de gestão de contas. A
-tela Contas é coberta por testes automatizados, mas não foi exercitada num navegador.
+**Auditoria durável (2026-10-28):** os eventos da CLI são gravados na tabela
+`auditoria_cli` (migração 0012), com o papel de execução limitado a inserir e
+consultar.
+
+**Pendências conhecidas:** a execução da suíte de segurança em homologação (SEG03),
+que inclui os testes novos de gestão de contas. A tela Contas é coberta por testes
+automatizados, mas não foi exercitada num navegador.
 
 ## HOST01 — Build e imagens de produção
 
@@ -242,6 +245,13 @@ tela Contas é coberta por testes automatizados, mas não foi exercitada num nav
 EXT04).
 **Verifica:** `test_01_exposicao.py`, `test_02_transporte.py`,
 `test_03_vazamento_info.py`, `test_12_banco_e_hash.py` e o nmap.
+
+**Estado do backup (2026-10-28):** `scripts/backup-banco.sh`,
+`scripts/restaurar-banco.sh` e `scripts/testar-restauracao.sh` estão prontos e
+commitados, com cifra por chave pública própria e teste de restauração real
+(8 tabelas, 9 linhas, 3 imagens conferidas por SHA-256). O item fica aberto
+porque falta o agendamento periódico e a restauração contra o Supabase real; ver
+`../../deploy/backup-restauracao.md`.
 
 ## HOST03 — Ambientes e servidor
 
