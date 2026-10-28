@@ -12,18 +12,24 @@ from PIL import Image, ImageDraw
 
 import training.dataset_sintetico as modulo_dataset
 from training.dataset_sintetico import (
+    FAIXAS_ALVO_RECOMPOSICAO,
     NOMES_BASES_REAIS,
     BasePlacaReal,
     ConfiguracaoDataset,
+    RecorteInsetoReal,
+    _bases_compativeis_com_alvo,
     _carregar_recortes_coco,
     _compor_recortes_reais,
     _criar_base_sintetica,
+    _criar_divisoes_por_faixa,
     _desenhar_distratores,
     _dividir_placas_reais,
     _extrair_recortes_reais,
     _particionar_fontes,
+    classificar_faixa_cobertura_real,
     generate_dataset,
 )
+from training.medicoes_recomposicao import medir_espalhamento
 
 
 def _criar_conjunto_real(diretorio: Path) -> tuple[Path, list[str]]:
@@ -91,6 +97,56 @@ def test_divisao_separa_placas_e_forca_bases_reais_na_composicao(
     assert ids_composicao | ids_avaliacao == set(nomes)
 
 
+@pytest.mark.parametrize(
+    ("quantidades_faixas", "esperado"),
+    [((10, 10, 10), (21, 5, 4)), ((1000, 1000, 1000), (2100, 450, 450))],
+)
+def test_divisao_estratificada_respeita_70_15_15_global_e_por_faixa(
+    quantidades_faixas: tuple[int, int, int], esperado: tuple[int, int, int]
+) -> None:
+    faixas = [
+        indice_faixa
+        for indice_faixa, quantidade in enumerate(quantidades_faixas)
+        for _ in range(quantidade)
+    ]
+
+    divisao = _criar_divisoes_por_faixa(faixas, semente=20261021)
+
+    nomes = ("treino", "validacao", "teste")
+    assert tuple(divisao.count(nome) for nome in nomes) == esperado
+    for indice_faixa in range(3):
+        tamanho = quantidades_faixas[indice_faixa]
+        contagem = tuple(
+            sum(
+                divisao[indice] == nome
+                for indice, faixa in enumerate(faixas)
+                if faixa == indice_faixa
+            )
+            for nome in nomes
+        )
+        assert all(
+            abs(contagem[indice] - tamanho * proporcao) <= 1
+            for indice, proporcao in enumerate((0.70, 0.15, 0.15))
+        )
+    assert divisao == _criar_divisoes_por_faixa(faixas, semente=20261021)
+
+
+@pytest.mark.parametrize(
+    ("percentual", "esperada"),
+    [(9.999, "ok"), (10.0, "atencao"), (19.999, "atencao"), (20.0, "trocar")],
+)
+def test_faixa_e_classificada_pela_cobertura_real(percentual, esperada):
+    assert classificar_faixa_cobertura_real(percentual) == esperada
+
+
+def test_alvos_compensam_um_ponto_perdido_pela_tolerancia():
+    assert FAIXAS_ALVO_RECOMPOSICAO == (
+        ("ok", 1.0, 10.9),
+        ("atencao", 11.0, 20.9),
+        ("trocar", 21.0, 55.0),
+    )
+
+
 def test_extracao_preserva_alfa_e_aplica_area_e_proporcao(
     tmp_path: Path,
 ) -> None:
@@ -134,6 +190,56 @@ def test_base_sintetica_k45_tem_proporcao_textura_e_sem_grade() -> None:
     assert np.all(np.abs(centro.astype(int) - np.array((232, 230, 221))) <= 2)
     assert borda[0] > borda[2]
     assert set(np.unique(classes)) == {0, 1}
+
+
+def test_recomposicao_uniforme_nao_encosta_recortes_para_formar_focos() -> None:
+    imagem = Image.new("RGB", (320, 240), (236, 236, 232))
+    mascara = Image.new("L", (320, 240), 0)
+    ImageDraw.Draw(imagem).rectangle((30, 55, 289, 184), fill=(232, 230, 221))
+    ImageDraw.Draw(mascara).rectangle((30, 55, 289, 184), fill=1)
+    recortes = [
+        RecorteInsetoReal(
+            identificador=f"inseto_{indice}",
+            placa_origem="origem",
+            imagem=Image.new("RGBA", (5, 5), (20, 18, 16, 255)),
+            area_px=25,
+        )
+        for indice in range(80)
+    ]
+
+    resultado, rotulos, _ = _compor_recortes_reais(
+        imagem,
+        mascara,
+        recortes,
+        percentual_alvo=4.0,
+        rng=random.Random(20261021),
+        limite_colagens=80,
+        limite_reuso=1,
+        intensidade_aglomeracao=0.0,
+        usos_globais=[0] * len(recortes),
+    )
+
+    medida = medir_espalhamento(
+        np.asarray(resultado), np.asarray(rotulos), sem_grade=False
+    )
+    assert 2.9 <= medida["fracao_escura"] * 100 <= 4.0
+    assert medida["aglomeracao"] == 0.0
+
+
+def test_faixas_baixas_evitem_base_real_com_foco_escuro_herdado() -> None:
+    bases = [
+        BasePlacaReal(
+            identificador=identificador,
+            imagem=Image.new("RGB", (100, 100)),
+            mascara=Image.new("L", (100, 100)),
+            percentual_herdado=0.0,
+        )
+        for identificador in ("base_lisa", "base_aglomerada")
+    ]
+    medidas = {"base_lisa": 0.0, "base_aglomerada": 0.16}
+
+    assert _bases_compativeis_com_alvo(bases, 12.0, medidas) == [bases[0]]
+    assert _bases_compativeis_com_alvo(bases, 24.0, medidas) == bases
 
 
 def test_geracao_exclui_fontes_de_avaliacao_e_respeita_metadados(
@@ -192,6 +298,9 @@ def test_geracao_exclui_fontes_de_avaliacao_e_respeita_metadados(
             )
         assert valores <= {0, 1, 2}
         assert abs(percentual - registro["percentual_cobertura_real"]) < 1e-9
+        assert registro["faixa_cobertura_real"] == classificar_faixa_cobertura_real(
+            registro["percentual_cobertura_real"]
+        )
 
 
 def test_recomposicao_real_e_deterministica(tmp_path: Path) -> None:
@@ -259,6 +368,30 @@ def test_recomposicao_real_retorna_do_checkpoint_sem_mudar_resultado(
     }
     assert arquivos_retomados == arquivos_completos
     assert retomadas == completas
+
+
+def test_recomposicao_para_no_checkpoint_e_retomavel(tmp_path: Path) -> None:
+    fonte, _ = _criar_conjunto_real(tmp_path / "fonte")
+    interrompida = tmp_path / "parcial"
+    referencia = tmp_path / "referencia"
+    configuracao = _configurar_saida(fonte, interrompida, quantidade=6)
+
+    parcial = generate_dataset(configuracao, parar_apos=2)
+
+    assert len(parcial) == 2
+    assert (
+        json.loads((interrompida / ".progresso.json").read_text())[
+            "amostras_concluidas"
+        ]
+        == 2
+    )
+    assert not (interrompida / "relatorio_geracao.json").exists()
+
+    completa = generate_dataset(configuracao)
+    esperada = generate_dataset(_configurar_saida(fonte, referencia, quantidade=6))
+
+    assert completa == esperada
+    assert (interrompida / "relatorio_geracao.json").is_file()
 
 
 def test_seis_bases_particionadas_em_quatro_um_um_antes_da_composicao(tmp_path):

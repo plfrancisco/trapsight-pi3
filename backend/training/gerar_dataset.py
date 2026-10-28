@@ -66,6 +66,14 @@ def criar_parser() -> argparse.ArgumentParser:
         help="Quantidade de imagens (padrão: 3000).",
     )
     parser.add_argument(
+        "--parar-apos",
+        type=int,
+        help=(
+            "Interrompe após N amostras e mantém o checkpoint para retomada; "
+            "uso de validação de reprodutibilidade."
+        ),
+    )
+    parser.add_argument(
         "--largura",
         type=int,
         default=RESOLUCAO_PADRAO[0],
@@ -198,6 +206,8 @@ def main(argumentos: list[str] | None = None) -> int:
                 "A saída precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR ou dataset/."
             )
         if opcoes.sprites is not None:
+            if opcoes.parar_apos is not None:
+                raise ValueError("--parar-apos só é válido com --placas-reais.")
             if not dentro_dos_dados(opcoes.sprites):
                 raise ValueError(
                     "O banco de sprites precisa ficar em TRAPSIGHT_TRAINING_DATA_DIR."
@@ -244,7 +254,12 @@ def main(argumentos: list[str] | None = None) -> int:
             proporcao_placas_avaliacao=opcoes.proporcao_placas_avaliacao,
         )
         inicio = time.perf_counter()
-        registros = generate_dataset(configuracao, sprites)
+        if opcoes.parar_apos is None:
+            registros = generate_dataset(configuracao, sprites)
+        else:
+            registros = generate_dataset(
+                configuracao, sprites, parar_apos=opcoes.parar_apos
+            )
     except (OSError, ValueError) as erro:
         parser.error(str(erro))
         return 2
@@ -256,6 +271,9 @@ def main(argumentos: list[str] | None = None) -> int:
     else:
         print(f"Placas reais: {opcoes.placas_reais.resolve()}")
     print(f"Semente global: {opcoes.semente}")
+    if opcoes.parar_apos is not None:
+        print(f"Checkpoint retomável: {opcoes.saida.resolve() / '.progresso.json'}")
+        return 0
     print(
         "Alvos atingidos: "
         f"{sum(registro['alvo_atingido'] is True for registro in registros)}"

@@ -89,6 +89,12 @@ FAIXAS_COBERTURA_RECOMPOSICAO: tuple[tuple[FaixaCobertura, float, float], ...] =
     ("atencao", 10.0, 20.0),
     ("trocar", 20.0, 55.0),
 )
+VIES_TOLERANCIA_ALVO_PP = 1.0
+FAIXAS_ALVO_RECOMPOSICAO: tuple[tuple[FaixaCobertura, float, float], ...] = (
+    ("ok", 1.0, 10.9),
+    ("atencao", 11.0, 20.9),
+    ("trocar", 21.0, 55.0),
+)
 NOMES_BASES_REAIS = (
     "senai_tebrau_sb__resized_w_uv_tebrau_160824_c172.png",
     "senai_tebrau_sb__resized_w_uv_tebrau_160824_b171.png",
@@ -102,6 +108,7 @@ PROPORCAO_MAXIMA_RECORTE_REAL = 4.0
 EROSAO_PLACA_PX = 26
 LIMIAR_PIXEL_ESCURO = 110
 AREA_COMPONENTE_AGLOMERADO = 500
+LIMITE_AGLOMERACAO_BASE_BAIXA_COBERTURA = 0.05
 LADO_MAXIMO_RECORTE_DISPERSO = 14
 EFICIENCIA_AREA_AGLOMERADA = 0.25
 EFICIENCIA_AREA_DISPERSA = 0.9
@@ -1055,6 +1062,23 @@ def _colar_recorte_real(
     return x0, y0, alfa_placa
 
 
+def _bases_compativeis_com_alvo(
+    bases: list[BasePlacaReal],
+    percentual_alvo: float,
+    aglomeracao_por_base: dict[str, float],
+) -> list[BasePlacaReal]:
+    """Evita bases com foco escuro herdado em coberturas abaixo de 20%."""
+    if percentual_alvo >= 20.0:
+        return bases
+    filtradas = [
+        base
+        for base in bases
+        if aglomeracao_por_base.get(base.identificador, 1.0)
+        <= LIMITE_AGLOMERACAO_BASE_BAIXA_COBERTURA
+    ]
+    return filtradas or bases
+
+
 def _compor_recortes_reais(
     imagem_base: Image.Image,
     mascara_base: Image.Image,
@@ -1279,13 +1303,30 @@ def _compor_recortes_reais(
         0, math.ceil((percentual_alvo - TOLERANCIA_RECOMPOSICAO_PP) * area_placa / 100)
     )
     distancia_a_cobertura = cv2.distanceTransform(
-        (~coberta).astype(np.uint8), cv2.DIST_L2, 5
+        (placa & ~coberta).astype(np.uint8), cv2.DIST_L2, 5
     )
     centros_isolados: list[tuple[int, int, int]] = []
+    distribuicao_uniforme_trocar = (
+        intensidade_aglomeracao == 0 and percentual_alvo >= 20.0
+    )
+    if distribuicao_uniforme_trocar:
+        while (
+            tentativas < limite_colagens
+            and int(coberta.sum()) < area_alvo_com_tolerancia
+        ):
+            indice_recorte = proximo_recorte(pequeno=True)
+            if indice_recorte is None:
+                break
+            registro = reservar_recorte(indice_recorte)
+            inseto = _transformar_recorte_real(registro.imagem, rng, fator_escala)
+            y, x = centros_validos[rng.randrange(len(centros_validos))]
+            _colar_recorte_real(imagem, coberta, placa, inseto, int(x), int(y))
+            tentativas += 1
     while (
         tentativas < limite_colagens
         and int(coberta.sum()) < area_alvo_com_tolerancia
         and int(mascara_dispersos.sum()) < area_dispersao_alvo
+        and not distribuicao_uniforme_trocar
     ):
         indice_recorte = proximo_recorte(pequeno=True)
         if indice_recorte is None:
@@ -1320,26 +1361,34 @@ def _compor_recortes_reais(
         centros_isolados.append((centro_x, centro_y, raio))
         tentativas += 1
 
-    # Expande a cobertura em torno das aglomerações quando as inserções isoladas
-    # esgotam o espaço; o teto de tentativas e de reutilização continua obrigatório.
+    # Para alvos menores, relaxa o espaçamento antes de encerrar a composição.
     while (
-        tentativas < limite_colagens and int(coberta.sum()) < area_alvo_com_tolerancia
+        tentativas < limite_colagens
+        and int(coberta.sum()) < area_alvo_com_tolerancia
+        and not distribuicao_uniforme_trocar
     ):
-        indice_recorte = proximo_recorte(qualquer=True)
+        indice_recorte = proximo_recorte(
+            pequeno=intensidade_aglomeracao == 0,
+            qualquer=intensidade_aglomeracao != 0,
+        )
         if indice_recorte is None:
             break
         registro = reservar_recorte(indice_recorte)
         inseto = _transformar_recorte_real(registro.imagem, rng, fator_escala)
-        borda_coberta = cv2.dilate(
-            coberta.astype(np.uint8), np.ones((9, 9), np.uint8)
-        ).astype(bool)
-        candidatos = np.argwhere(erodida & ~coberta & borda_coberta)
-        if not len(candidatos):
-            candidatos = np.argwhere(erodida & ~coberta)
-        if not len(candidatos):
-            break
-        y, x = candidatos[rng.randrange(len(candidatos))]
-        _colar_recorte_real(imagem, coberta, placa, inseto, int(x), int(y))
+        if intensidade_aglomeracao == 0:
+            y, x = centros_validos[rng.randrange(len(centros_validos))]
+            _colar_recorte_real(imagem, coberta, placa, inseto, int(x), int(y))
+        else:
+            borda_coberta = cv2.dilate(
+                coberta.astype(np.uint8), np.ones((9, 9), np.uint8)
+            ).astype(bool)
+            candidatos = np.argwhere(erodida & ~coberta & borda_coberta)
+            if not len(candidatos):
+                candidatos = np.argwhere(erodida & ~coberta)
+            if not len(candidatos):
+                break
+            y, x = candidatos[rng.randrange(len(candidatos))]
+            _colar_recorte_real(imagem, coberta, placa, inseto, int(x), int(y))
         tentativas += 1
 
     classes_finais = np.zeros_like(classes)
@@ -1389,6 +1438,7 @@ def _compor_recortes_reais(
 def generate_dataset(
     configuracao: ConfiguracaoDataset,
     sprites: tuple[SpriteCatalogado, ...] = (),
+    parar_apos: int | None = None,
 ) -> list[dict[str, object]]:
     """Gera imagens, máscaras e metadados em uma estrutura estável.
 
@@ -1404,7 +1454,9 @@ def generate_dataset(
         OSError: Se não for possível criar ou gravar os artefatos.
     """
     if configuracao.diretorio_placas_reais is not None:
-        return _gerar_dataset_recomposicao_real(configuracao)
+        return _gerar_dataset_recomposicao_real(configuracao, parar_apos)
+    if parar_apos is not None:
+        raise ValueError("--parar-apos só é válido na recomposição de placas reais.")
     if not sprites:
         raise ValueError("Informe sprites ou o diretório de placas reais.")
     saida = configuracao.diretorio_saida.resolve()
@@ -1547,16 +1599,57 @@ def _criar_faixas_recomposicao(quantidade: int, semente: int) -> list[int]:
     return indices
 
 
+def classificar_faixa_cobertura_real(percentual: float) -> FaixaCobertura:
+    """Classifica a cobertura medida na máscara, com limites do status do produto."""
+    if percentual < 10.0:
+        return "ok"
+    if percentual < 20.0:
+        return "atencao"
+    return "trocar"
+
+
 def _criar_divisoes_por_faixa(faixas: list[int], semente: int) -> list[str]:
     """Estratifica cada faixa em 70/15/15 com semente independente e estável."""
     divisoes = [""] * len(faixas)
+    proporcoes = (0.70, 0.15, 0.15)
+    brutos = [len(faixas) * proporcao for proporcao in proporcoes]
+    alvos = [math.floor(valor) for valor in brutos]
+    ordem_alvos = sorted(
+        range(len(proporcoes)),
+        key=lambda indice: (-(brutos[indice] - alvos[indice]), indice),
+    )
+    for indice in ordem_alvos[: len(faixas) - sum(alvos)]:
+        alvos[indice] += 1
+
+    totais_por_faixa = [faixas.count(indice) for indice in range(3)]
+    faltantes = [
+        alvos[indice]
+        - sum(
+            math.floor(quantidade * proporcoes[indice])
+            for quantidade in totais_por_faixa
+        )
+        for indice in range(len(proporcoes))
+    ]
     for indice_faixa in range(len(FAIXAS_COBERTURA_RECOMPOSICAO)):
         indices = [i for i, faixa in enumerate(faixas) if faixa == indice_faixa]
         random.Random(semente ^ (0xA11CE + indice_faixa)).shuffle(indices)
-        quantidade_treino = math.floor(len(indices) * 0.70 + 0.5)
-        quantidade_validacao = math.floor(len(indices) * 0.15 + 0.5)
-        if quantidade_treino + quantidade_validacao > len(indices):
-            quantidade_validacao = max(0, len(indices) - quantidade_treino)
+        ideais = [len(indices) * proporcao for proporcao in proporcoes]
+        quantidades = [math.floor(valor) for valor in ideais]
+        extras = len(indices) - sum(quantidades)
+        ordem_extras = sorted(
+            range(len(proporcoes)),
+            key=lambda indice: (-(ideais[indice] - quantidades[indice]), indice),
+        )
+        for indice in ordem_extras:
+            if extras == 0:
+                break
+            if faltantes[indice] > 0:
+                quantidades[indice] += 1
+                faltantes[indice] -= 1
+                extras -= 1
+        if extras:
+            raise RuntimeError("Não foi possível balancear a divisão estratificada.")
+        quantidade_treino, quantidade_validacao, _ = quantidades
         for indice in indices[:quantidade_treino]:
             divisoes[indice] = "treino"
         for indice in indices[
@@ -1565,6 +1658,8 @@ def _criar_divisoes_por_faixa(faixas: list[int], semente: int) -> list[str]:
             divisoes[indice] = "validacao"
         for indice in indices[quantidade_treino + quantidade_validacao :]:
             divisoes[indice] = "teste"
+    if any(faltantes) or any(not divisao for divisao in divisoes):
+        raise RuntimeError("A divisão estratificada não corresponde aos alvos globais.")
     return divisoes
 
 
@@ -1853,7 +1948,7 @@ def _assinatura_recomposicao(
             catalogo = raiz / "catalogos" / f"{nome}.jsonl"
             catalogos[nome] = _sha256_arquivo(catalogo)
     identidade = {
-        "versao": "recomposicao_real_v5_retoma1",
+        "versao": "recomposicao_real_v5_retoma3",
         "parametros": {
             "semente": configuracao.semente,
             "idade_maxima_dias": configuracao.idade_maxima_dias,
@@ -1865,6 +1960,8 @@ def _assinatura_recomposicao(
             "fator_escala_recorte": configuracao.fator_escala_recorte,
             "limite_reuso_recorte": configuracao.limite_reuso_recorte,
             "proporcao_placas_avaliacao": configuracao.proporcao_placas_avaliacao,
+            "faixas_alvo": FAIXAS_ALVO_RECOMPOSICAO,
+            "compensacao_vies_pp": VIES_TOLERANCIA_ALVO_PP,
         },
         "fontes_por_conjunto": {
             nome: [p.stem for p in fontes]
@@ -1944,6 +2041,7 @@ def _preparar_retoma_recomposicao(
         ".progresso.json.part",
         "configuracao.json",
         "relatorio_geracao.json",
+        "relatorio_auditoria_v5.json",
     }
     if any(caminho.name not in permitidos for caminho in saida.iterdir()):
         raise FileExistsError(f"A saída contém itens fora do gerador: {saida}.")
@@ -2026,7 +2124,7 @@ def _preparar_retoma_recomposicao(
             != FAIXAS_COBERTURA_RECOMPOSICAO[faixas[indice]][0]
         ):
             raise ValueError(f"Metadados divergentes na amostra {esperado_id}.")
-        _, minimo, maximo = FAIXAS_COBERTURA_RECOMPOSICAO[faixas[indice]]
+        _, minimo, maximo = FAIXAS_ALVO_RECOMPOSICAO[faixas[indice]]
         alvo_esperado = random.Random(sementes[indice] ^ 0xC0B3A7).uniform(
             minimo, maximo
         )
@@ -2045,6 +2143,10 @@ def _preparar_retoma_recomposicao(
             abs_tol=1e-12,
         ):
             raise ValueError(f"Alvo ou idade divergente em {esperado_id}.")
+        if registro.get("faixa_cobertura_real") != classificar_faixa_cobertura_real(
+            float(registro["percentual_cobertura_real"])
+        ):
+            raise ValueError(f"Faixa real divergente em {esperado_id}.")
         conjunto = str(registro["conjunto"])
         fontes_permitidas = {p.stem for p in fontes_por_conjunto[conjunto]}
         if not set(registro.get("placas_origem_recortes", [])) <= fontes_permitidas or (
@@ -2108,6 +2210,7 @@ def _preparar_retoma_recomposicao(
 
 def _gerar_dataset_recomposicao_real(
     configuracao: ConfiguracaoDataset,
+    parar_apos: int | None = None,
 ) -> list[dict[str, object]]:
     """Gera amostras sem usar recortes ou bases de placas reservadas à avaliação."""
     diretorio_real = configuracao.diretorio_placas_reais
@@ -2116,6 +2219,8 @@ def _gerar_dataset_recomposicao_real(
     diretorio_real = diretorio_real.resolve()
     if not diretorio_real.is_dir():
         raise FileNotFoundError(f"Conjunto de placas reais ausente: {diretorio_real}.")
+    if parar_apos is not None and not 0 < parar_apos < configuracao.quantidade:
+        raise ValueError("parar_apos deve ficar entre 1 e a quantidade total.")
     saida = configuracao.diretorio_saida.resolve()
 
     # A separação é definida por identificador antes da carga de imagens ou máscaras.
@@ -2170,6 +2275,19 @@ def _gerar_dataset_recomposicao_real(
         bases_reais.append(base)
     if not bases_reais:
         raise ValueError("Nenhuma base real elegível está disponível para composição.")
+
+    import numpy as np
+
+    from training.medicoes_recomposicao import medir_espalhamento
+
+    aglomeracao_bases_reais = {
+        base.identificador: medir_espalhamento(
+            np.asarray(base.imagem.convert("RGB")),
+            np.asarray(base.mascara.convert("L")),
+            sem_grade=True,
+        )["aglomeracao"]
+        for base in bases_reais
+    }
 
     if pasta_mascaras_bases is not None:
         for base in bases_reais:
@@ -2266,7 +2384,8 @@ def _gerar_dataset_recomposicao_real(
     with caminho_metadados.open(
         modo_metadados, encoding="utf-8", newline="\n"
     ) as arquivo:
-        for indice in range(inicio_geracao, len(sementes)):
+        limite_execucao = min(len(sementes), parar_apos or len(sementes))
+        for indice in range(inicio_geracao, limite_execucao):
             semente_amostra = sementes[indice]
             conjunto = divisoes[indice]
             recortes_amostra = recortes_por_conjunto[conjunto]
@@ -2274,12 +2393,18 @@ def _gerar_dataset_recomposicao_real(
             rng = random.Random(semente_amostra)
             rng_cobertura = random.Random(semente_amostra ^ 0xC0B3A7)
             rng_idade = random.Random(semente_amostra ^ 0xA61DADE)
-            faixa, minimo, maximo = FAIXAS_COBERTURA_RECOMPOSICAO[faixas[indice]]
+            faixa, _, _ = FAIXAS_COBERTURA_RECOMPOSICAO[faixas[indice]]
+            _, minimo, maximo = FAIXAS_ALVO_RECOMPOSICAO[faixas[indice]]
             percentual_alvo = rng_cobertura.uniform(minimo, maximo)
             idade_simulada = rng_idade.uniform(0.0, configuracao.idade_maxima_dias)
             usar_base_real = sequencia_bases[indice]
             if usar_base_real:
-                base = rng.choice(bases_por_conjunto[conjunto])
+                candidatas_base = _bases_compativeis_com_alvo(
+                    bases_por_conjunto[conjunto],
+                    percentual_alvo,
+                    aglomeracao_bases_reais,
+                )
+                base = rng.choice(candidatas_base)
                 imagem_base, mascara_base = base.imagem.copy(), base.mascara.copy()
                 identificador_base: str | None = base.identificador
                 tipo_base = "real_ums"
@@ -2349,6 +2474,9 @@ def _gerar_dataset_recomposicao_real(
                 "semente": semente_amostra,
                 "conjunto": divisoes[indice],
                 "faixa_cobertura_alvo": faixa,
+                "faixa_cobertura_real": classificar_faixa_cobertura_real(
+                    float(composicao["percentual_cobertura_real"])
+                ),
                 "percentual_cobertura_alvo": percentual_alvo,
                 "percentual_cobertura_real": composicao["percentual_cobertura_real"],
                 "alvo_atingido": abs(
@@ -2395,6 +2523,16 @@ def _gerar_dataset_recomposicao_real(
             arquivo.flush()
             os.fsync(arquivo.fileno())
             _salvar_checkpoint_recomposicao(saida, assinatura_geracao, len(registros))
+            if len(registros) % 50 == 0 or len(registros) == configuracao.quantidade:
+                percentual = 100.0 * len(registros) / configuracao.quantidade
+                print(
+                    f"Progresso: {len(registros)}/{configuracao.quantidade} "
+                    f"amostras ({percentual:.1f}%)",
+                    flush=True,
+                )
+
+    if parar_apos is not None and len(registros) < configuracao.quantidade:
+        return registros
 
     quantidade_descritores = min(configuracao.quantidade, AMOSTRAS_DESCRITORES_VISUAIS)
     indices_descritores = {
@@ -2453,9 +2591,14 @@ def _gerar_dataset_recomposicao_real(
         "resolucao": list(configuracao.resolucao),
         "fonte_placas_reais": str(diretorio_real),
         "faixas_cobertura_alvo": {
+            nome: [minimo, maximo] for nome, minimo, maximo in FAIXAS_ALVO_RECOMPOSICAO
+        },
+        "faixas_cobertura_real": {
             nome: [minimo, maximo]
             for nome, minimo, maximo in FAIXAS_COBERTURA_RECOMPOSICAO
         },
+        "compensacao_vies_tolerancia_alvo_pp": VIES_TOLERANCIA_ALVO_PP,
+        "classificacao_faixa": "percentual_real_da_mascara_v1",
         "proporcao_bases_reais": configuracao.proporcao_bases_reais,
         "intensidade_aglomeracao": configuracao.intensidade_aglomeracao,
         "fator_escala_recorte": configuracao.fator_escala_recorte,
@@ -2528,6 +2671,10 @@ def _gerar_dataset_recomposicao_real(
             for nome in bases_por_conjunto
         },
         "bases_elegiveis": sorted(base.identificador for base in bases_reais),
+        "aglomeracao_por_base_real": aglomeracao_bases_reais,
+        "limite_aglomeracao_base_para_alvos_abaixo_de_20": (
+            LIMITE_AGLOMERACAO_BASE_BAIXA_COBERTURA
+        ),
         "quantidade_bases_elegiveis_por_conjunto": {
             nome: len(bases_por_conjunto[nome]) for nome in bases_por_conjunto
         },
@@ -2546,6 +2693,16 @@ def _gerar_dataset_recomposicao_real(
             faixa: {
                 conjunto: sum(
                     r["faixa_cobertura_alvo"] == faixa and r["conjunto"] == conjunto
+                    for r in registros
+                )
+                for conjunto in ("treino", "validacao", "teste")
+            }
+            for faixa, _, _ in FAIXAS_COBERTURA_RECOMPOSICAO
+        },
+        "separacao_por_faixa_real": {
+            faixa: {
+                conjunto: sum(
+                    r["faixa_cobertura_real"] == faixa and r["conjunto"] == conjunto
                     for r in registros
                 )
                 for conjunto in ("treino", "validacao", "teste")
