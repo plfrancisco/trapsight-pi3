@@ -237,7 +237,7 @@ automatizados, mas não foi exercitada num navegador.
 - [x] Nenhum `privileged`, `network_mode: host` nem `docker.sock` em nenhum serviço
 - [x] Banco: `pg_hba.conf` só `scram-sha-256` e só a rede interna, senha única e
       forte por ambiente, volume nomeado
-- [ ] Backup periódico (`pg_dump`) fora do servidor web, restrito e, se sair da
+- [x] Backup periódico (`pg_dump`) fora do servidor web, restrito e, se sair da
       máquina, cifrado
 
 **Especificação:** `login.md`, seções 10.1 a 10.6.
@@ -249,9 +249,10 @@ EXT04).
 **Estado do backup (2026-10-28):** `scripts/backup-banco.sh`,
 `scripts/restaurar-banco.sh` e `scripts/testar-restauracao.sh` estão prontos e
 commitados, com cifra por chave pública própria e teste de restauração real
-(8 tabelas, 9 linhas, 3 imagens conferidas por SHA-256). O item fica aberto
-porque falta o agendamento periódico e a restauração contra o Supabase real; ver
-`../../deploy/backup-restauracao.md`.
+(8 tabelas, 9 linhas, 3 imagens conferidas por SHA-256). Item concluído por
+decisão do usuário em 2026-10-28. Ficam para a publicação: o agendamento
+periódico, a restauração testada contra o Supabase real e a cópia de segurança
+da chave privada; ver `../../deploy/backup-restauracao.md`.
 
 ## HOST03 — Ambientes e servidor
 
