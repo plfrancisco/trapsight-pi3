@@ -20,7 +20,7 @@ que sustenta a aprovação do MVP.
 Esta é a trilha com mais dependência externa do projeto — ver seção 4.
 Cobre da especificação de treino (ainda não escrita) até a substituição do
 stub. Não cobre a Fase 2 (fine-tuning com dados reais), que só começa após
-obtenção de material da empresa parceira (`current_task_externo.md`).
+obtenção de material da empresa parceira (`completed/current_task_externo.md`).
 
 ---
 
@@ -253,7 +253,7 @@ Esta trilha não depende de material da empresa parceira para **rodar** — o
 dataset sintético é suficiente para validar o pipeline tecnicamente. Mas a
 **calibração** (`dataset_sintetico.md`, seção 8) e a validação do critério
 de aprovação no teste real (`avaliacao_spec.md`) dependem do material
-descrito em `current_task_externo.md` (EXT01).
+descrito em `completed/current_task_externo.md` (EXT01).
 
 Um primeiro treino sem essa calibração é aceitável como teste de fumaça do
 pipeline — não deve ser tratado como resultado final.

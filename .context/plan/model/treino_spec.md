@@ -397,7 +397,7 @@ resultados do treino valem para o domínio sintético. Sintético bom e real
 ausente significa "o modelo aprendeu o gerador", não "o modelo funciona em
 campo". Isso deve constar como limitação explícita em qualquer relatório, e a
 validação em campo permanece pendente até o material descrito em
-`current_task_externo.md` (EXT01).
+`completed/current_task_externo.md` (EXT01).
 
 ## 10.2 Atalho pelos recortes
 

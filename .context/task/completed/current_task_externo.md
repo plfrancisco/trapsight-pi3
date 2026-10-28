@@ -1,7 +1,7 @@
 # CURRENT TASK — DEPENDÊNCIAS EXTERNAS — Projeto Integrador
 
 **Versão:** 1.0
-**Status:** ATIVA
+**Status:** CONCLUÍDA
 **Escopo:** itens que dependem da empresa parceira, do grupo ou da faculdade
 — não são executáveis por código
 
@@ -25,22 +25,25 @@ ação de comunicação ou decisão de grupo.
 # 3. Tarefas
 
 **Estado (2026-10-26):** EXT01, EXT02 e EXT03 confirmadas como concluídas pelo usuário.
-Em EXT04 a escolha feita foi Vercel e Supabase (`../../deploy/vercel-supabase.md`), e não
+Em EXT04 a escolha feita foi Vercel e Supabase (`../../../deploy/vercel-supabase.md`), e não
 um servidor próprio com domínio e firewall do provedor, como os itens abaixo pressupõem;
-os demais itens de EXT04 seguem em aberto. `../plan/foundation/project_overview.md`
+os demais itens de EXT04 foram resolvidos em 2026-10-28 (ver abaixo). `../../plan/foundation/project_overview.md`
 (seção 9) ainda registra integrantes e prazo como "a definir".
 
 ## EXT01 — Material da empresa parceira
 
 - [x] Fotos reais de armadilhas em diferentes níveis de saturação
 - [x] Fotos de refis em idades diferentes (confirma a perda de contraste por
-  amarelamento — `../plan/model/modelo_spec.md`, seção 4.2.1)
+  amarelamento — `../../plan/model/modelo_spec.md`, seção 4.2.1)
 - [x] Confirmar se o adesivo apresenta fluorescência sob as lâmpadas UV
 - [x] Especificação da câmera, se/quando a Fase 2 for iniciada
 
-**Especificação:** `../plan/foundation/hardware_armadilha.md`, seção 5;
-`../plan/data/dataset_sintetico.md`, seção 8.
-**Contato:** Gustavo — ver `../plan/foundation/stakeholder_evidencias.md`.
+**Especificação:** `../../plan/foundation/hardware_armadilha.md`, seção 5;
+`../../plan/data/dataset_sintetico.md`, seção 8.
+**Contato:** Gustavo — ver `../../plan/foundation/stakeholder_evidencias.md`.
+
+**Concluída em:** 2026-10-28, por decisão do usuário: sem domínio comprado nem
+VPS paga.
 
 **Impacto se atrasar:** bloqueia a calibração do gerador sintético e o
 critério de aprovação no teste real (`avaliacao_spec.md`). Quanto mais tarde
@@ -54,7 +57,7 @@ chegar, menor a chance de corrigir o gerador a tempo.
   diagnóstico)
 - [x] Confirmar se o nome da empresa pode ser citado no relatório final
 
-**Especificação:** `../plan/foundation/stakeholder_evidencias.md`, seção 5.
+**Especificação:** `../../plan/foundation/stakeholder_evidencias.md`, seção 5.
 **Dependências:** nenhuma — pode ser feita a qualquer momento.
 
 ## EXT03 — Integrantes e prazo
@@ -64,7 +67,7 @@ chegar, menor a chance de corrigir o gerador a tempo.
   frontend, modelo)
 - [x] Definir prazo final de entrega e marcos intermediários
 
-**Especificação:** `../plan/foundation/project_overview.md`, seção 9
+**Especificação:** `../../plan/foundation/project_overview.md`, seção 9
 (restrições).
 **Dependências:** nenhuma.
 
@@ -75,12 +78,16 @@ de menor esforço e maior efeito destravante do projeto.
 
 - [x] Escolher o provedor do servidor (VPS ou equivalente, com firewall de rede
   do provedor que negue tudo por padrão)
-- [ ] Registrar um domínio e apontar o DNS (necessário ao HTTPS automático)
-- [ ] Definir quem administra o servidor, o acesso por SSH com chave e onde
-  ficam os backups do banco
-- [ ] Definir o orçamento mensal aceitável
+- [x] Registrar um domínio e apontar o DNS (necessário ao HTTPS automático) —
+  dispensado: não haverá domínio comprado; a publicação usa o endereço da
+  Vercel, com HTTPS da plataforma
+- [x] Definir quem administra o servidor, o acesso por SSH com chave e onde
+  ficam os backups do banco — concluído; não haverá servidor próprio (Vercel e
+  Supabase), e os backups seguem `../../../deploy/backup-restauracao.md`
+- [x] Definir o orçamento mensal aceitável — concluído: sem VPS paga nem domínio
+  comprado, o projeto usa só os planos gratuitos
 
-**Especificação:** `../plan/foundation/login.md`, seções 10.1 e 10.5.
+**Especificação:** `../../plan/foundation/login.md`, seções 10.1 e 10.5.
 **Dependências:** nenhuma — pode ser feita a qualquer momento.
 
 **Impacto se atrasar:** bloqueia HOST02 e HOST03 de `current_task_autenticacao_hospedagem.md`

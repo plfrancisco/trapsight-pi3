@@ -20,8 +20,9 @@ conforme `../plan/foundation/login.md` (aprovado em 2026-10-16).
 Cobre a implementação do login no backend e no frontend, a infraestrutura de
 produção e todo o ciclo de verificação de segurança. Não cobre MFA, papel
 somente leitura, recuperação de senha por e-mail nem provedor de identidade externo
-(Fase 2, `login.md`, seção 12.3). A escolha do provedor de hospedagem e do
-domínio depende do usuário e está em `current_task_externo.md` (EXT04).
+(Fase 2, `login.md`, seção 12.3). A escolha do provedor de hospedagem foi
+concluída (`completed/current_task_externo.md`, EXT04): Vercel e Supabase, sem
+domínio comprado nem VPS paga.
 
 **Regras que valem para todas as tasks deste arquivo:**
 
@@ -241,7 +242,7 @@ automatizados, mas não foi exercitada num navegador.
       máquina, cifrado
 
 **Especificação:** `login.md`, seções 10.1 a 10.6.
-**Dependências:** HOST01; decisão de provedor e domínio (`current_task_externo.md`,
+**Dependências:** HOST01; decisão de provedor e domínio (`completed/current_task_externo.md`,
 EXT04).
 **Verifica:** `test_01_exposicao.py`, `test_02_transporte.py`,
 `test_03_vazamento_info.py`, `test_12_banco_e_hash.py` e o nmap.
@@ -251,8 +252,7 @@ EXT04).
 commitados, com cifra por chave pública própria e teste de restauração real
 (8 tabelas, 9 linhas, 3 imagens conferidas por SHA-256). Item concluído por
 decisão do usuário em 2026-10-28. Ficam para a publicação: o agendamento
-periódico, a restauração testada contra o Supabase real e a cópia de segurança
-da chave privada; ver `../../deploy/backup-restauracao.md`.
+periódico e a restauração testada contra o Supabase real; ver `../../deploy/backup-restauracao.md`.
 
 ## HOST03 — Ambientes e servidor
 
