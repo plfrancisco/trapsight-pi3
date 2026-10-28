@@ -156,6 +156,10 @@ como revisada. A classe 255 é reservada a regiões ambíguas; não pode substit
 os exemplos negativos de sujeira. Marcações impressas, grade e bordas têm
 máscaras de estrutura próprias, separadas dos insetos e dos distratores.
 
+Na recomposição v5, cada amostra com base sintética recebe pelo menos um
+distrator. No diagnóstico de 300 amostras, todas as 150 bases sintéticas
+continham distratores; eles permanecem na imagem e são excluídos da classe 2.
+
 ---
 
 # 5. Composição
@@ -197,21 +201,25 @@ amostras fora da tolerância devem ser rejeitadas na validação do conjunto.
 ## 5.4 Recomposição com insetos reais
 
 O modo principal recebe `--placas-reais` apontando para um conjunto com
-`imagens/`, `mascaras/` e `metadados.jsonl`. Antes de abrir máscaras ou recortar
-componentes, o gerador separa os identificadores das placas por uma semente
-reprodutível. Por padrão, 80% ficam em composição e 20% em avaliação. As seis
-placas de baixa cobertura indicadas pelo inventário ficam obrigatoriamente em
-composição; se o inventário mudar, as bases restantes são escolhidas pela menor
-cobertura rotulada. Nenhum recorte ou base de avaliação entra em uma amostra.
+`imagens/`, `mascaras/` e `metadados.jsonl`, além das máscaras v5 revisadas e da
+biblioteca de recortes SAM/COCO. As 69 placas reais são particionadas por uma
+semente reprodutível em 55 placas de composição e 14 de avaliação antes de
+abrir pixels ou recortar componentes. As placas de avaliação não entram como
+base nem como origem de recortes.
 
-As placas de composição são então atribuídas a treino, validação e teste,
-antes de abrir pixels, estratificando separadamente as seis bases. Cada placa
-tem um único dono, inclusive quando fornece simultaneamente base e recortes.
-Com as fontes atuais, são 39/8/8 placas e 4/1/1 bases. A amostra usa essa divisão
-explicitamente; um único fundo real em validação e teste oferece pouca
-diversidade. Antes do conjunto definitivo, decidir entre ampliar o inventário
-de bases independentes ou usar bases sintéticas nesses conjuntos. A reserva
-de 14 placas reais continua intocada.
+As 55 placas de composição são atribuídas a treino, validação e teste antes da
+geração. Cada origem tem um único conjunto, inclusive quando fornece base e
+recortes. A partição observada contém 39/8/8 placas; as cinco bases reais
+elegíveis ficam 3/1/1. B117 é excluída como base porque excede o limite de área
+ambígua; as cinco bases restantes são A164, A167, B171, B310 e C172. Um único
+fundo real em validação e teste oferece pouca diversidade e limita a
+generalização; ampliar o inventário de bases independentes segue como melhoria.
+
+O processamento v5 avaliou 24.758 propostas COCO nas 69 placas: 20.717
+máscaras SAM passaram pelo controle de qualidade (83,68%). A biblioteca
+resultante contém 16.811 recortes aprovados das 55 placas de composição. As
+14 placas de avaliação mantêm regiões sem rótulo fora das anotações COCO; a
+avaliação futura em imagens reais deve declarar essa limitação.
 
 Da classe `placa_coberta` são extraídos componentes conectados com área mínima
 de 25 pixels e razão entre lados de até 4:1. A máscara do componente vira o
@@ -220,28 +228,26 @@ somente giros em múltiplos de 90° e espelhamento horizontal. O centro de cada
 recorte precisa cair dentro da placa erodida em 26 pixels. A sobreposição é
 permitida e usada para atingir altas coberturas.
 
-As bases reais vêm somente das placas de composição com menor carga rotulada.
-As bases sintéticas seguem o formato 450:220 do StickFly K-45, sem grade,
-superfície `(232, 230, 221)`, ruído gaussiano de sigma 4 misturado a 10% e
-amarelecimento suave das bordas em direção a `(206, 194, 152)`. A proporção de
-bases reais é configurável e começa em 50%; a sequência distribui os dois
+As bases reais vêm somente das placas de composição aprovadas. Nas amostras com
+alvo abaixo de 20%, o gerador prioriza bases cuja fração aglomerada de pixels
+escuros seja <=0,05; assim, insetos grandes já herdados não distorcem a faixa
+baixa. As bases sintéticas seguem o formato 450:220 do StickFly K-45, sem
+grade, superfície `(232, 230, 221)`, ruído gaussiano de sigma 4 misturado a 10%
+e amarelecimento suave das bordas em direção a `(206, 194, 152)`. A proporção
+de bases reais é configurável e começa em 50%; a sequência distribui os dois
 tipos uniformemente ao longo do conjunto.
 
 O alvo é sorteado antes da quantidade de colagens. No modo real, `trocar` cobre
-20–55%, limitando o alvo à capacidade verificada após a separação das fontes;
-os modos legados de sprites continuam
-limitados às faixas anteriores. Em `ok` e `atencao`, a colocação é quase uniforme
-com espaçamento mínimo, sem focos. Em `trocar`, o padrão é uniforme com
-sobreposição. Qualquer hipótese com focos exige comparação contra colocação
-aleatória uniforme na mesma densidade e justificativa explícita. A mesma fonte
-pode aparecer no máximo doze vezes em uma amostra no modo real, com até
-12.000 colagens. Isso compensa o banco menor de validação e teste, mas aumenta
-a repetição dentro da amostra e deve ser acompanhado no relatório. Quando a
-fase espaçada não alcança o alvo, a execução informa a limitação em vez de
-criar focos silenciosamente. O relatório
-registra a origem dos recortes, os parâmetros geométricos, a maior reutilização
-no conjunto, a cobertura herdada pela base e a cobertura adicionada pela
-composição, sempre medidas na máscara final.
+20–55%; os modos legados de sprites continuam limitados às faixas anteriores.
+Em `ok` e `atencao`, a colocação começa quase uniforme com espaçamento mínimo;
+se necessário, completa o alvo com centros uniformes. Em `trocar`, os centros
+são amostrados uniformemente desde o início e podem se sobrepor. Não há focos
+artificiais. A validação em 100 amostras `trocar` encontrou diferença média de
+aglomeração de -0,000015 e de ocupação de 0,0046 contra centros uniformes; 98
+das 100 comparações ficaram dentro de 1 ponto percentual de cobertura. O
+reuso de cada recorte é limitado a duas ocorrências por amostra, com até
+12.000 colagens. O relatório registra origem, parâmetros geométricos, reuso,
+cobertura herdada e cobertura adicionada, medidas na máscara final.
 
 Nas bases sintéticas, poeira, teias, pelos e respingos são desenhados antes
 dos insetos, nas frequências da seção 4.4. Seus pixels permanecem na classe 1;
@@ -329,10 +335,13 @@ Distribuição uniforme entre faixas, não proporcional a uma distribuição rea
 assumida — o objetivo é garantir exemplos suficientes nas fronteiras de
 decisão (10% e 20%), onde o erro do modelo tem maior consequência prática.
 
-A recomposição real limita o alvo a **55%** após particionar o banco por
-placa; a referência de 62,62% com 2.200 colagens continua sendo uma referência
-de calibração, sem ser apresentada como cobertura garantida deste banco.
-O modo legado de sprites permanece limitado a 35%.
+A recomposição real limita o alvo a **55%**. No diagnóstico de 300 amostras,
+99% de `ok`, 100% de `atencao` e 100% de `trocar` atingiram seus alvos; a
+cobertura máxima observada foi 53,99%. A calibração por colagem com fator 2,0
+ficou em 12,79% contra 14,38% para 300 colagens (razão 0,889) e em 32,98%
+contra 34,65% para 900 colagens (razão 0,952), ambas dentro de ±15%. A
+referência de 62,62% com 2.200 colagens não é apresentada como cobertura
+garantida deste banco. O modo legado de sprites permanece limitado a 35%.
 
 ## 7.2 Volume
 
@@ -376,7 +385,7 @@ apenas como teste de fumaça do gerador e do treino.
 | Máscara de 3 classes gerada corretamente | Inspeção visual de amostra aleatória |
 | `idade_simulada` e `percentual_cobertura` sem correlação | Calcular correlação de Pearson entre as duas colunas de metadados; deve ser próxima de zero |
 | Distratores presentes e ausentes da máscara | Inspeção visual de amostra com distrator |
-| Reprodutibilidade | Gerar duas vezes com a mesma semente global produz dataset idêntico |
+| Reprodutibilidade | Duas execuções independentes com a mesma semente produzem imagens, máscaras e metadados idênticos nas primeiras 100 amostras |
 | Sem vazamento entre placas | Conferir que `placas_origem_recortes` e `placa_base_id` não intersectam as placas de avaliação listadas no relatório |
 | Sem vazamento entre treino, validação e teste | Cada placa de composição pertence a exatamente um conjunto; a união de bases e origens de recortes de um conjunto é disjunta dos demais. O carregador deve recusar cruzamentos, inclusive entre os papéis de base e recorte |
 | Bases com rótulos revisados | Aplicar o aceite por área e decisão da seção 5.4 em cada placa; registrar regiões, áreas, versões e hashes, preservando as originais |
@@ -385,24 +394,37 @@ apenas como teste de fumaça do gerador e do treino.
 | Similaridade dos recortes | Comparar a distribuição do maior lado dos componentes escuros por KS contra as placas de avaliação; registrar a distância |
 | Similaridade de tons | Comparar histogramas de tons de cinza com 32 faixas usando meia distância L1 |
 | Fração escura | Comparar a fração com cinza abaixo de 110 contra 0,0635; medir somente pixels da placa |
-| Aglomeração sem grade | Fração dos pixels escuros (<110) em componentes >500 px após remover segmentos horizontais/verticais de pelo menos 41 px. Referência nas 69 placas: 0,016 sem grade; com grade, aproximadamente 0,72. A antiga referência 0,777 incluía estruturas e foi invalidada |
-| Ocupação espacial | Fração dos tiles de 24 px elegíveis (>=50% de placa válida) com pelo menos 3 pixels escuros. Comparar por densidade escura: ocupação real 0,35 em 1–2%, 0,57 em 2–4% e 0,88 em 4–8% |
+| Aglomeração sem grade | Fração dos pixels escuros (<110) em componentes >500 px após remover segmentos horizontais/verticais de pelo menos 41 px. Referência nas 69 placas: 0,016 sem grade; limite sintético <=0,05 |
+| Ocupação espacial | Fração dos tiles de 24 px elegíveis (>=50% de placa válida) com pelo menos 3 pixels escuros. Comparar por densidade escura: ocupação real 0,35 em 1–2%, 0,57 em 2–4% e 0,88 em 4–8%, com tolerância de ±0,10 |
 | Completude por área e decisão | Em cada base: zero candidatas sem decisão, área ambígua <=10% da área candidata e <=0,2 pp da placa; estruturas versionadas; sujeira revisada na classe 1; inseto sobre a placa nunca na classe 0 |
 | Quantidade de componentes de referência | Registrar as 5.144 componentes escuros identificadas nas 69 placas |
 | Relatório visual | Gravar os quatro descritores somente dentro da placa, a cobertura das amostras usadas na comparação de aglomeração, a divisão e semente das placas, a maior reutilização de recorte e a conclusão do teste de inpainting em `relatorio_geracao.json` |
 
-A classe 2 é a medida exata da máscara gerada. Nas placas reais, as máscaras
-SAM cobrem somente 25,6% das anotações COCO; por isso, a comparação de
-aglomeração também registra os componentes dos pixels escuros como aproximação
-visual e informa separadamente a fração calculada pela máscara rotulada.
+A classe 2 é a medida exata da máscara gerada. Nas 69 placas, 83,68% das
+propostas COCO passaram no controle de qualidade SAM. A avaliação das 14 placas
+reservadas tem rótulo incompleto fora das anotações COCO e deve registrar essa
+limitação; a métrica de espalhamento usa também os pixels escuros como medida
+visual independente da máscara rotulada.
+
+No diagnóstico de 300 amostras (semente 20261021), P, L, D, C, T, K, R e I
+passaram. P registrou 210/45/45 amostras e zero cruzamentos entre conjuntos;
+as bases reais ficaram 3/1/1. D encontrou distratores em 150/150 bases
+sintéticas. C mediu as faixas escuras com n=29/62/86: ocupações médias
+0,343/0,571/0,743, diferenças para a referência de +0,053/+0,046/-0,065 e
+aglomeração 0/0/0,00073; todas dentro dos limites. T atingiu 99%/100%/100%,
+R comparou 300/300 arquivos idênticos em duas execuções de 100 amostras e I
+mediu correlação idade-cobertura de 0,028. Os critérios K e a comparação
+uniforme estão quantificados na seção 5.4.
 
 Não há referência real validada de insetos acima de aproximadamente 8% de pixels escuros. O
 domínio `trocar` de 20–70% de cobertura é extrapolação; o perfil limitado a
 20–55% é um subintervalo desse domínio, sem validação visual real nessa faixa.
 Não se compara aglomeração a uma suposta referência real de cobertura >=50%.
 Na amostra de 30, medir todas as imagens, comparar `trocar` com o aleatório e
-parar para revisão. No conjunto de 3.000, autorizado separadamente, medir pelo
-menos 100 amostras com os mesmos instrumentos versionados e testados.
+parar para revisão do usuário. Os critérios que exigem >=100 amostras usam um
+diagnóstico separado de 300 amostras; a reprodutibilidade compara duas
+execuções independentes de 100. O conjunto final de 3.000 só começa depois da
+revisão da amostra e será auditado com os mesmos instrumentos versionados.
 
 ---
 
