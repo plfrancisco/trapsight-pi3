@@ -1,11 +1,14 @@
 """Valida a calibração reprodutível e os limites do auditor v5."""
 
+import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 from PIL import Image, ImageDraw
 
 from training.auditar_recomposicao_v5 import (
+    _normalizar_json,
     calcular_correlacao_idade_cobertura,
     comparar_reprodutibilidade,
     medir_calibracao_colagens,
@@ -14,6 +17,14 @@ from training.auditar_recomposicao_v5 import (
 )
 from training.dataset_sintetico import RecorteInsetoReal
 from training.treino.dados import Amostra
+
+
+def test_normalizar_json_converte_escalas_numpy_em_tipos_nativos() -> None:
+    valor = _normalizar_json(
+        {"medidas": [np.bool_(True), np.int64(3), np.float32(0.5)]}
+    )
+
+    assert json.loads(json.dumps(valor)) == {"medidas": [True, 3, 0.5]}
 
 
 def test_correlacao_usa_todos_os_conjuntos():
@@ -124,7 +135,7 @@ def test_trocar_compara_mascaras_com_colagem_uniforme(tmp_path):
     imagem = Image.new("RGB", (768, 576), (230, 230, 220))
     mascara = Image.new("L", (768, 576), 0)
     ImageDraw.Draw(mascara).rectangle((100, 100, 667, 375), fill=1)
-    ImageDraw.Draw(mascara).rectangle((200, 200, 211, 211), fill=2)
+    ImageDraw.Draw(mascara).rectangle((201, 150, 500, 280), fill=2)
     imagem.save(dataset / "imagens" / "amostra_000001.png")
     mascara.save(dataset / "mascaras" / "amostra_000001.png")
     (dataset / "configuracao.json").write_text(
@@ -133,7 +144,7 @@ def test_trocar_compara_mascaras_com_colagem_uniforme(tmp_path):
     (dataset / "metadados.jsonl").write_text(
         '{"id":"amostra_000001","faixa_cobertura_alvo":"trocar",'
         '"recortes_coco_ids_usados":["placa__coco1"],"origem_base":'
-        '"sintetica_stickfly_k45","semente":11,"percentual_cobertura_real":1.0}\n',
+        '"sintetica_stickfly_k45","semente":11,"percentual_cobertura_real":25.0}\n',
         encoding="utf-8",
     )
     recorte = Image.new("RGBA", (12, 12), (0, 0, 0, 0))

@@ -27,6 +27,7 @@ from training.dataset_sintetico import (
     _desenhar_distratores,
     _selecionar_distratores,
     _transformar_recorte_real,
+    classificar_faixa_cobertura_real,
 )
 from training.medicoes_recomposicao import medir_espalhamento
 from training.treino.dados import (
@@ -40,6 +41,19 @@ REFERENCIAS_OCUPACAO = {"1-2%": 0.35, "2-4%": 0.57, "4-8%": 0.88}
 REFERENCIA_AGLOMERACAO = 0.05
 TOLERANCIA_OCUPACAO = 0.10
 REFERENCIAS_COLAGEM = {300: 14.38, 900: 34.65}
+
+
+def _normalizar_json(valor: Any) -> Any:
+    """Converte escalares e vetores NumPy para valores JSON nativos."""
+    if isinstance(valor, np.ndarray):
+        return _normalizar_json(valor.tolist())
+    if isinstance(valor, np.generic):
+        return _normalizar_json(valor.item())
+    if isinstance(valor, dict):
+        return {chave: _normalizar_json(item) for chave, item in valor.items()}
+    if isinstance(valor, (list, tuple)):
+        return [_normalizar_json(item) for item in valor]
+    return valor
 
 
 def _aplicar_alpha(
@@ -286,7 +300,10 @@ def medir_trocar_contra_aleatoria(
     metadados = [
         registro
         for registro in metadados
-        if registro["faixa_cobertura_alvo"] == "trocar"
+        if classificar_faixa_cobertura_real(
+            float(registro["percentual_cobertura_real"])
+        )
+        == "trocar"
     ][:maximo_amostras]
     recortes_por_id = {recorte.identificador: recorte for recorte in recortes}
     medidas = []
@@ -436,6 +453,7 @@ def avaliar_dataset(
     diretorio_espalhamento: Path | None = None,
     referencia_real: dict[str, Any] | None = None,
     comparacao_uniforme: dict[str, Any] | None = None,
+    mascaras_bases: Path | None = None,
 ) -> dict[str, Any]:
     """Mede integridade, divisão, rótulos, distratores, faixas e correlação."""
     info = ler_dataset(diretorio)
@@ -477,6 +495,14 @@ def avaliar_dataset(
             dimensoes_validas &= imagem.size == (768, 576) and imagem.mode == "RGB"
     classes_validas = True
     cobertura_metadados = True
+    classe_255_por_conjunto: dict[str, dict[str, int]] = {
+        conjunto: {
+            "classe_255": 0,
+            "area_placa_rotulada": 0,
+            "pixels_raster": 0,
+        }
+        for conjunto in ("treino", "validacao", "teste")
+    }
     for amostra in info.amostras:
         with Image.open(amostra.mascara) as mascara_aberta:
             mascara = np.asarray(mascara_aberta.convert("L"), dtype=np.uint8)
@@ -484,6 +510,14 @@ def avaliar_dataset(
         contagem = np.bincount(mascara.ravel(), minlength=256)
         percentual = 100 * contagem[2] / max(1, contagem[1] + contagem[2])
         cobertura_metadados &= abs(percentual - amostra.percentual_real) <= 0.01
+        classe_255_por_conjunto[amostra.conjunto]["classe_255"] += int(contagem[255])
+        classe_255_por_conjunto[amostra.conjunto]["area_placa_rotulada"] += int(
+            contagem[1] + contagem[2] + contagem[255]
+        )
+        classe_255_por_conjunto[amostra.conjunto]["pixels_raster"] += int(mascara.size)
+        classe_real = classificar_faixa_cobertura_real(percentual)
+        if classe_real != amostra.faixa:
+            cobertura_metadados = False
     distratores_sinteticos = [
         registro
         for registro in metadados
@@ -541,6 +575,92 @@ def avaliar_dataset(
         }
         for nome, amostras in divisao.items()
     }
+    faixa_balanceada_por_conjunto = all(
+        max(faixas.values()) - min(faixas.values()) <= 1
+        for faixas in faixas_por_conjunto.values()
+    )
+    contagens_faixa_real = {
+        faixa: sum(amostra.faixa == faixa for amostra in info.amostras)
+        for faixa in ("ok", "atencao", "trocar")
+    }
+    cruzamento_faixa_alvo_real = {
+        faixa_alvo: {
+            faixa_real: sum(
+                registro["faixa_cobertura_alvo"] == faixa_alvo
+                and classificar_faixa_cobertura_real(
+                    float(registro["percentual_cobertura_real"])
+                )
+                == faixa_real
+                for registro in metadados
+            )
+            for faixa_real in ("ok", "atencao", "trocar")
+        }
+        for faixa_alvo, _, _ in FAIXAS_COBERTURA_RECOMPOSICAO
+    }
+    faixa_alvo_coerente_com_cobertura_real = all(
+        registro["faixa_cobertura_alvo"]
+        == classificar_faixa_cobertura_real(
+            float(registro["percentual_cobertura_real"])
+        )
+        for registro in metadados
+    )
+    estatisticas_255_por_base = None
+    if mascaras_bases is not None:
+        manifesto = json.loads(
+            (mascaras_bases.parent / "configuracao.json").read_text("utf-8")
+        )
+        elegiveis = set(manifesto.get("bases_elegiveis", []))
+        nao_elegiveis = {
+            registro["placa"]: registro
+            for registro in manifesto.get("bases_nao_elegiveis", [])
+        }
+        estatisticas_255_por_base = {}
+        for nome in sorted(Path(nome).stem for nome in NOMES_BASES_REAIS):
+            caminho = mascaras_bases / f"{nome}.png"
+            if not caminho.is_file():
+                estatisticas_255_por_base[nome] = {
+                    "disponivel": False,
+                    "elegivel": nome in elegiveis,
+                }
+                continue
+            with Image.open(caminho) as mascara_aberta:
+                mascara_base = np.asarray(mascara_aberta.convert("L"), dtype=np.uint8)
+            placa_rotulada = np.isin(mascara_base, (1, 2, 255))
+            area_placa = int(placa_rotulada.sum())
+            percentual_255 = (
+                100.0 * int((mascara_base == 255).sum()) / area_placa
+                if area_placa
+                else 0.0
+            )
+            causa = nao_elegiveis.get(nome)
+            estatisticas_255_por_base[nome] = {
+                "disponivel": True,
+                "classe_255_percentual_do_raster": (
+                    100.0 * int((mascara_base == 255).sum()) / mascara_base.size
+                ),
+                "classe_255_percentual_da_placa": percentual_255,
+                "elegivel": nome in elegiveis,
+                "limite_anterior_0_2_pp_excedido": percentual_255 > 0.2,
+                "limite_de_elegibilidade_1_pp_excedido": percentual_255 > 1.0,
+                "motivo_nao_elegibilidade": causa,
+                "decisao_excecao_0_2_pp": (
+                    "aceita: manter pixels ambíguos ignorados para evitar rótulo falso"
+                    if nome in elegiveis and percentual_255 > 0.2
+                    else None
+                ),
+            }
+    estatisticas_255_por_conjunto = {
+        conjunto: {
+            **valores,
+            "classe_255_percentual_da_placa": (
+                100.0 * valores["classe_255"] / max(1, valores["area_placa_rotulada"])
+            ),
+            "classe_255_percentual_do_raster": (
+                100.0 * valores["classe_255"] / max(1, valores["pixels_raster"])
+            ),
+        }
+        for conjunto, valores in classe_255_por_conjunto.items()
+    }
     correlacao = calcular_correlacao_idade_cobertura(info.amostras)
     criterios = {
         "P_particao": {
@@ -570,6 +690,8 @@ def avaliar_dataset(
             "classes_validas": classes_validas,
             "cobertura_recalculada_confere": cobertura_metadados,
             "255_fora_do_numerador_e_denominador": True,
+            "classe_255_por_conjunto": estatisticas_255_por_conjunto,
+            "classe_255_por_base": estatisticas_255_por_base,
             "dimensoes_rgb_768x576": dimensoes_validas,
             "aceita": classes_validas and cobertura_metadados and dimensoes_validas,
         },
@@ -584,6 +706,11 @@ def avaliar_dataset(
         "C_espalhamento": espalhamento,
         "T_alvo_por_faixa": {
             "faixas": faixas,
+            "classificacao_final_por": "percentual_cobertura_real_da_mascara",
+            "todos_os_rotulos_de_faixa_conferem_com_a_cobertura_real": (
+                faixa_alvo_coerente_com_cobertura_real
+            ),
+            "faixas_reais_por_alvo": cruzamento_faixa_alvo_real,
             "cobertura_real_maxima": max(
                 (amostra.percentual_real for amostra in info.amostras), default=0.0
             ),
@@ -597,6 +724,7 @@ def avaliar_dataset(
             ),
             "aceita": (
                 all(dados["aceita"] for dados in faixas.values())
+                and faixa_alvo_coerente_com_cobertura_real
                 and max(
                     (
                         float(r["percentual_cobertura_alvo"])
@@ -627,22 +755,26 @@ def avaliar_dataset(
             "quantidade_imagens": len(imagens),
             "faixas_em_tercos": (
                 max(
-                    sum(r["faixa_cobertura_alvo"] == faixa for r in metadados)
-                    for faixa in ("ok", "atencao", "trocar")
+                    contagens_faixa_real[faixa] for faixa in ("ok", "atencao", "trocar")
                 )
                 - min(
-                    sum(r["faixa_cobertura_alvo"] == faixa for r in metadados)
-                    for faixa in ("ok", "atencao", "trocar")
+                    contagens_faixa_real[faixa] for faixa in ("ok", "atencao", "trocar")
                 )
                 <= 1
             ),
+            "faixas_por_cobertura_real": contagens_faixa_real,
             "faixas_por_conjunto": faixas_por_conjunto,
+            "estratificacao_balanceada_por_conjunto": faixa_balanceada_por_conjunto,
             "correlacao_idade_cobertura_global": correlacao,
             "correlacao_abaixo_limite": abs(correlacao) < 0.1,
             "aceita": (
                 len(ids) == len(set(ids))
                 and len(sementes) == len(set(sementes))
                 and len(imagens) == len(info.amostras)
+                and max(contagens_faixa_real.values())
+                - min(contagens_faixa_real.values())
+                <= 1
+                and faixa_balanceada_por_conjunto
                 and abs(correlacao) < 0.1
             ),
         },
@@ -755,11 +887,13 @@ if __name__ == "__main__":
         diretorio_espalhamento=args.espalhamento,
         referencia_real=referencia_real,
         comparacao_uniforme=comparacao_uniforme,
+        mascaras_bases=args.mascaras_bases,
     )
     args.saida.parent.mkdir(parents=True, exist_ok=True)
     temporario = args.saida.with_suffix(args.saida.suffix + ".part")
     temporario.write_text(
-        json.dumps(resultado, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        json.dumps(_normalizar_json(resultado), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
     )
     temporario.replace(args.saida)
     if args.atualizar_relatorio_geracao:
@@ -774,7 +908,9 @@ if __name__ == "__main__":
         temporario_relatorio.replace(caminho_relatorio)
     print(
         json.dumps(
-            {"amostras": resultado["amostras"], "criterios": resultado["criterios"]},
+            _normalizar_json(
+                {"amostras": resultado["amostras"], "criterios": resultado["criterios"]}
+            ),
             ensure_ascii=False,
         )
     )
