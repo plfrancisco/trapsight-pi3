@@ -11,6 +11,7 @@ from training.auditar_recomposicao_v5 import (
     _normalizar_json,
     calcular_correlacao_idade_cobertura,
     comparar_reprodutibilidade,
+    faixas_balanceadas,
     medir_calibracao_colagens,
     medir_espalhamento_dataset,
     medir_trocar_contra_aleatoria,
@@ -25,6 +26,33 @@ def test_normalizar_json_converte_escalas_numpy_em_tipos_nativos() -> None:
     )
 
     assert json.loads(json.dumps(valor)) == {"medidas": [True, 3, 0.5]}
+
+
+@pytest.mark.parametrize(
+    ("faixas_por_conjunto", "esperado"),
+    [
+        (
+            {
+                "treino": {"ok": 700, "atencao": 700, "trocar": 700},
+                "validacao": {"ok": 150, "atencao": 150, "trocar": 150},
+            },
+            True,
+        ),
+        (
+            {
+                "treino": {"ok": 7, "atencao": 7, "trocar": 7},
+                "validacao": {"ok": 2, "atencao": 2, "trocar": 1},
+                "teste": {"ok": 1, "atencao": 1, "trocar": 2},
+            },
+            True,
+        ),
+        ({"treino": {"ok": 10, "atencao": 8, "trocar": 7}}, False),
+    ],
+)
+def test_faixas_balanceadas_independe_do_tamanho_do_dataset(
+    faixas_por_conjunto, esperado
+):
+    assert faixas_balanceadas(faixas_por_conjunto) is esperado
 
 
 def test_correlacao_usa_todos_os_conjuntos():

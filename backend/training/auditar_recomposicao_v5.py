@@ -56,6 +56,14 @@ def _normalizar_json(valor: Any) -> Any:
     return valor
 
 
+def faixas_balanceadas(faixas_por_conjunto: dict[str, dict[str, int]]) -> bool:
+    """Confere que, em cada conjunto, as faixas diferem em no máximo uma amostra."""
+    return all(
+        max(faixas.values()) - min(faixas.values()) <= 1
+        for faixas in faixas_por_conjunto.values()
+    )
+
+
 def _aplicar_alpha(
     destino: np.ndarray,
     mascara_placa: np.ndarray,
@@ -575,10 +583,7 @@ def avaliar_dataset(
         }
         for nome, amostras in divisao.items()
     }
-    faixa_balanceada_por_conjunto = all(
-        max(faixas.values()) - min(faixas.values()) <= 1
-        for faixas in faixas_por_conjunto.values()
-    )
+    faixa_balanceada_por_conjunto = faixas_balanceadas(faixas_por_conjunto)
     contagens_faixa_real = {
         faixa: sum(amostra.faixa == faixa for amostra in info.amostras)
         for faixa in ("ok", "atencao", "trocar")
@@ -643,11 +648,6 @@ def avaliar_dataset(
                 "limite_anterior_0_2_pp_excedido": percentual_255 > 0.2,
                 "limite_de_elegibilidade_1_pp_excedido": percentual_255 > 1.0,
                 "motivo_nao_elegibilidade": causa,
-                "decisao_excecao_0_2_pp": (
-                    "aceita: manter pixels ambíguos ignorados para evitar rótulo falso"
-                    if nome in elegiveis and percentual_255 > 0.2
-                    else None
-                ),
             }
     estatisticas_255_por_conjunto = {
         conjunto: {
