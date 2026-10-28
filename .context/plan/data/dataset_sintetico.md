@@ -211,7 +211,10 @@ As 55 placas de composição são atribuídas a treino, validação e teste ante
 geração. Cada origem tem um único conjunto, inclusive quando fornece base e
 recortes. A partição observada contém 39/8/8 placas; as cinco bases reais
 elegíveis ficam 3/1/1. B117 é excluída como base porque excede o limite de área
-ambígua; as cinco bases restantes são A164, A167, B171, B310 e C172. Um único
+ambígua; as cinco bases restantes são A164, A167, B171, B310 e C172. B310 e
+C172 ficam acima de 0,2 p.p. de pixels ambíguos (0,31% e 0,64% da imagem) e
+permanecem como base por decisão registrada: esses pixels vão para a classe 255,
+fora da perda e das métricas, o que evita um rótulo falso. Um único
 fundo real em validação e teste oferece pouca diversidade e limita a
 generalização; ampliar o inventário de bases independentes segue como melhoria.
 
