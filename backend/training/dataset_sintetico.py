@@ -23,6 +23,8 @@ from typing import Literal, cast
 import PIL
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
+from training.treino.configuracao import derivar_status
+
 CategoriaSprite = Literal["pequeno", "medio", "grande"]
 FaixaCobertura = Literal["ok", "atencao", "trocar"]
 
@@ -1601,11 +1603,7 @@ def _criar_faixas_recomposicao(quantidade: int, semente: int) -> list[int]:
 
 def classificar_faixa_cobertura_real(percentual: float) -> FaixaCobertura:
     """Classifica a cobertura medida na máscara, com limites do status do produto."""
-    if percentual < 10.0:
-        return "ok"
-    if percentual < 20.0:
-        return "atencao"
-    return "trocar"
+    return cast(FaixaCobertura, derivar_status(percentual))
 
 
 def _criar_divisoes_por_faixa(faixas: list[int], semente: int) -> list[str]:

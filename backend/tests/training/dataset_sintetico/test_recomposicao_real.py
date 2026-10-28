@@ -133,7 +133,12 @@ def test_divisao_estratificada_respeita_70_15_15_global_e_por_faixa(
 
 @pytest.mark.parametrize(
     ("percentual", "esperada"),
-    [(9.999, "ok"), (10.0, "atencao"), (19.999, "atencao"), (20.0, "trocar")],
+    [
+        (9.999, "ok"),
+        (10.0, "atencao"),
+        (20.0, "atencao"),
+        (20.001, "trocar"),
+    ],
 )
 def test_faixa_e_classificada_pela_cobertura_real(percentual, esperada):
     assert classificar_faixa_cobertura_real(percentual) == esperada

@@ -15,6 +15,15 @@ LIMIAR_TROCAR = 20.0
 CONFIGURACAO_PADRAO = Path(__file__).with_name("configuracao_padrao.json")
 
 
+def derivar_status(percentual: float) -> str:
+    """Status pelo percentual coberto (modelo_spec.md, seção 5.2)."""
+    if percentual < LIMIAR_ATENCAO:
+        return "ok"
+    if percentual <= LIMIAR_TROCAR:
+        return "atencao"
+    return "trocar"
+
+
 @dataclass(frozen=True)
 class Configuracao:
     """Hiperparâmetros e caminhos de uma execução de treino."""

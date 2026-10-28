@@ -21,7 +21,11 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 
-from training.treino.configuracao import INDICE_PLACA_COBERTA, INDICE_PLACA_LIMPA
+from training.treino.configuracao import (
+    INDICE_PLACA_COBERTA,
+    INDICE_PLACA_LIMPA,
+    derivar_status,
+)
 
 CONJUNTOS = ("treino", "validacao", "teste")
 FAIXAS = ("ok", "atencao", "trocar")
@@ -97,14 +101,6 @@ def percentual_da_mascara(mascara: np.ndarray) -> float | None:
     return float(contagens[INDICE_PLACA_COBERTA]) / area_placa * 100.0
 
 
-def _faixa_por_cobertura_real(percentual: float) -> str:
-    if percentual < 10.0:
-        return "ok"
-    if percentual < 20.0:
-        return "atencao"
-    return "trocar"
-
-
 def ler_dataset(diretorio: Path) -> InfoDataset:
     """Lê `metadados.jsonl` e `configuracao.json` de um dataset gerado."""
     raiz = Path(diretorio).resolve()
@@ -140,7 +136,7 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
             ):
                 raise ValueError("placas_origem_recortes inválidas")
             percentual_real = float(dados["percentual_cobertura_real"])
-            faixa_real = _faixa_por_cobertura_real(percentual_real)
+            faixa_real = derivar_status(percentual_real)
             if (
                 "faixa_cobertura_real" in dados
                 and dados["faixa_cobertura_real"] != faixa_real

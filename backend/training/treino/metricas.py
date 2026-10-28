@@ -18,22 +18,12 @@ from training.treino.configuracao import (
     CLASSES,
     INDICE_PLACA_COBERTA,
     INDICE_PLACA_LIMPA,
-    LIMIAR_ATENCAO,
-    LIMIAR_TROCAR,
+    derivar_status,
 )
 
 AREA_PLACA_MINIMA = 0.05
 STATUS = ("ok", "atencao", "trocar")
 FAIXAS_IDADE = ((0.0, 30.0, "0-30"), (30.0, 60.0, "30-60"), (60.0, math.inf, "60+"))
-
-
-def derivar_status(percentual: float) -> str:
-    """Status pelo percentual coberto (modelo_spec.md, seção 5.2)."""
-    if percentual < LIMIAR_ATENCAO:
-        return "ok"
-    if percentual <= LIMIAR_TROCAR:
-        return "atencao"
-    return "trocar"
 
 
 def _faixa_idade(idade: float) -> str:
