@@ -9,7 +9,9 @@ import pytest
 from PIL import Image
 
 from training.treino.dados import (
+    Amostra,
     DatasetInvalido,
+    InfoDataset,
     amostrar,
     contar_pixels_por_classe,
     correlacao_idade_cobertura,
@@ -35,6 +37,38 @@ def test_hash_dos_metadados_e_estavel(criar_dataset):
     raiz = criar_dataset()
 
     assert ler_dataset(raiz).hash_metadados == ler_dataset(raiz).hash_metadados
+
+
+def test_faixa_de_treino_usa_cobertura_real_e_nao_alvo(criar_dataset):
+    raiz = criar_dataset()
+    caminho = raiz / "metadados.jsonl"
+    linhas = [json.loads(linha) for linha in caminho.read_text().splitlines()]
+    registro = next(r for r in linhas if r["conjunto"] == "treino")
+    percentual = registro["percentual_cobertura_real"]
+    esperada = "ok" if percentual < 10 else "atencao" if percentual < 20 else "trocar"
+    registro["faixa_cobertura_alvo"] = "trocar" if esperada != "trocar" else "ok"
+    registro["faixa_cobertura_real"] = esperada
+    caminho.write_text("\n".join(json.dumps(r) for r in linhas) + "\n")
+
+    amostra = next(
+        a for a in ler_dataset(raiz).amostras if a.identificador == registro["id"]
+    )
+
+    assert amostra.faixa == esperada
+
+
+def test_faixa_real_divergente_da_cobertura_invalida_dataset(criar_dataset):
+    raiz = criar_dataset()
+    caminho = raiz / "metadados.jsonl"
+    linhas = [json.loads(linha) for linha in caminho.read_text().splitlines()]
+    registro = linhas[0]
+    percentual = registro["percentual_cobertura_real"]
+    faixa = "ok" if percentual < 10 else "atencao" if percentual < 20 else "trocar"
+    registro["faixa_cobertura_real"] = "trocar" if faixa != "trocar" else "ok"
+    caminho.write_text("\n".join(json.dumps(r) for r in linhas) + "\n")
+
+    with pytest.raises(DatasetInvalido, match="Linha 1"):
+        ler_dataset(raiz)
 
 
 def test_semente_em_dois_conjuntos_impede_o_treino(criar_dataset):
@@ -88,6 +122,36 @@ def test_faixa_ausente_no_treino_impede_o_treino(criar_dataset):
     problemas = verificar_estrutura(info)
 
     assert any("Faixa" in problema and "treino" in problema for problema in problemas)
+
+
+def test_amostra_pequena_aceita_o_balanceamento_inteiro_mais_proximo(tmp_path):
+    distribuicao = {
+        "treino": (7, 7, 7),
+        "validacao": (2, 2, 1),
+        "teste": (1, 1, 2),
+    }
+    amostras = []
+    indice = 0
+    for conjunto, contagens in distribuicao.items():
+        for faixa, quantidade in zip(("ok", "atencao", "trocar"), contagens):
+            for _ in range(quantidade):
+                amostras.append(
+                    Amostra(
+                        identificador=f"amostra_{indice:03d}",
+                        semente=indice,
+                        conjunto=conjunto,
+                        faixa=faixa,
+                        percentual_real=indice % 25,
+                        idade_dias=0.0,
+                        dominante_cor="neutra",
+                        imagem=tmp_path / f"imagem_{indice}.png",
+                        mascara=tmp_path / f"mascara_{indice}.png",
+                    )
+                )
+                indice += 1
+    info = InfoDataset(tmp_path, tuple(amostras), 20261021, "hash")
+
+    assert verificar_estrutura(info) == []
 
 
 def test_correlacao_entre_idade_e_cobertura_impede_o_treino(criar_dataset):

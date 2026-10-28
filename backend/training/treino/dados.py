@@ -97,6 +97,14 @@ def percentual_da_mascara(mascara: np.ndarray) -> float | None:
     return float(contagens[INDICE_PLACA_COBERTA]) / area_placa * 100.0
 
 
+def _faixa_por_cobertura_real(percentual: float) -> str:
+    if percentual < 10.0:
+        return "ok"
+    if percentual < 20.0:
+        return "atencao"
+    return "trocar"
+
+
 def ler_dataset(diretorio: Path) -> InfoDataset:
     """Lê `metadados.jsonl` e `configuracao.json` de um dataset gerado."""
     raiz = Path(diretorio).resolve()
@@ -131,13 +139,23 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
                 not isinstance(origem, str) or not origem.strip() for origem in origens
             ):
                 raise ValueError("placas_origem_recortes inválidas")
+            percentual_real = float(dados["percentual_cobertura_real"])
+            faixa_real = _faixa_por_cobertura_real(percentual_real)
+            if (
+                "faixa_cobertura_real" in dados
+                and dados["faixa_cobertura_real"] != faixa_real
+            ):
+                raise ValueError("faixa_cobertura_real diverge da cobertura")
+            faixa = str(
+                dados.get("faixa_cobertura_real", dados["faixa_cobertura_alvo"])
+            )
             amostras.append(
                 Amostra(
                     identificador=identificador,
                     semente=int(dados["semente"]),
                     conjunto=str(dados["conjunto"]),
-                    faixa=str(dados["faixa_cobertura_alvo"]),
-                    percentual_real=float(dados["percentual_cobertura_real"]),
+                    faixa=faixa,
+                    percentual_real=percentual_real,
                     idade_dias=float(dados["idade_simulada_dias"]),
                     dominante_cor=str(dados.get("dominante_cor", "")),
                     imagem=raiz / "imagens" / f"{identificador}.png",
@@ -213,12 +231,23 @@ def verificar_estrutura(info: InfoDataset) -> list[str]:
             problemas.append(f"O conjunto {conjunto} está vazio.")
             continue
         contagem = Counter(a.faixa for a in do_conjunto)
-        for faixa in FAIXAS:
-            proporcao = contagem.get(faixa, 0) / len(do_conjunto)
-            if not PROPORCAO_FAIXA_MINIMA <= proporcao <= PROPORCAO_FAIXA_MAXIMA:
+        if len(do_conjunto) < 3:
+            problemas.append(
+                f"Conjunto {conjunto} tem menos de três amostras para cobrir as faixas."
+            )
+        elif len(do_conjunto) < 12:
+            quantidades = [contagem.get(faixa, 0) for faixa in FAIXAS]
+            if max(quantidades) - min(quantidades) > 1:
                 problemas.append(
-                    f"Faixa {faixa} em {conjunto} com {proporcao:.0%} das amostras."
+                    f"Faixas desbalanceadas em {conjunto}: {dict(contagem)}."
                 )
+        else:
+            for faixa in FAIXAS:
+                proporcao = contagem.get(faixa, 0) / len(do_conjunto)
+                if not PROPORCAO_FAIXA_MINIMA <= proporcao <= PROPORCAO_FAIXA_MAXIMA:
+                    problemas.append(
+                        f"Faixa {faixa} em {conjunto} com {proporcao:.0%} das amostras."
+                    )
 
     correlacao = correlacao_idade_cobertura(info.do_conjunto("treino"))
     if abs(correlacao) >= CORRELACAO_IDADE_MAXIMA:
