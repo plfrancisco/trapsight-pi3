@@ -4,14 +4,15 @@ O banco guarda **dados sensíveis**: hashes de senha Argon2id das contas
 (`usuario.senha_hash`), tokens de sessão e as imagens das análises em colunas
 `BYTEA` (`analise.imagem_original` e `analise.mascara`, usadas quando
 `STORAGE_BACKEND=database`). Um dump é, portanto, uma cópia completa do material
-mais sensível do sistema: ele nunca fica em claro fora do momento da restauração,
-nunca entra no repositório e nunca é anexado em chat, e-mail ou issue.
+mais sensível do sistema: ele nunca fica em claro fora do momento da
+restauração, nunca entra no repositório e nunca é anexado em chat, e-mail ou
+issue.
 
 O par de scripts cobre o ciclo inteiro:
 
 | Script | Papel |
 | --- | --- |
-| `scripts/backup-banco.sh` | `pg_dump` no formato custom, cifrado para uma chave pública, com `.sha256` do artefato |
+| `scripts/backup-banco.sh` | `pg_dump` do schema `public` no formato custom, cifrado para uma chave pública, com `.sha256` do artefato |
 | `scripts/restaurar-banco.sh` | confere o hash, decifra em memória e restaura **em banco vazio** |
 | `scripts/testar-restauracao.sh` | prova o ciclo em um PostgreSQL descartável e compara linhas, imagens e login |
 
@@ -65,15 +66,50 @@ Enquanto o sistema for protótipo em demonstração, com dados reinseríveis:
   externo ou armazenamento pessoal). Como o arquivo já vai cifrado, um
   armazenamento de terceiros guarda apenas texto ilegível.
 - A **chave privada nunca** acompanha o dump nem entra no repositório: ela mora
-  em `~/.trapsight-seguranca/chave_privada.pem`, igual à do relatório cifrado da
-  suíte de segurança. Backup e chave no mesmo lugar equivalem a backup em claro.
+  em `~/.trapsight-backup/chave_privada.pem`. Backup e chave no mesmo lugar
+  equivalem a backup em claro.
+
+## O par de chaves do backup
+
+A cifra segue a convenção que o repositório já usa para o relatório cego da
+suíte de segurança — `openssl cms` com certificado público —, mas com **chave
+própria**: quem pode abrir um backup não precisa poder abrir os relatórios, e
+vice-versa. São dois arquivos com destinos opostos:
+
+| Arquivo | Onde fica |
+| --- | --- |
+| `security/cifra/backup-certificado.pem` (público) | no repositório; é com ele que o backup é cifrado |
+| `chave_privada.pem` (privada) | **só** em `~/.trapsight-backup/`, nunca no repositório |
+
+> **Perder a chave privada é perder todos os backups.** Nenhum dump cifrado com
+> ela pode ser aberto de outra forma — não existe recuperação. Guarde uma
+> **cópia de segurança da chave privada** em lugar separado dos dumps
+> (gerenciador de senhas com anexo, ou mídia offline guardada fisicamente), e
+> nunca no mesmo diretório, disco ou nuvem em que os backups são arquivados:
+> quem obtiver os dois tem o banco em claro.
+
+Gere o par uma única vez, com validade longa — o certificado só serve para
+transportar a chave pública, não há cadeia de confiança envolvida:
+
+```bash
+mkdir -p ~/.trapsight-backup && chmod 700 ~/.trapsight-backup
+openssl req -x509 -newkey rsa:4096 -nodes -days 3650 \
+  -subj "/CN=trapsight-backup" \
+  -keyout ~/.trapsight-backup/chave_privada.pem \
+  -out security/cifra/backup-certificado.pem
+chmod 600 ~/.trapsight-backup/chave_privada.pem
+```
+
+No Git Bash, o `openssl` nativo do Windows não entende caminhos `/c/...`:
+envolva cada caminho em `$(cygpath -m ...)` ou rode o comando no WSL.
+
+Commite **apenas** `security/cifra/backup-certificado.pem`. A chave privada não
+entra no repositório em nenhuma circunstância; se isso acontecer por engano, ela
+está comprometida e o par precisa ser trocado, com novo backup de tudo.
 
 ## Como cifrar
 
-O repositório já tem uma convenção de cifra por chave pública — a mesma do
-relatório cego da suíte de segurança: `openssl cms` com o certificado público
-`security/cifra/certificado.pem`, decifrável só por quem tem a chave privada
-correspondente. O backup usa essa convenção por padrão, sem instalar nada novo:
+Com o certificado público no lugar, o backup é um comando:
 
 ```bash
 BACKUP_DATABASE_URL="postgresql://usuario:senha@host:5432/postgres" \
@@ -83,6 +119,15 @@ BACKUP_DATABASE_URL="postgresql://usuario:senha@host:5432/postgres" \
 O resultado é `~/backups-trapsight/armadilhas-<data>.dump.cms` mais o
 `.sha256` do arquivo cifrado — que permite verificar a integridade de uma cópia
 arquivada sem precisar da chave privada.
+
+O dump cobre **só o schema `public`** (`pg_dump --schema=public`), onde estão as
+tabelas da aplicação e o controle de versão das migrações. Os schemas da
+plataforma do Supabase (`auth`, `storage`, `extensions`) ficam de fora: eles
+pertencem ao provedor, o papel da aplicação não conseguiria restaurá-los e a
+presença deles tornaria o dump incompatível com a exigência de restaurar em
+banco vazio, já que em um projeto gerenciado esses schemas nunca estão vazios.
+Donos e permissões são preservados, por isso o banco de destino precisa ter os
+papéis `trapsight_backend` e `trapsight_runtime`.
 
 Para cifrar com GPG em vez do CMS, basta informar a chave pública do
 destinatário; a extensão passa a ser `.dump.gpg`:
@@ -139,6 +184,12 @@ RESTORE_DATABASE_URL="postgresql://postgres:senha@host:5432/postgres" \
 O dump é decifrado direto para o `pg_restore`, em uma transação única: nenhuma
 cópia em claro toca o disco e uma falha no meio não deixa banco pela metade.
 
+A restauração usa `pg_restore --schema=public`, que é o par necessário do
+`--schema=public` do backup: ao delimitar o schema, o dump passa a carregar um
+`CREATE SCHEMA public`, e esse schema já existe em qualquer banco recém-criado.
+O filtro aplica os objetos de dentro do schema e ignora a criação dele. Se um
+dos dois lados mudar, o outro precisa mudar junto.
+
 ### No Supabase
 
 1. Use a conexão **direta** ou o pooler em modo sessão (porta `5432`) com o
@@ -164,7 +215,10 @@ estes scripts: crie um banco novo, restaure nele e só então aponte a aplicaç�
 
 ## Limites conhecidos
 
-- O backup cobre **só o banco**. Arquivos sob `UPLOADS_DIR` não entram; com
+- O backup cobre **só o schema `public` do banco**. Nada que viva em outro
+  schema entra no dump; se algum dia a aplicação passar a criar objetos fora do
+  `public`, o `--schema=public` de `scripts/backup-banco.sh` precisa acompanhar.
+- Arquivos sob `UPLOADS_DIR` não entram; com
   `STORAGE_BACKEND=database` as imagens estão no próprio dump, mas em uma
   instalação com backend `filesystem` o diretório de uploads precisa de cópia
   própria.
@@ -172,3 +226,5 @@ estes scripts: crie um banco novo, restaure nele e só então aponte a aplicaç�
   executar o script (ou de um agendador do sistema operacional, ainda não
   configurado).
 - A rotação das cópias antigas é manual.
+- A guarda da chave privada e da cópia de segurança dela é manual: sem essa
+  cópia, um disco perdido invalida de uma vez todos os backups já arquivados.

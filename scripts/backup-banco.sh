@@ -5,17 +5,20 @@
 # pg_dump passa por um filtro que apaga qualquer URL antes de ser impressa, e a
 # senha é movida da URL para PGPASSWORD, de modo que não apareça na linha de
 # comando (visível a qualquer processo da máquina). O dump sai no formato custom
-# do pg_dump, que o pg_restore aplica seletivamente, e é cifrado para uma chave
-# pública — a privada fica fora do repositório. O arquivo `.sha256` registra o
-# hash do artefato cifrado, que permite conferir a integridade de uma cópia
-# arquivada sem precisar decifrá-la.
+# do pg_dump, que o pg_restore aplica seletivamente, cobre apenas o schema
+# `public` (as tabelas da aplicação) e é cifrado para a chave pública própria do
+# backup — a privada fica fora do repositório, e perdê-la significa perder todo
+# backup já cifrado com ela. O arquivo `.sha256` registra o hash do artefato
+# cifrado, que permite conferir a integridade de uma cópia arquivada sem
+# precisar decifrá-la.
 #
 # Variáveis de ambiente:
 #   BACKUP_DATABASE_URL     conexão do banco a copiar; o padrão é DATABASE_URL
 #   BACKUP_DIR              diretório de saída, sempre fora do repositório
 #                           (padrão: ~/backups-trapsight)
-#   BACKUP_CERTIFICADO      certificado público usado por `openssl cms`
-#                           (padrão: security/cifra/certificado.pem)
+#   BACKUP_CERTIFICADO      certificado público do backup, usado por
+#                           `openssl cms` (padrão:
+#                           security/cifra/backup-certificado.pem)
 #   BACKUP_GPG_DESTINATARIO cifra com gpg para essa chave pública, em vez do CMS
 #   BACKUP_DOCKER_REDE      rede docker em que o banco responde, quando o
 #                           pg_dump roda em contêiner
@@ -75,10 +78,13 @@ if [ -n "${BACKUP_GPG_DESTINATARIO:-}" ]; then
   }
 else
   SUFIXO="cms"
-  CERTIFICADO="${BACKUP_CERTIFICADO:-$RAIZ/security/cifra/certificado.pem}"
+  # Chave separada da que cifra os relatórios de segurança: quem abre um
+  # backup não precisa poder abrir os relatórios, e vice-versa.
+  CERTIFICADO="${BACKUP_CERTIFICADO:-$RAIZ/security/cifra/backup-certificado.pem}"
   command -v openssl >/dev/null 2>&1 || { echo "openssl não encontrado." >&2; exit 66; }
   [ -f "$CERTIFICADO" ] || {
-    echo "Certificado público ausente: $CERTIFICADO" >&2
+    echo "Certificado público do backup ausente: $CERTIFICADO" >&2
+    echo "Gere o par de chaves como descrito em deploy/backup-restauracao.md." >&2
     exit 66
   }
 fi
@@ -96,14 +102,18 @@ cifrar() {
 }
 
 despejar() {
-  # O dump sai completo, com donos e permissões: o banco de destino precisa ter
-  # os papéis que as migrações criam (trapsight_backend, trapsight_runtime).
+  # Só o schema `public`, onde ficam as tabelas da aplicação: em um banco
+  # gerenciado como o Supabase, os schemas da plataforma (auth, storage,
+  # extensions) pertencem ao provedor, não podem ser restaurados por este papel
+  # e deixariam o dump incompatível com a exigência de banco de destino vazio.
+  # Donos e permissões são preservados, então o destino precisa ter os papéis
+  # que as migrações criam (trapsight_backend, trapsight_runtime).
   if command -v pg_dump >/dev/null 2>&1; then
-    pg_dump --format=custom --dbname="$URL"
+    pg_dump --format=custom --schema=public --dbname="$URL"
   else
     # shellcheck disable=SC2086 # --network só entra quando a rede é informada
     docker run --rm ${REDE:+--network "$REDE"} -e PGPASSWORD "$IMAGEM_PG" \
-      pg_dump --format=custom --dbname="$URL"
+      pg_dump --format=custom --schema=public --dbname="$URL"
   fi
 }
 

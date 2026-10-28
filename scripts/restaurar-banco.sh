@@ -9,8 +9,8 @@
 #
 # Variáveis de ambiente:
 #   RESTORE_DATABASE_URL    conexão do banco de destino; o padrão é DATABASE_URL
-#   RESTORE_CHAVE_PRIVADA   chave privada do CMS, sempre fora do repositório
-#                           (padrão: ~/.trapsight-seguranca/chave_privada.pem)
+#   RESTORE_CHAVE_PRIVADA   chave privada do backup, sempre fora do repositório
+#                           (padrão: ~/.trapsight-backup/chave_privada.pem)
 #   RESTORE_DOCKER_REDE     rede docker em que o banco responde, quando o
 #                           pg_restore roda em contêiner
 #   RESTORE_IMAGEM_PG       imagem com pg_restore e psql, usada quando não estão
@@ -70,8 +70,13 @@ case "$ARQUIVO" in
     ;;
   *.cms)
     command -v openssl >/dev/null 2>&1 || { echo "openssl não encontrado." >&2; exit 66; }
-    CHAVE="${RESTORE_CHAVE_PRIVADA:-$HOME/.trapsight-seguranca/chave_privada.pem}"
-    [ -f "$CHAVE" ] || { echo "Chave privada não encontrada em $CHAVE" >&2; exit 66; }
+    # Chave do backup, distinta da que abre os relatórios de segurança.
+    CHAVE="${RESTORE_CHAVE_PRIVADA:-$HOME/.trapsight-backup/chave_privada.pem}"
+    [ -f "$CHAVE" ] || {
+      echo "Chave privada do backup não encontrada em $CHAVE" >&2
+      echo "Sem ela o dump não abre; ver deploy/backup-restauracao.md." >&2
+      exit 66
+    }
     decifrar() {
       openssl cms -decrypt -binary -inform DER \
         -in "$(winpath "$ARQUIVO")" -inkey "$(winpath "$CHAVE")"
@@ -134,8 +139,11 @@ if [ "$TABELAS" != "0" ]; then
   exit 65
 fi
 
+# `--schema=public` restaura os objetos de dentro do schema e ignora o
+# `CREATE SCHEMA public` que o dump carrega: o schema já existe em qualquer banco
+# recém-criado, e sem esse filtro a restauração aborta no primeiro comando.
 if ! decifrar 2>"$ERROS" | executar_pg pg_restore --dbname="$URL" \
-  --single-transaction --exit-on-error 2>>"$ERROS"; then
+  --schema=public --single-transaction --exit-on-error 2>>"$ERROS"; then
   falhar "Falha ao restaurar; a transação única garante que nada foi aplicado."
 fi
 
