@@ -155,16 +155,27 @@ determinada. A suíte de backend rodou em Linux pela primeira vez no CI de
 - [x] Limiar calibrado sobre o conjunto de treino, não escolhido
       arbitrariamente
 - [x] **Não implementar limiar adaptativo**
-- [ ] Recalibrar o limiar sobre o dataset por recomposição (ML02B): a calibração
-      registrada abaixo foi feita sobre o dataset sintético anterior, cujas
-      imagens foram descartadas
+- [x] Recalibrar o limiar sobre o dataset por recomposição (ML02B), com a classe
+      255 ignorada (fora da placa, do percentual e das métricas)
 
 **Especificação:** `../plan/model/modelo_spec.md`, seção 9.
 **Dependências:** ML02 e ML02A (precisa de imagens para calibrar).
 
-**Calibração:** `../../backend/training/baseline_calibracao.json`; teste:
-450 amostras, Dice 0,80553837, IoU 0,67439452, erro absoluto médio
-11,00708889 pp, acurácia de status 0,71777778.
+**Calibração (2026-10-28, dataset v5):** `../../backend/training/baseline_calibracao.json`,
+versão 2, limiar V = 217, Dice de treino 0,81733856, 2.100 amostras de treino.
+
+| Conjunto | Amostras | Dice | IoU | Erro médio (pp) | Acurácia de status |
+|---|---:|---:|---:|---:|---:|
+| Validação | 450 | 0,6790 | 0,5140 | 13,81 | 0,5422 |
+| Teste | 450 | 0,8352 | 0,7171 | 3,34 | 0,7267 |
+| Teste, base sintética | 223 | 0,8554 | 0,7473 | 2,56 | 0,8386 |
+| Teste, base real | 227 | 0,8216 | 0,6972 | 4,10 | 0,6167 |
+
+Na validação, as 232 amostras de base real (uma única placa, B310) têm Dice 0,5709
+e erro de 24,27 pp, contra 0,8833 e 2,69 pp nas 218 de base sintética. Os valores
+anteriores (Dice 0,8055 em 450 amostras de teste) eram do dataset sintético
+descartado e não valem mais. As métricas por conjunto ficam em
+`metricas_baseline_{validacao,teste}.json`, dentro do dataset (não versionado).
 
 **Nota:** o baseline existe para representar a abordagem clássica ingênua.
 Torná-lo adaptativo aproximaria seu comportamento do modelo treinado e
