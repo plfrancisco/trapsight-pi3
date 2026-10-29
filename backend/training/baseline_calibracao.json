@@ -1,10 +1,11 @@
 {
-  "dice_treino": 0.80507881,
-  "hash_conjunto_treino_sha256": "1b6c67fca2a2d404e068be2436c5c8c44f0add0107e339934cd08a43cb5c0d6b",
-  "limiar_v": 166,
+  "dice_treino": 0.81733856,
+  "hash_conjunto_treino_sha256": "c897bd97a31fb4f9d51bbcb969bec8b3a5e3c84236743857c54e23b538c65ef8",
+  "limiar_v": 217,
   "metodo": "limiar_global_hsv_v",
   "quantidade_amostras_treino": 2100,
   "regra": "V < limiar_v dentro da placa",
+  "regra_mascara": "placa = classes 1 e 2; classe 255 ignorada",
   "semente_global": 20261021,
-  "versao": 1
+  "versao": 2
 }

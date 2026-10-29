@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ import cv2
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
-VERSAO_CALIBRACAO = 1
+VERSAO_CALIBRACAO = 2
 LIMIAR_V_MINIMO = 0
 LIMIAR_V_MAXIMO = 255
 LIMIAR_ATENCAO = 10.0
@@ -32,6 +33,15 @@ class RegistroAmostra:
     conjunto: str
     imagem: Path
     mascara: Path
+    origem_base: str | None = None
+
+
+def _iterar_linhas_metadados(caminho: Path) -> Iterator[tuple[int, str]]:
+    try:
+        with caminho.open(encoding="utf-8") as arquivo:
+            yield from enumerate(arquivo, start=1)
+    except FileNotFoundError as erro:
+        raise ValueError(f"Arquivo obrigatório ausente: {erro.filename}.") from erro
 
 
 def _ler_dataset(diretorio: Path) -> tuple[int, list[RegistroAmostra]]:
@@ -51,14 +61,9 @@ def _ler_dataset(diretorio: Path) -> tuple[int, list[RegistroAmostra]]:
     if isinstance(semente_global, bool) or not isinstance(semente_global, int):
         raise ValueError("configuracao.json precisa registrar semente_global inteira.")
 
-    try:
-        linhas = caminho_metadados.read_text(encoding="utf-8").splitlines()
-    except FileNotFoundError as erro:
-        raise ValueError(f"Arquivo obrigatório ausente: {erro.filename}.") from erro
-
     registros: list[RegistroAmostra] = []
     identificadores: set[str] = set()
-    for numero_linha, linha in enumerate(linhas, start=1):
+    for numero_linha, linha in _iterar_linhas_metadados(caminho_metadados):
         if not linha.strip():
             continue
         try:
@@ -75,6 +80,7 @@ def _ler_dataset(diretorio: Path) -> tuple[int, list[RegistroAmostra]]:
         identificador = dados.get("id")
         semente = dados.get("semente")
         conjunto = dados.get("conjunto")
+        origem_base = dados.get("origem_base")
         if (
             not isinstance(identificador, str)
             or not identificador
@@ -91,6 +97,8 @@ def _ler_dataset(diretorio: Path) -> tuple[int, list[RegistroAmostra]]:
             )
         if not isinstance(conjunto, str) or conjunto not in DIVISOES_VALIDAS:
             raise ValueError(f"Divisão inválida na linha {numero_linha}.")
+        if origem_base is not None and not isinstance(origem_base, str):
+            raise ValueError(f"Origem da base inválida na linha {numero_linha}.")
 
         identificadores.add(identificador)
         registros.append(
@@ -100,6 +108,7 @@ def _ler_dataset(diretorio: Path) -> tuple[int, list[RegistroAmostra]]:
                 conjunto=conjunto,
                 imagem=raiz / "imagens" / f"{identificador}.png",
                 mascara=raiz / "mascaras" / f"{identificador}.png",
+                origem_base=origem_base,
             )
         )
 
@@ -127,11 +136,11 @@ def _ler_par_imagem(registro: RegistroAmostra) -> tuple[np.ndarray, np.ndarray]:
         raise ValueError(
             f"Imagem e máscara têm dimensões diferentes: {registro.identificador}."
         )
-    if not np.isin(mascara, (0, 1, 2)).all():
+    if not np.isin(mascara, (0, 1, 2, 255)).all():
         raise ValueError(
             f"Máscara contém classe não reconhecida: {registro.identificador}."
         )
-    if not np.any(mascara != 0):
+    if not np.isin(mascara, (1, 2)).any():
         raise ValueError(f"Máscara sem pixels de placa: {registro.identificador}.")
     return imagem, mascara
 
@@ -271,10 +280,9 @@ def calibrar(
     limpos_por_valor = np.zeros(256, dtype=np.int64)
     for registro in registros_treino:
         imagem, mascara = _ler_par_imagem(registro)
-        placa = mascara != 0
         valor = cv2.cvtColor(np.ascontiguousarray(imagem), cv2.COLOR_RGB2HSV)[:, :, 2]
-        positivos_por_valor += np.bincount(valor[placa & (mascara == 2)], minlength=256)
-        limpos_por_valor += np.bincount(valor[placa & (mascara == 1)], minlength=256)
+        positivos_por_valor += np.bincount(valor[mascara == 2], minlength=256)
+        limpos_por_valor += np.bincount(valor[mascara == 1], minlength=256)
 
     limiar_v, dice_treino = _selecionar_limiar(
         positivos_por_valor,
@@ -284,6 +292,7 @@ def calibrar(
         "versao": VERSAO_CALIBRACAO,
         "metodo": "limiar_global_hsv_v",
         "regra": "V < limiar_v dentro da placa",
+        "regra_mascara": "placa = classes 1 e 2; classe 255 ignorada",
         "limiar_v": limiar_v,
         "dice_treino": round(dice_treino, 8),
         "semente_global": semente_global,
@@ -313,6 +322,8 @@ def _ler_calibracao(
         or isinstance(calibracao.get("versao"), bool)
         or calibracao.get("versao") != VERSAO_CALIBRACAO
         or calibracao.get("metodo") != "limiar_global_hsv_v"
+        or calibracao.get("regra_mascara")
+        != "placa = classes 1 e 2; classe 255 ignorada"
     ):
         raise ValueError("Versão de calibração ausente ou incompatível.")
     limiar_v = calibracao.get("limiar_v")
@@ -342,6 +353,26 @@ def _derivar_status(percentual: float) -> str:
     return "trocar"
 
 
+def _resumir_metricas(
+    tp: int,
+    fp: int,
+    fn: int,
+    soma_erro_percentual: float,
+    acertos_status: int,
+    quantidade: int,
+) -> dict[str, float]:
+    uniao = tp + fp + fn
+    return {
+        "dice_placa_coberta": round(_dice(tp, fp, fn), 8),
+        "iou_placa_coberta": round(1.0 if uniao == 0 else tp / uniao, 8),
+        "erro_percentual_absoluto_medio_pp": round(
+            soma_erro_percentual / quantidade,
+            8,
+        ),
+        "acuracia_status": round(acertos_status / quantidade, 8),
+    }
+
+
 def avaliar(
     diretorio_dataset: Path,
     split: str,
@@ -366,9 +397,20 @@ def avaliar(
     tp = fp = fn = 0
     soma_erro_percentual = 0.0
     acertos_status = 0
+    acumulados_por_origem = {
+        origem: {
+            "quantidade": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "soma_erro_percentual": 0.0,
+            "acertos_status": 0,
+        }
+        for origem in ("sintetica", "real_ums")
+    }
     for registro in registros_avaliados:
         imagem, mascara = _ler_par_imagem(registro)
-        placa = mascara != 0
+        placa = np.isin(mascara, (1, 2))
         predicao, percentual_predito = segmentar(
             imagem,
             calibracao["limiar_v"],
@@ -382,18 +424,52 @@ def avaliar(
             / int(np.count_nonzero(placa)),
             2,
         )
-        tp += int(np.count_nonzero(coberta_predita & coberta_real))
-        fp += int(np.count_nonzero(coberta_predita & (mascara == 1)))
-        fn += int(np.count_nonzero(~coberta_predita & coberta_real))
-        soma_erro_percentual += abs(percentual_predito - percentual_real)
-        acertos_status += int(
+        tp_amostra = int(np.count_nonzero(coberta_predita & coberta_real))
+        fp_amostra = int(np.count_nonzero(coberta_predita & (mascara == 1)))
+        fn_amostra = int(np.count_nonzero(~coberta_predita & coberta_real))
+        erro_amostra = abs(percentual_predito - percentual_real)
+        status_correto = int(
             _derivar_status(percentual_predito) == _derivar_status(percentual_real)
         )
+        tp += tp_amostra
+        fp += fp_amostra
+        fn += fn_amostra
+        soma_erro_percentual += erro_amostra
+        acertos_status += status_correto
+        origem = (
+            "real_ums"
+            if registro.origem_base == "real_ums"
+            else "sintetica"
+            if registro.origem_base is not None
+            else None
+        )
+        acumulado = acumulados_por_origem.get(origem)
+        if acumulado is not None:
+            acumulado["quantidade"] += 1
+            acumulado["tp"] += tp_amostra
+            acumulado["fp"] += fp_amostra
+            acumulado["fn"] += fn_amostra
+            acumulado["soma_erro_percentual"] += erro_amostra
+            acumulado["acertos_status"] += status_correto
 
-    uniao = tp + fp + fn
     quantidade = len(registros_avaliados)
+    metricas_por_origem_base = {
+        origem: {
+            "quantidade_amostras": acumulado["quantidade"],
+            "metricas": _resumir_metricas(
+                int(acumulado["tp"]),
+                int(acumulado["fp"]),
+                int(acumulado["fn"]),
+                float(acumulado["soma_erro_percentual"]),
+                int(acumulado["acertos_status"]),
+                int(acumulado["quantidade"]),
+            ),
+        }
+        for origem, acumulado in acumulados_por_origem.items()
+        if acumulado["quantidade"]
+    }
     relatorio = {
-        "versao": 1,
+        "versao": 2,
         "metodo": "limiar_global_hsv_v",
         "conjunto": split,
         "quantidade_amostras": quantidade,
@@ -402,15 +478,15 @@ def avaliar(
             "semente_global": calibracao["semente_global"],
             "hash_conjunto_treino_sha256": hash_treino,
         },
-        "metricas": {
-            "dice_placa_coberta": round(_dice(tp, fp, fn), 8),
-            "iou_placa_coberta": round(1.0 if uniao == 0 else tp / uniao, 8),
-            "erro_percentual_absoluto_medio_pp": round(
-                soma_erro_percentual / quantidade,
-                8,
-            ),
-            "acuracia_status": round(acertos_status / quantidade, 8),
-        },
+        "metricas": _resumir_metricas(
+            tp,
+            fp,
+            fn,
+            soma_erro_percentual,
+            acertos_status,
+            quantidade,
+        ),
+        "metricas_por_origem_base": metricas_por_origem_base,
     }
     destino = arquivo_saida or diretorio_dataset / f"metricas_baseline_{split}.json"
     _gravar_json(destino, relatorio)

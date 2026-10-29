@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from training.baseline import avaliar, calibrar, segmentar
@@ -21,14 +22,16 @@ def _gravar_amostra(
 ) -> dict[str, object]:
     Image.fromarray(imagem).save(raiz / "imagens" / f"{identificador}.png")
     Image.fromarray(mascara).save(raiz / "mascaras" / f"{identificador}.png")
-    return {
+    registro: dict[str, object] = {
         "id": identificador,
         "semente": semente,
         "conjunto": conjunto,
         "percentual_cobertura_real": float(np.count_nonzero(mascara == 2))
         * 100.0
         / float(np.count_nonzero(mascara != 0)),
+        "origem_base": "real_ums" if conjunto == "teste" else "sintetica_fixture",
     }
+    return registro
 
 
 def _criar_dataset(raiz: Path) -> None:
@@ -122,7 +125,7 @@ def test_sujeira_escura_e_contada_como_cobertura_pelo_limiar_global(
     dataset = tmp_path / "dataset"
     arquivo_calibracao = tmp_path / "baseline_calibracao.json"
     _criar_dataset(dataset)
-    calibrar(dataset, arquivo_calibracao)
+    calibracao = calibrar(dataset, arquivo_calibracao)
 
     metricas = avaliar(
         dataset,
@@ -133,6 +136,95 @@ def test_sujeira_escura_e_contada_como_cobertura_pelo_limiar_global(
 
     assert metricas["metricas"]["dice_placa_coberta"] == 0.66666667
     assert metricas["metricas"]["iou_placa_coberta"] == 0.5
-    assert metricas["metricas"]["erro_percentual_absoluto_medio_pp"] > 0
+    assert calibracao["limiar_v"] == 51
+    assert calibracao["dice_treino"] == 1.0
+    assert metricas["metricas"]["erro_percentual_absoluto_medio_pp"] == 1.0
     assert metricas["metricas"]["acuracia_status"] == 1.0
+    assert metricas["metricas_por_origem_base"]["real_ums"]["quantidade_amostras"] == 1
     assert (tmp_path / "metricas.json").is_file()
+
+
+def test_calibracao_ignora_pixels_255_nos_histogramas(tmp_path: Path) -> None:
+    dataset_255 = tmp_path / "dataset_255"
+    dataset_zero = tmp_path / "dataset_zero"
+    _criar_dataset(dataset_255)
+    _criar_dataset(dataset_zero)
+
+    imagem_255_path = dataset_255 / "imagens" / "amostra_000001.png"
+    imagem_255 = np.asarray(Image.open(imagem_255_path).convert("RGB")).copy()
+    imagem_255[0, 1] = 40
+    Image.fromarray(imagem_255).save(imagem_255_path)
+    mascara_255_path = dataset_255 / "mascaras" / "amostra_000001.png"
+    mascara_255 = np.asarray(Image.open(mascara_255_path).convert("L")).copy()
+    mascara_255[0, 1] = 255
+    Image.fromarray(mascara_255).save(mascara_255_path)
+
+    imagem_zero_path = dataset_zero / "imagens" / "amostra_000001.png"
+    imagem_zero = np.asarray(Image.open(imagem_zero_path).convert("RGB")).copy()
+    imagem_zero[0, 1] = 40
+    Image.fromarray(imagem_zero).save(imagem_zero_path)
+    mascara_zero_path = dataset_zero / "mascaras" / "amostra_000001.png"
+    mascara_zero = np.asarray(Image.open(mascara_zero_path).convert("L")).copy()
+    mascara_zero[0, 1] = 0
+    Image.fromarray(mascara_zero).save(mascara_zero_path)
+
+    calibracao_255 = calibrar(dataset_255, tmp_path / "calibracao_255.json")
+    calibracao_zero = calibrar(dataset_zero, tmp_path / "calibracao_zero.json")
+
+    assert calibracao_255["limiar_v"] == calibracao_zero["limiar_v"] == 51
+    assert calibracao_255["dice_treino"] == calibracao_zero["dice_treino"] == 1.0
+
+
+def test_avaliacao_ignora_255_no_segmento_e_denominador(tmp_path: Path) -> None:
+    dataset = tmp_path / "dataset"
+    arquivo_calibracao = tmp_path / "baseline_calibracao.json"
+    _criar_dataset(dataset)
+    calibrar(dataset, arquivo_calibracao)
+
+    caminho_mascara = dataset / "mascaras" / "amostra_000002.png"
+    mascara = np.asarray(Image.open(caminho_mascara).convert("L")).copy()
+    mascara[0, 1] = 255
+    Image.fromarray(mascara).save(caminho_mascara)
+
+    metricas = avaliar(dataset, "teste", arquivo_calibracao)
+
+    assert metricas["metricas"] == {
+        "dice_placa_coberta": 1.0,
+        "iou_placa_coberta": 1.0,
+        "erro_percentual_absoluto_medio_pp": 0.0,
+        "acuracia_status": 1.0,
+    }
+    assert (
+        metricas["metricas_por_origem_base"]["real_ums"]["metricas"]
+        == metricas["metricas"]
+    )
+
+
+def test_avaliacao_rejeita_classe_de_mascara_desconhecida(tmp_path: Path) -> None:
+    dataset = tmp_path / "dataset"
+    arquivo_calibracao = tmp_path / "baseline_calibracao.json"
+    _criar_dataset(dataset)
+    calibrar(dataset, arquivo_calibracao)
+
+    caminho_mascara = dataset / "mascaras" / "amostra_000002.png"
+    mascara = np.asarray(Image.open(caminho_mascara).convert("L")).copy()
+    mascara[0, 1] = 3
+    Image.fromarray(mascara).save(caminho_mascara)
+
+    with pytest.raises(ValueError, match="classe não reconhecida"):
+        avaliar(dataset, "teste", arquivo_calibracao)
+
+
+def test_avaliacao_exige_pixels_de_placa_entre_as_classes_validas(
+    tmp_path: Path,
+) -> None:
+    dataset = tmp_path / "dataset"
+    arquivo_calibracao = tmp_path / "baseline_calibracao.json"
+    _criar_dataset(dataset)
+    calibrar(dataset, arquivo_calibracao)
+
+    caminho_mascara = dataset / "mascaras" / "amostra_000002.png"
+    Image.fromarray(np.full((10, 10), 255, dtype=np.uint8)).save(caminho_mascara)
+
+    with pytest.raises(ValueError, match="sem pixels de placa"):
+        avaliar(dataset, "teste", arquivo_calibracao)
