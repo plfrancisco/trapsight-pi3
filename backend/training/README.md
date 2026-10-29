@@ -250,6 +250,63 @@ arquivos são preservados. Fora do desenvolvimento local, a execução exige a
 confirmação explícita `--confirmar-ambiente`; o destino é exibido sem
 credenciais.
 
+O seed gera as imagens com um limite de sprites maior que o padrão (6000),
+porque os cenários mais densos, com insetos pequenos, precisam de mais sprites
+do que os 3000 do modo legado. Os percentuais dos cenários ficam abaixo do teto
+de 35% de cobertura do gerador, que não muda. A silhueta da placa se repete
+entre as leituras de uma mesma armadilha, porque a perspectiva da captura vem
+de um gerador fixo por armadilha; ruído, luz e compressão variam por imagem.
+
+O diretório informado por `TRAPSIGHT_TRAINING_DATA_DIR` precisa estar fora do
+repositório e conter `manifest.json` (diretamente ou em uma subpasta
+`sprites/`). Copie o catálogo validado para uma pasta de dados externa e use
+essa pasta nas execuções locais; não versionar os PNGs, o manifesto nem o
+cache de coleta. A guarda do seed recusa caminhos dentro do checkout.
+
+### Executar contra Supabase (não testado contra Supabase real)
+
+Esta configuração ainda não foi testada contra um projeto Supabase real. Para
+carregar a demonstração, instale o grupo `treino` e obtenha a URL do banco por
+um gerenciador de segredos ou por uma variável de ambiente. Use a conexão direta
+na porta `5432` ou o pooler em modo sessão; não use a porta `6543` (pooler de
+transações) para o seed. Não coloque URL ou senha em arquivo versionado nem no
+histórico do shell.
+
+O `UPLOADS_DIR` precisa apontar para uma pasta persistente na máquina que roda o
+comando, fora de `TEMP`. Com `STORAGE_BACKEND=database`, ela guarda o manifesto
+`.seed_demo_manifest.json`, que prova quais registros o seed pode substituir.
+Se esse manifesto se perder, a idempotência deixa de poder ser provada; com o
+banco populado, o seed recusa a reexecução e não remove dados. Restaure o
+manifesto correspondente antes de repetir a carga.
+
+No PowerShell, depois de exportar `SUPABASE_DATABASE_URL` pelo gerenciador de
+segredos e preparar o catálogo externo:
+
+```powershell
+cd backend
+$env:DATABASE_URL = $env:SUPABASE_DATABASE_URL
+$env:AMBIENTE = "producao"
+$env:STORAGE_BACKEND = "database"
+$env:TRAPSIGHT_TRAINING_DATA_DIR = "D:\Estudos - Pedro\dados-trapsight\sprites"
+$env:UPLOADS_DIR = "D:\Estudos - Pedro\dados-trapsight\seed-uploads"
+uv run python -m src.seed_demo --confirmar-ambiente
+```
+
+Mantenha o mesmo `UPLOADS_DIR` persistente nas reexecuções. O resultado contra
+Supabase real, inclusive compatibilidade da conexão escolhida e permissões do
+banco, permanece **não testado**.
+
+### Testes do seed
+
+Os testes de `tests/seed_demo/` usam identificadores determinísticos e esperam
+um banco PostgreSQL vazio, já migrado até `head`; não os execute contra o banco
+de desenvolvimento populado. Execute a suíte em um banco descartável:
+
+```powershell
+uv run alembic upgrade head
+uv run pytest tests/seed_demo -q
+```
+
 ## Revisão da recomposição real
 
 O diagnóstico mantém as fontes separadas por placa e gera somente uma amostra

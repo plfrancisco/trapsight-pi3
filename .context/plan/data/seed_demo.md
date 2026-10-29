@@ -40,6 +40,25 @@ Seis armadilhas, cada uma cobrindo um estado distinto da interface. O conjunto
 foi desenhado para que **toda tela e todo caso de exceção especificados
 tenham representação**.
 
+Os percentuais dos cenários foram escritos para os limiares de 40% e 70% e
+reescalados por 20/70 (2/7) para os limiares do produto, 10% e 20%, com duas
+casas decimais. A razão é a mesma dos limiares, então a forma de cada série e
+os **dias até saturar não mudam** (ARM-001 já saturado, ARM-002 em 5 dias e o
+refil ativo de ARM-004 em 26 dias). Todos os alvos ficam abaixo do teto de 35%
+de cobertura do gerador.
+
+| Cenário | Dias de uso | Percentuais após a escala 2/7 (%) |
+|---|---|---|
+| ARM-001 | 2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32 | 2,86; 4,86; 6,86; 8,86; 10,86; 12,86; 14,86; 16,57; 18,29; 20,71; 22,29 |
+| ARM-002 | 2, 5, 8, 11, 14, 17, 20 | 1,57; 3,93; 6,29; 8,64; 11,00; 13,36; 15,71 |
+| ARM-003 | 3, 6 | 2,00; 3,43 |
+| ARM-004, refil 1 | 3, 18, 33 | 4,00; 11,43; 18,57 |
+| ARM-004, refil 2 | 3, 18, 33, 42 | 3,43; 9,14; 15,71; 19,43 |
+| ARM-004, refil 3 | 3, 6, 9, 12, 15 | 2,29; 3,43; 5,14; 6,29; 7,71 |
+
+ARM-005 e ARM-006 não têm leituras. A escala preserva a relação com o limiar
+de troca de 20% definido no produto; o limiar de atenção permanece em 10%.
+
 | # | Identificador | Estado | Demonstra |
 |---|---|---|---|
 | 1 | `ARM-001` | Em alerta | Painel de alertas e status `trocar` |
@@ -55,7 +74,7 @@ tenham representação**.
 |---|---|
 | Refil instalado | 32 dias atrás |
 | Análises | 11, a cada 3 dias |
-| Percentual atual | Aproximadamente 24% |
+| Percentual atual | Aproximadamente 22% |
 | Cruzou o limiar de 20% | 3 dias atrás |
 
 Produz alerta ativo há 3 dias no painel do dashboard.
@@ -66,10 +85,10 @@ Produz alerta ativo há 3 dias no painel do dashboard.
 |---|---|
 | Refil instalado | 20 dias atrás |
 | Análises | 7, a cada 3 dias |
-| Percentual atual | Aproximadamente 14% |
+| Percentual atual | Aproximadamente 16% |
 | Taxa | Constante, cerca de 0,8 pp por dia |
 
-Com taxa constante, a projeção resulta em aproximadamente 7 dias até
+Com taxa constante, a projeção resulta em aproximadamente 5 dias até
 chegar ao limiar de troca (20%) — valor verificável manualmente durante a
 demonstração.
 
@@ -95,9 +114,9 @@ Estado saudável com projeção já disponível, por haver duas análises.
 completo. A curva sobe até a troca, cai bruscamente e volta a subir,
 evidenciando os ciclos.
 
-Os ciclos anteriores terminam perto do limiar de troca (cerca de 18% a 21%) e
-o refil ativo, aos 15 dias, está por volta de 7%, com taxas médias parecidas
-entre os ciclos (cerca de 0,5 pp por dia).
+Os ciclos anteriores terminam perto do limiar de troca (cerca de 19%) e o
+refil ativo, aos 15 dias, está por volta de 8%, com taxas médias parecidas
+entre os ciclos (entre 0,4 e 0,5 pp por dia).
 
 Os refis anteriores devem ter durações diferentes — refis idênticos sugeririam
 dados fabricados de forma pouco cuidadosa.

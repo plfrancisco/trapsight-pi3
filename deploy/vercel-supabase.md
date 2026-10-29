@@ -36,7 +36,11 @@ Não crie variáveis Supabase com prefixo `VITE_`. A interface não acessa o
 Supabase diretamente. O papel de banco do backend não tem acesso por meio dos
 papéis `anon` ou `authenticated` e usa políticas RLS próprias.
 
-## Preparação do banco no Supabase
+## Preparação do banco no Supabase (não testado contra Supabase real)
+
+As instruções desta seção e de carregamento do seed abaixo são **não testadas
+contra um projeto Supabase real**; valide-as em um projeto de teste antes do
+deploy.
 
 As migrações criam o papel de execução sozinhas; só a senha fica de fora, por
 não poder ir para o repositório.
@@ -63,6 +67,38 @@ não poder ir para o repositório.
 
 Em um Supabase novo e vazio, essas etapas se repetem do mesmo jeito; a `0007`
 e a `0008` só atuam enquanto o papel administrador puder criar papéis.
+
+## Carregar a demonstração no Supabase (não testado contra Supabase real)
+
+O seed é uma operação manual e explícita. O catálogo de sprites deve ser
+mantido fora do repositório e acessível ao processo que executa o comando; o
+seed não baixa sprites nem aceita um caminho dentro do checkout. A senha e a
+URL devem vir de um gerenciador de segredos ou de variáveis exportadas no
+ambiente, nunca de um arquivo versionado ou do histórico do shell.
+
+Com o grupo `treino` instalado, use a conexão direta do Supabase (porta `5432`)
+ou o pooler em modo sessão. Não use a porta `6543` para esta operação. O exemplo
+abaixo pressupõe que o gerenciador de segredos já exportou
+`SUPABASE_DATABASE_URL` com `sslmode=require`, usuário
+`trapsight_runtime.<project-ref>` e a senha:
+
+```powershell
+cd backend
+$env:DATABASE_URL = $env:SUPABASE_DATABASE_URL
+$env:STORAGE_BACKEND = "database"
+$env:TRAPSIGHT_TRAINING_DATA_DIR = "D:\dados-trapsight\sprites"
+$env:UPLOADS_DIR = "D:\Estudos - Pedro\dados-trapsight\seed-uploads"
+uv run python -m src.seed_demo --confirmar-ambiente
+```
+
+O comando mostra somente o host, a porta e o nome do banco. Em armazenamento
+`database`, cada PNG é gravado nas colunas `imagem_original` e `mascara`; o
+`UPLOADS_DIR` persistente guarda apenas o manifesto local de propriedade. Não
+use `TEMP`: se o manifesto `.seed_demo_manifest.json` sumir, a idempotência e a
+prova de propriedade dos registros se perdem; com os cenários ainda no banco,
+o seed recusa a reexecução e não os substitui. Reexecuções substituem somente os
+seis cenários registrados no manifesto correspondente. Este fluxo continua
+**não testado contra Supabase real**.
 
 ## Limites da demonstração
 
