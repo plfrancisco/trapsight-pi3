@@ -10,7 +10,11 @@ import pytest
 from PIL import Image, ImageDraw
 
 import training.dataset_sintetico as modulo
-from training.dataset_sintetico import SpriteCatalogado, generate_sample
+from training.dataset_sintetico import (
+    SpriteCatalogado,
+    create_plate_geometry,
+    generate_sample,
+)
 
 
 def test_convergencia_das_tres_faixas_de_cobertura(
@@ -103,7 +107,7 @@ def test_mascara_coberta_e_uniao_dos_alphas_visiveis(
     monkeypatch.setattr(
         modulo,
         "_finalizar_cena",
-        lambda cena, mascara, rng: (cena.convert("RGB"), mascara),
+        lambda cena, mascara, rng, rng_geometria=None: (cena.convert("RGB"), mascara),
     )
 
     amostra = generate_sample(
@@ -144,3 +148,34 @@ def test_sombra_de_contato_fica_fora_da_mascara(
             ):
                 mudou_fora = True
     assert mudou_fora
+
+
+def test_geometria_fixa_repete_a_silhueta_da_placa_entre_cenas(
+    sprites_catalogados: tuple[SpriteCatalogado, ...],
+) -> None:
+    """Com geometria fixa a placa fica no mesmo lugar; sem ela, a captura varia."""
+    resolucao = (320, 240)
+    geometria = create_plate_geometry(resolucao, random.Random(7))
+
+    def gerar(semente: int, rng_geometria: random.Random | None):
+        return generate_sample(
+            sprites_catalogados,
+            percentual_alvo=12,
+            idade_simulada_dias=10,
+            idade_maxima_dias=90,
+            rng=random.Random(semente),
+            resolucao=resolucao,
+            geometria_placa=geometria,
+            rng_base=random.Random(99),
+            rng_geometria=rng_geometria,
+        )
+
+    def silhueta(amostra) -> tuple[int, int, int, int] | None:
+        return amostra.mascara.point(lambda valor: 255 if valor > 0 else 0).getbbox()
+
+    fixas = [gerar(semente, random.Random(5)) for semente in range(1, 7)]
+    livres = [gerar(semente, None) for semente in range(1, 7)]
+
+    assert len({silhueta(amostra) for amostra in fixas}) == 1
+    assert len({silhueta(amostra) for amostra in livres}) > 1
+    assert len({amostra.imagem.tobytes() for amostra in fixas}) == len(fixas)

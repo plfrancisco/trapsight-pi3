@@ -14,6 +14,12 @@ from src.services.saturacao import (
     calcular_em_alerta_desde,
 )
 
+# O seed foi escrito para limiares de 40% e 70%. Com os limiares do produto
+# (10% e 20%), cada percentual dos cenários e cada limite em pontos percentuais
+# destes testes foi multiplicado por 20/70. A mesma razão vale para as taxas.
+ESCALA_SEED = Decimal(2) / Decimal(7)
+LIMIAR_TROCAR = Decimal("20")
+
 
 def _armadilha(session: Session, identificador: str) -> Armadilha:
     return session.scalars(
@@ -148,7 +154,7 @@ def test_datas_sao_relativas_ao_relogio_mockado(
     pontos = [
         PontoMedicao(item.analisado_em, item.percentual_coberto) for item in analises
     ]
-    alerta_desde = calcular_em_alerta_desde(pontos, Decimal("70"))
+    alerta_desde = calcular_em_alerta_desde(pontos, LIMIAR_TROCAR)
     assert alerta_desde is not None
     assert alerta_desde.date() == data_seed - timedelta(days=3)
 
@@ -172,7 +178,7 @@ def test_armadilha_001_suaviza_a_leitura_antes_do_alerta(
     )
 
     salto = leituras[9].percentual_coberto - leituras[8].percentual_coberto
-    assert Decimal("0") < salto <= Decimal("10")
+    assert Decimal("0") < salto <= Decimal("10") * ESCALA_SEED
 
 
 def test_armadilha_004_cresce_na_taxa_historica_com_variacao(
@@ -199,17 +205,23 @@ def test_armadilha_004_cresce_na_taxa_historica_com_variacao(
     )
 
     assert len(leituras) == 5
-    assert Decimal("25") <= leituras[-1].percentual_coberto <= Decimal("30")
+    assert (
+        Decimal("25") * ESCALA_SEED
+        <= leituras[-1].percentual_coberto
+        <= Decimal("30") * ESCALA_SEED
+    )
     dias = (leituras[-1].analisado_em - leituras[0].analisado_em).days
     taxa_media = (
         leituras[-1].percentual_coberto - leituras[0].percentual_coberto
     ) / Decimal(dias)
-    assert Decimal("1.3") <= taxa_media <= Decimal("1.9")
+    assert Decimal("1.3") * ESCALA_SEED <= taxa_media <= Decimal("1.9") * ESCALA_SEED
     taxas_por_intervalo = [
         (seguinte.percentual_coberto - anterior.percentual_coberto) / Decimal(3)
         for anterior, seguinte in zip(leituras, leituras[1:], strict=False)
     ]
-    assert max(taxas_por_intervalo) - min(taxas_por_intervalo) >= Decimal("0.3")
+    assert max(taxas_por_intervalo) - min(taxas_por_intervalo) >= (
+        Decimal("0.3") * ESCALA_SEED
+    )
 
 
 def test_projecao_armadilha_002_fica_em_torno_de_cinco_dias(
@@ -243,7 +255,7 @@ def test_projecao_armadilha_002_fica_em_torno_de_cinco_dias(
         pontos,
         refil.data_instalacao,
         agora,
-        Decimal("70"),
+        LIMIAR_TROCAR,
     )
     assert dias is not None
     assert 4 <= dias <= 6

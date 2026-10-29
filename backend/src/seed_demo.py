@@ -10,7 +10,7 @@ import random
 import shutil
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -43,6 +43,12 @@ RESOLUCAO_DEMO = RESOLUCAO_PADRAO
 TOLERANCIA_COBERTURA_PP = 2.0
 CODIGO_MODELO = "stickfly-k45"
 NOME_MANIFESTO = ".seed_demo_manifest.json"
+LIMITE_SPRITES_DEMO = 6000
+TAMANHOS_MM_SPRITES_DEMO = {
+    "pequeno": 2.0,
+    "medio": 6.0,
+    "grande": 11.0,
+}
 IDENTIFICADORES = tuple(f"ARM-{indice:03d}" for indice in range(1, 7))
 HOSTS_LOCAIS = {"localhost", "127.0.0.1", "::1", "db", "postgres"}
 _DOIS_DECIMAIS = Decimal("0.01")
@@ -180,7 +186,19 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                         LeituraSpec(dia, percentual)
                         for dia, percentual in zip(
                             range(2, 33, 3),
-                            (10, 17, 24, 31, 38, 45, 52, 58, 64, 72.5, 78),
+                            (
+                                2.86,
+                                4.86,
+                                6.86,
+                                8.86,
+                                10.86,
+                                12.86,
+                                14.86,
+                                16.57,
+                                18.29,
+                                20.71,
+                                22.29,
+                            ),
                             strict=True,
                         )
                     ),
@@ -198,7 +216,7 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                         LeituraSpec(dia, percentual)
                         for dia, percentual in zip(
                             range(2, 21, 3),
-                            (5.5, 13.75, 22, 30.25, 38.5, 46.75, 55),
+                            (1.57, 3.93, 6.29, 8.64, 11, 13.36, 15.71),
                             strict=True,
                         )
                     ),
@@ -212,7 +230,7 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                 RefilSpec(
                     -6,
                     None,
-                    (LeituraSpec(3, 7), LeituraSpec(6, 12)),
+                    (LeituraSpec(3, 2), LeituraSpec(6, 3.43)),
                 ),
             ),
         ),
@@ -223,27 +241,27 @@ def cenarios_seed() -> tuple[ArmadilhaSpec, ...]:
                 RefilSpec(
                     -98,
                     38,
-                    (LeituraSpec(3, 14), LeituraSpec(18, 40), LeituraSpec(33, 65)),
+                    (LeituraSpec(3, 4), LeituraSpec(18, 11.43), LeituraSpec(33, 18.57)),
                 ),
                 RefilSpec(
                     -60,
                     45,
                     (
-                        LeituraSpec(3, 12),
-                        LeituraSpec(18, 32),
-                        LeituraSpec(33, 55),
-                        LeituraSpec(42, 68),
+                        LeituraSpec(3, 3.43),
+                        LeituraSpec(18, 9.14),
+                        LeituraSpec(33, 15.71),
+                        LeituraSpec(42, 19.43),
                     ),
                 ),
                 RefilSpec(
                     -15,
                     None,
                     (
-                        LeituraSpec(3, 8),
-                        LeituraSpec(6, 12),
-                        LeituraSpec(9, 18),
-                        LeituraSpec(12, 22),
-                        LeituraSpec(15, 27),
+                        LeituraSpec(3, 2.29),
+                        LeituraSpec(6, 3.43),
+                        LeituraSpec(9, 5.14),
+                        LeituraSpec(12, 6.29),
+                        LeituraSpec(15, 7.71),
                     ),
                 ),
             ),
@@ -294,7 +312,15 @@ def carregar_sprites_do_ambiente() -> tuple[SpriteCatalogado, ...]:
             "TRAPSIGHT_TRAINING_DATA_DIR deve apontar para um banco fora do repositório."
         )
     try:
-        return load_sprite_catalog(diretorio)
+        catalogo = load_sprite_catalog(diretorio)
+        return tuple(
+            replace(
+                sprite,
+                tamanho_mm=sprite.tamanho_mm
+                or TAMANHOS_MM_SPRITES_DEMO[sprite.categoria],
+            )
+            for sprite in catalogo
+        )
     except (OSError, ValueError) as erro:
         raise ErroSeedDemo(
             f"Não foi possível carregar o banco de sprites: {erro}"
@@ -307,8 +333,8 @@ def criar_seed_demo(
     diretorio_uploads: str | Path,
     sprites: tuple[SpriteCatalogado, ...] | None = None,
     modelo_versao: str = "v0.1.0-dev+00000000",
-    limiar_atencao: Decimal = Decimal("40"),
-    limiar_trocar: Decimal = Decimal("70"),
+    limiar_atencao: Decimal,
+    limiar_trocar: Decimal,
     resolucao: tuple[int, int] = RESOLUCAO_DEMO,
     storage_backend: Literal["filesystem", "database"] = "filesystem",
 ) -> ResultadoSeedDemo:
@@ -623,6 +649,7 @@ def _gerar_midias(
             )
             rng = random.Random(semente_trap ^ ((indice + 1) * 0x9E3779B1))
             rng_base = random.Random(semente_trap ^ 0xC4E)
+            rng_geometria = random.Random(semente_trap ^ 0x6E0)
             idade_simulada = float(leitura.dia_de_uso)
             amostra = generate_sample(
                 sprites,
@@ -631,8 +658,10 @@ def _gerar_midias(
                 IDADE_MAXIMA_DEMO_DIAS,
                 rng,
                 resolucao=resolucao,
+                limite_sprites=LIMITE_SPRITES_DEMO,
                 geometria_placa=geometria,
                 rng_base=rng_base,
+                rng_geometria=rng_geometria,
             )
             percentual_medido = calcular_percentual_cobertura(amostra.mascara)
             if (

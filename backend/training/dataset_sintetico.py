@@ -547,6 +547,7 @@ def generate_sample(
     pesos_grupo: dict[str, float] | None = None,
     geometria_placa: GeometriaPlaca | None = None,
     rng_base: random.Random | None = None,
+    rng_geometria: random.Random | None = None,
     px_por_mm: float = PX_POR_MM_PADRAO,
     k_escala_min: float = K_ESCALA_MINIMO,
     k_escala_max: float = K_ESCALA_MAXIMO,
@@ -567,6 +568,10 @@ def generate_sample(
         pesos_grupo: Pesos normalizados usados para selecionar os grupos.
         geometria_placa: Posição e dimensões compartilhadas entre cenas.
         rng_base: Gerador separado para repetir fundo, luz e moldura.
+        rng_geometria: Gerador reiniciado a cada cena de uma mesma câmera. Quando
+            informado, a perspectiva e o deslocamento da captura saem dele e a
+            silhueta da placa se repete entre as cenas; ruído, luz e compressão
+            continuam variando por imagem.
 
     Returns:
         Cena RGB, máscara L e metadados derivados da máscara final.
@@ -629,7 +634,7 @@ def generate_sample(
     rng_finalizacao = random.Random(rng.getrandbits(64))
     distratores = _selecionar_distratores(rng)
     _desenhar_distratores(cena, caixa_placa, distratores, rng)
-    cena, mascara = _finalizar_cena(cena, mascara, rng_finalizacao)
+    cena, mascara = _finalizar_cena(cena, mascara, rng_finalizacao, rng_geometria)
 
     percentual_cobertura_real = calcular_percentual_cobertura(mascara)
     return AmostraSintetica(
@@ -3011,19 +3016,32 @@ def _finalizar_cena(
     cena: Image.Image,
     mascara: Image.Image,
     rng: random.Random,
+    rng_geometria: random.Random | None = None,
 ) -> tuple[Image.Image, Image.Image]:
-    """Aplica captura, luz, pequena perspectiva, ruído e compressão à cena."""
+    """Aplica captura, luz, pequena perspectiva, ruído e compressão à cena.
+
+    Args:
+        cena: Cena RGB composta.
+        mascara: Máscara de três classes da mesma cena.
+        rng: Gerador das variações próprias de cada imagem.
+        rng_geometria: Gerador da perspectiva e da rotação. Por padrão elas
+            saem de ``rng``; um gerador fixo por câmera repete a silhueta.
+
+    Returns:
+        Cena e máscara depois da captura simulada.
+    """
     luz = _criar_campo_luz(*cena.size, rng).convert("RGB")
     cena_rgb = ImageChops.multiply(cena.convert("RGB"), luz)
-    g = rng.uniform(-0.000012, 0.000012)
-    h = rng.uniform(-0.000012, 0.000012)
+    origem_geometria = rng if rng_geometria is None else rng_geometria
+    g = origem_geometria.uniform(-0.000012, 0.000012)
+    h = origem_geometria.uniform(-0.000012, 0.000012)
     parametros = (
         1.0,
-        rng.uniform(-0.0015, 0.0015),
-        rng.uniform(-1.2, 1.2),
-        rng.uniform(-0.0015, 0.0015),
+        origem_geometria.uniform(-0.0015, 0.0015),
+        origem_geometria.uniform(-1.2, 1.2),
+        origem_geometria.uniform(-0.0015, 0.0015),
         1.0,
-        rng.uniform(-1.2, 1.2),
+        origem_geometria.uniform(-1.2, 1.2),
         g,
         h,
     )
@@ -3041,7 +3059,7 @@ def _finalizar_cena(
         resample=Image.Resampling.NEAREST,
         fillcolor=VALORES_CLASSES["fundo"],
     )
-    angulo = rng.uniform(-1.1, 1.1)
+    angulo = origem_geometria.uniform(-1.1, 1.1)
     cena_rgb = cena_rgb.rotate(
         angulo,
         resample=Image.Resampling.BICUBIC,

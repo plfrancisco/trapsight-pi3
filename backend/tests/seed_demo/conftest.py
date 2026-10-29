@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -90,6 +91,8 @@ def executar_seed(tmp_path: Path, sprites_seed: tuple[SpriteCatalogado, ...]):
             session,
             diretorio_uploads=tmp_path / "uploads",
             sprites=sprites_seed,
+            limiar_atencao=Decimal("10"),
+            limiar_trocar=Decimal("20"),
             resolucao=(320, 240),
             storage_backend=storage_backend,
         )

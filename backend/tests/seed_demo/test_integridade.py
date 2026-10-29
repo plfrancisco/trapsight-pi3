@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.entities import Analise, Armadilha, ModeloArmadilha, Refil
-from src.seed_demo import ErroSeedDemo, criar_seed_demo
+from src.seed_demo import NOME_MANIFESTO, ErroSeedDemo, criar_seed_demo
 from training.dataset_sintetico import calcular_percentual_cobertura
 
 
@@ -197,10 +197,43 @@ def test_colisao_de_identificador_sem_manifesto_nao_remove_registro(
             session,
             diretorio_uploads=tmp_path / "uploads",
             sprites=sprites_seed,
+            limiar_atencao=Decimal("10"),
+            limiar_trocar=Decimal("20"),
             resolucao=(320, 240),
         )
 
     assert session.get(Armadilha, armadilha.id) is not None
+
+
+def test_seed_populado_sem_manifesto_recusa_sem_alterar_dados(
+    session: Session,
+    executar_seed,
+    tmp_path: Path,
+) -> None:
+    """A perda do manifesto impede reexecução sem alterar banco ou mídias."""
+    resultado = executar_seed(session)
+    resultado.confirmar_arquivos()
+    estado_antes = _estado_seed(session)
+    uploads = tmp_path / "uploads"
+    manifesto = uploads / NOME_MANIFESTO
+    assert manifesto.is_file()
+    manifesto.unlink()
+    arquivos_antes = {
+        caminho.relative_to(uploads): caminho.read_bytes()
+        for caminho in uploads.rglob("*")
+        if caminho.is_file()
+    }
+
+    with pytest.raises(ErroSeedDemo, match="não consta como dado do seed"):
+        executar_seed(session)
+
+    assert _estado_seed(session) == estado_antes
+    arquivos_depois = {
+        caminho.relative_to(uploads): caminho.read_bytes()
+        for caminho in uploads.rglob("*")
+        if caminho.is_file()
+    }
+    assert arquivos_depois == arquivos_antes
 
 
 def test_percentual_persistido_e_medido_na_mascara(
