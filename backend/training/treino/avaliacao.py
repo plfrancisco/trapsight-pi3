@@ -28,6 +28,17 @@ from training.treino.dados import (
 from training.treino.metricas import AcumuladorMetricas
 
 SUBCONJUNTOS = ("iluminacao_angulo", "sujeira", "amarelamento")
+# Dez dias agregam idades contínuas em grupos com várias amostras sem esconder
+# a evolução ao longo dos 90 dias simulados. A cauda aberta usa 95 como posição
+# representativa, prolongando a mesma largura visual; seu limite final é nulo.
+LARGURA_FAIXA_IDADE = 10
+INICIO_FAIXA_ABERTA = 90
+
+
+def _faixa_idade_curva(idade: float) -> int:
+    return min(
+        int(idade // LARGURA_FAIXA_IDADE), INICIO_FAIXA_ABERTA // LARGURA_FAIXA_IDADE
+    )
 
 
 def conferir_aprovacao(metricas: dict[str, Any], dominio: str) -> dict[str, Any]:
@@ -76,7 +87,7 @@ def comparar_modelo_baseline(
     """Mede ambos os métodos nas mesmas amostras de teste e pixels válidos.
 
     Recebe um modelo carregado e limiar já calibrado. Retorna métricas globais,
-    por condição, origem da base e idade exata; recusa teste vazio ou inválido.
+    por condição, origem da base e faixa de idade; recusa teste vazio ou inválido.
     Rótulos de robustez são explícitos para não inventar cortes experimentais.
     """
     if dominio not in ("sintetico", "real"):
@@ -86,9 +97,6 @@ def comparar_modelo_baseline(
         raise ValueError("O conjunto de teste está vazio.")
     if any(not math.isfinite(a.idade_dias) or a.idade_dias < 0 for a in amostras):
         raise ValueError("Idades devem ser finitas e não negativas.")
-    problemas = verificar_mascaras(amostras)
-    if problemas:
-        raise ValueError(" ".join(problemas))
     grupos: dict[str, dict[str, AcumuladorMetricas]] = {}
     registros = []
     transformacao = transformacao_avaliacao()
@@ -101,6 +109,15 @@ def comparar_modelo_baseline(
                     imagem = np.array(aberta.convert("RGB"), dtype=np.uint8)
                 with Image.open(amostra.mascara) as aberta:
                     mascara = np.array(aberta.convert("L"), dtype=np.uint8)
+                # Recusar a amostra impede que o acumulador a pule e desloque
+                # os IDs associados às métricas das imagens seguintes.
+                if not np.any(mascara != 255):
+                    raise ValueError(
+                        f"Amostra {amostra.identificador} sem pixels válidos (somente classe 255)."
+                    )
+                problemas = verificar_mascaras([amostra])
+                if problemas:
+                    raise ValueError(" ".join(problemas))
                 if imagem.shape[:2] != mascara.shape:
                     raise ValueError(f"Dimensões divergentes: {amostra.identificador}.")
                 entrada = transformacao(image=imagem, mask=mascara)
@@ -118,7 +135,7 @@ def comparar_modelo_baseline(
                 chaves = [
                     "global",
                     f"base/{amostra.origem_base or 'nao_informada'}",
-                    f"idade/{amostra.idade_dias}",
+                    f"idade/{_faixa_idade_curva(amostra.idade_dias)}",
                 ]
                 chaves += [f"condicao/{s}" for s in amostra.subconjuntos_avaliacao]
                 for chave in dict.fromkeys(chaves):
@@ -158,6 +175,26 @@ def comparar_modelo_baseline(
         for registro, metrica in zip(registros, global_[metodo]["por_imagem"]):
             metrica.update(registro)
     aprovacao = conferir_aprovacao(global_["modelo"], dominio)
+    curvas = []
+    for indice in range(INICIO_FAIXA_ABERTA // LARGURA_FAIXA_IDADE + 1):
+        par = resultados.get(f"idade/{indice}")
+        if par is None:
+            continue
+        inicio = indice * LARGURA_FAIXA_IDADE
+        fim = inicio + LARGURA_FAIXA_IDADE if inicio < INICIO_FAIXA_ABERTA else None
+        curvas.append(
+            {
+                "faixa": f"{inicio}-{fim}" if fim is not None else f"{inicio}+",
+                "idade_dias": inicio + LARGURA_FAIXA_IDADE / 2,
+                "idade_inicio": inicio,
+                "idade_fim": fim,
+                "amostras": par["modelo"]["amostras"],
+                **{
+                    m: par[m]["erro_percentual_medio_pp"]
+                    for m in ("modelo", "baseline")
+                },
+            }
+        )
     return {
         "modelo": global_["modelo"],
         "baseline": global_["baseline"],
@@ -167,22 +204,7 @@ def comparar_modelo_baseline(
             if k.startswith("base/")
         },
         "por_subconjunto": {s: resultados.get(f"condicao/{s}") for s in SUBCONJUNTOS},
-        "curvas_erro_por_idade": [
-            {
-                "idade_dias": float(k.split("/", 1)[1]),
-                "amostras": v["modelo"]["amostras"],
-                **{m: v[m]["erro_percentual_medio_pp"] for m in ("modelo", "baseline")},
-            }
-            for k, v in sorted(
-                resultados.items(),
-                key=lambda item: (
-                    float(item[0].split("/", 1)[1])
-                    if item[0].startswith("idade/")
-                    else -1
-                ),
-            )
-            if k.startswith("idade/")
-        ],
+        "curvas_erro_por_idade": curvas,
         "aprovacao": aprovacao,
         # Recomposição sobre foto real continua pertencendo ao domínio sintético.
         "aprovacao_geral": (
@@ -198,7 +220,7 @@ def comparar_modelo_baseline(
 def grafico_idade_svg(curvas: list[dict[str, Any]]) -> str:
     """Retorna SVG com duas curvas de erro médio por idade, sem dependências.
 
-    Recusa curvas vazias; os pontos preservam as idades observadas no teste.
+    Recusa curvas vazias; posiciona os pontos no centro representativo da faixa.
     """
     if not curvas:
         raise ValueError("Não há idades para o gráfico.")
@@ -212,8 +234,12 @@ def grafico_idade_svg(curvas: list[dict[str, Any]]) -> str:
         '<text x="60" y="20">Erro absoluto médio (pp)</text>',
         f'<text x="15" y="40">{ymax:.2f}</text>',
         '<text x="35" y="355">0</text>',
-        f'<text x="640" y="360">{xmax:g}</text>',
     ]
+    for ponto in curvas:
+        x = 60 + ponto["idade_dias"] / xmax * 620
+        partes.append(
+            f'<text x="{x:.2f}" y="360" text-anchor="middle" font-size="11">{ponto["faixa"]}</text>'
+        )
     for metodo, cor, y in (("modelo", "#1565c0", 55), ("baseline", "#c62828", 80)):
         pontos = " ".join(
             f"{60 + p['idade_dias'] / xmax * 620:.2f},{340 - p[metodo] / ymax * 300:.2f}"
@@ -234,6 +260,7 @@ def avaliar_teste(
     pasta_execucao: Path,
     reavaliar: bool = False,
     calibracao: Path = ARQUIVO_CALIBRACAO_PADRAO,
+    dominio: str = "sintetico",
 ) -> Path:
     """Carrega o melhor checkpoint e grava JSON comparativo e gráfico SVG.
 
@@ -242,6 +269,8 @@ def avaliar_teste(
     """
     from training.treino.modelo import carregar_checkpoint
 
+    if dominio not in ("sintetico", "real"):
+        raise ValueError("Domínio deve ser sintetico ou real.")
     pasta = Path(pasta_execucao)
     execucao = json.loads((pasta / "execucao.json").read_text("utf-8"))
     checkpoint = pasta / "melhor.pt"
@@ -265,7 +294,9 @@ def avaliar_teste(
     calibracao = Path(calibracao)
     dados_baseline = json.loads(calibracao.read_text("utf-8"))
     modelo, _ = carregar_checkpoint(checkpoint, "cpu")
-    comparacao = comparar_modelo_baseline(modelo, info, dados_baseline["limiar_v"])
+    comparacao = comparar_modelo_baseline(
+        modelo, info, dados_baseline["limiar_v"], dominio=dominio
+    )
     bibliotecas = {"python": platform.python_version()}
     for nome in (
         "torch",
@@ -281,7 +312,8 @@ def avaliar_teste(
         except PackageNotFoundError:
             bibliotecas[nome] = None
     resultado = {
-        "versao_relatorio": 1,
+        "versao_relatorio": 2,
+        "dominio": dominio,
         "execucao": execucao["identificador"],
         "avaliado_em": datetime.now(timezone.utc).isoformat(),
         "checkpoint_sha256": resumo,

@@ -83,10 +83,10 @@ def test_comparacao_pareada_ignora_255_e_separa_bases(info_minima):
         assert [m["id"] for m in por_imagem] == ["0", "1", "2", "3"]
         assert len(por_imagem[0]["imagem_sha256"]) == 64
     assert [p["idade_dias"] for p in resultado["curvas_erro_por_idade"]] == [
-        0,
-        20,
-        40,
-        60,
+        5,
+        25,
+        45,
+        65,
     ]
     svg = grafico_idade_svg(resultado["curvas_erro_por_idade"])
     raiz = ElementTree.fromstring(svg)
@@ -178,8 +178,46 @@ def test_idade_invalida_e_teste_vazio_sao_recusados(info_minima):
         comparar_modelo_baseline(ModeloTrivial(), info, 217)
 
 
+def test_curvas_agrupam_faixas_bordas_e_idades_iguais(info_minima):
+    idades = (0.1, 9.9, 10.0, 10.0, 29.0, 89.9, 90.0, 99.0, 180.0)
+    info = replace(
+        info_minima,
+        amostras=tuple(
+            replace(
+                info_minima.amostras[i % 4], identificador=f"{i:02d}", idade_dias=idade
+            )
+            for i, idade in enumerate(idades)
+        ),
+    )
+    curvas = comparar_modelo_baseline(ModeloTrivial(), info, 217)[
+        "curvas_erro_por_idade"
+    ]
+    assert [p["faixa"] for p in curvas] == ["0-10", "10-20", "20-30", "80-90", "90+"]
+    assert [p["amostras"] for p in curvas] == [2, 2, 1, 1, 3]
+    assert [p["idade_dias"] for p in curvas] == [5, 15, 25, 85, 95]
+    assert [p["idade_inicio"] for p in curvas] == [0, 10, 20, 80, 90]
+    assert [p["idade_fim"] for p in curvas] == [10, 20, 30, 90, None]
+    assert all(p["modelo"] == 25 and p["baseline"] == 0 for p in curvas)
+    assert sum(p["amostras"] for p in curvas) == len(idades)
+    raiz = ElementTree.fromstring(grafico_idade_svg(curvas))
+    textos = [t.text for t in raiz.findall("{http://www.w3.org/2000/svg}text")]
+    assert all(p["faixa"] in textos for p in curvas)
+    assert "30-40" not in textos
+    json.dumps(curvas, allow_nan=False)
+
+
+def test_imagem_inteiramente_ignorada_e_recusada_sem_deslocar_ids(info_minima):
+    amostra = info_minima.amostras[1]
+    Image.fromarray(np.full((4, 4), 255, dtype=np.uint8)).save(amostra.mascara)
+    modelo = ModeloTrivial().train()
+    with pytest.raises(ValueError, match=r"Amostra 1 sem pixels válidos.*255"):
+        comparar_modelo_baseline(modelo, info_minima, 217)
+    assert modelo.training
+
+
+@pytest.mark.parametrize("dominio", ["sintetico", "real"])
 def test_entrada_de_avaliacao_registra_versoes_e_preserva_historico(
-    criar_dataset, tmp_path, monkeypatch
+    criar_dataset, tmp_path, monkeypatch, dominio
 ):
     from training.treino import modelo as modulo_modelo
 
@@ -201,20 +239,29 @@ def test_entrada_de_avaliacao_registra_versoes_e_preserva_historico(
     monkeypatch.setattr(
         modulo_modelo, "carregar_checkpoint", lambda *_: (ModeloTrivial(), {})
     )
-    primeiro = avaliacao.avaliar_teste(pasta, calibracao=calibracao)
+    primeiro = avaliacao.avaliar_teste(pasta, calibracao=calibracao, dominio=dominio)
     resultado = json.loads(primeiro.read_text("utf-8"))
-    assert resultado["versao_relatorio"] == 1
+    assert resultado["versao_relatorio"] == 2
+    assert resultado["dominio"] == dominio
+    assert resultado["comparacao"]["aprovacao"]["dominio"] == dominio
+    assert ("acuracia_status" in resultado["comparacao"]["aprovacao"]["criterios"]) == (
+        dominio == "real"
+    )
     assert resultado["semente_global"] == 7
     assert resultado["bibliotecas"]["torch"]
     assert resultado["comparacao"]["aprovacao_geral"] == "reprovado"
     assert primeiro.with_suffix(".svg").exists()
     with pytest.raises(FileExistsError):
-        avaliacao.avaliar_teste(pasta, calibracao=calibracao)
-    novo = avaliacao.avaliar_teste(pasta, reavaliar=True, calibracao=calibracao)
+        avaliacao.avaliar_teste(pasta, calibracao=calibracao, dominio=dominio)
+    novo = avaliacao.avaliar_teste(
+        pasta, reavaliar=True, calibracao=calibracao, dominio=dominio
+    )
     assert novo != primeiro and primeiro.exists()
     (dataset / "metadados.jsonl").write_text("\n", encoding="utf-8")
     with pytest.raises(ValueError):
-        avaliacao.avaliar_teste(pasta, reavaliar=True, calibracao=calibracao)
+        avaliacao.avaliar_teste(
+            pasta, reavaliar=True, calibracao=calibracao, dominio=dominio
+        )
 
 
 def test_leitura_preserva_metadados_de_avaliacao(criar_dataset):
@@ -243,7 +290,11 @@ def test_cli_existente_delega_avaliacao_e_comparacao(monkeypatch, capsys):
         ),
     )
     assert cli.main(["avaliar-teste", "--execucao", "pasta", "--reavaliar"]) == 0
-    assert chamadas == [(Path("pasta"), {"reavaliar": True})]
+    assert chamadas == [(Path("pasta"), {"reavaliar": True, "dominio": "sintetico"})]
+    assert cli.main(["avaliar-teste", "--execucao", "pasta", "--dominio", "real"]) == 0
+    assert chamadas[-1] == (Path("pasta"), {"reavaliar": False, "dominio": "real"})
+    with pytest.raises(SystemExit):
+        cli.main(["avaliar-teste", "--execucao", "pasta", "--dominio", "invalido"])
     monkeypatch.setattr(loop, "comparar_execucoes", lambda *_: {"epocas_comparadas": 2})
     assert cli.main(["comparar", "--a", "a", "--b", "b"]) == 0
     assert "epocas_comparadas" in capsys.readouterr().out

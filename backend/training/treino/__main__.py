@@ -37,6 +37,7 @@ def _parser() -> argparse.ArgumentParser:
     teste.add_argument("--execucao", type=Path, required=True)
     teste.add_argument("--reavaliar", action="store_true")
     teste.add_argument("--calibracao", type=Path)
+    teste.add_argument("--dominio", choices=("sintetico", "real"), default="sintetico")
 
     comparar = comandos.add_parser("comparar", help="compara duas execuções por época")
     comparar.add_argument("--a", type=Path, required=True)
@@ -75,7 +76,9 @@ def main(argumentos: list[str] | None = None) -> int:
             from training.treino.avaliacao import avaliar_teste
 
             opcoes = {"calibracao": args.calibracao} if args.calibracao else {}
-            destino = avaliar_teste(args.execucao, reavaliar=args.reavaliar, **opcoes)
+            destino = avaliar_teste(
+                args.execucao, reavaliar=args.reavaliar, dominio=args.dominio, **opcoes
+            )
             print(f"resultado do teste em {destino}")
             return 0
         from training.treino.loop import comparar_execucoes
