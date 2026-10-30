@@ -76,6 +76,12 @@ seed não baixa sprites nem aceita um caminho dentro do checkout. A senha e a
 URL devem vir de um gerenciador de segredos ou de variáveis exportadas no
 ambiente, nunca de um arquivo versionado ou do histórico do shell.
 
+`TRAPSIGHT_TRAINING_DATA_DIR` aponta para a pasta externa com `manifest.json`
+ou para sua pasta pai se houver `sprites/manifest.json`. Copie o catálogo
+preservando os caminhos relativos e confira contagens e SHA-256 entre origem
+e cópia antes de usá-lo. Não envie o banco licenciado ao Git ou ao deploy.
+O procedimento local está no [README do backend](../backend/README.md).
+
 Com o grupo `treino` instalado, use a conexão direta do Supabase (porta `5432`)
 ou o pooler em modo sessão. Não use a porta `6543` para esta operação. O exemplo
 abaixo pressupõe que o gerenciador de segredos já exportou

@@ -162,7 +162,7 @@ sintético. Ver seção 6.
 | Item | Definição |
 |---|---|
 | Comando | Script dedicado, executado manualmente |
-| Ambiente | Bloqueado fora de desenvolvimento |
+| Ambiente | Fora de desenvolvimento ou em banco remoto, exige `--confirmar-ambiente` |
 | Reexecução | Remove os dados de seed anteriores antes de recriar |
 | Escopo da limpeza | Apenas registros criados pelo próprio seed |
 
