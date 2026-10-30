@@ -1,4 +1,4 @@
-"""Métricas de segmentação e de negócio (avaliacao_spec.md, seção 3).
+"""Métricas de segmentação e de negócio sobre pixels com gabarito válido.
 
 Dice e IoU medem a sobreposição pixel a pixel; o erro percentual absoluto mede
 o que o produto informa. Os erros de segmentação podem se cancelar no
@@ -113,6 +113,17 @@ class AcumuladorMetricas:
             "dice_coberta": dice["placa_coberta"],
             "erro_percentual_medio_pp": sum(erros) / len(erros),
             "erro_percentual_maximo_pp": max(erros),
+            "por_imagem": [
+                {
+                    **imagem,
+                    "erro_percentual_absoluto_pp": erro,
+                    "status_real": real,
+                    "status_previsto": previsto,
+                }
+                for imagem, erro, real, previsto in zip(
+                    self._imagens, erros, status_real, status_previsto
+                )
+            ],
             "acuracia_status": acertos / len(erros),
             "matriz_status": confusao_status,
             "trocar_como_ok": confusao_status[STATUS.index("trocar")][

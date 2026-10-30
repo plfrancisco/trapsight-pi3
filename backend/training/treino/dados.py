@@ -54,6 +54,8 @@ class Amostra:
     mascara: Path
     placa_base_id: str | None = None
     placas_origem_recortes: tuple[str, ...] = ()
+    origem_base: str | None = None
+    subconjuntos_avaliacao: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -129,6 +131,17 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
                 raise ValueError("identificador com caminho")
             base = dados.get("placa_base_id")
             origens = dados.get("placas_origem_recortes", [])
+            origem_base = dados.get("origem_base")
+            subconjuntos = dados.get("subconjuntos_avaliacao", [])
+            if origem_base is not None and (
+                not isinstance(origem_base, str) or not origem_base.strip()
+            ):
+                raise ValueError("origem_base inválida")
+            if not isinstance(subconjuntos, list) or any(
+                s not in ("iluminacao_angulo", "sujeira", "amarelamento")
+                for s in subconjuntos
+            ):
+                raise ValueError("subconjuntos_avaliacao inválidos")
             if base is not None and (not isinstance(base, str) or not base.strip()):
                 raise ValueError("placa_base_id inválida")
             if not isinstance(origens, list) or any(
@@ -158,6 +171,8 @@ def ler_dataset(diretorio: Path) -> InfoDataset:
                     mascara=raiz / "mascaras" / f"{identificador}.png",
                     placa_base_id=base,
                     placas_origem_recortes=tuple(origens),
+                    origem_base=origem_base,
+                    subconjuntos_avaliacao=tuple(subconjuntos),
                 )
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as erro:
