@@ -142,7 +142,8 @@ def descobrir_lote_por_passo(
     comparado com a memória **livre** no início, e não com a total: o sistema e
     outros programas já usam parte da GPU. Usa um modelo descartável (sem pesos
     pré-treinados) para não alterar as estatísticas do modelo real. Em CPU
-    devolve um lote pequeno fixo.
+    devolve um lote pequeno fixo. Lança RuntimeError se nenhum candidato couber
+    no orçamento de VRAM, em vez de iniciar um treino inviável.
     """
     if configuracao.batch_por_passo != "auto":
         return int(configuracao.batch_por_passo)
@@ -156,7 +157,7 @@ def descobrir_lote_por_passo(
     sonda.to(memory_format=torch.channels_last)
     colocar_em_treino(sonda, configuracao.bn_encoder_congelado)
     otimizador = torch.optim.AdamW(sonda.parameters(), lr=1e-6)
-    escolhido = 1
+    escolhido = None
     for candidato in CANDIDATOS_LOTE:
         if candidato > configuracao.batch_efetivo:
             continue
@@ -191,6 +192,12 @@ def descobrir_lote_por_passo(
             break
     del sonda, otimizador
     torch.cuda.empty_cache()
+    if escolhido is None:
+        raise RuntimeError(
+            "Memória de vídeo insuficiente: nem o lote 1 cabe no orçamento de "
+            "VRAM livre com folga. Reduza a resolução somente no teste de fumaça "
+            "E0, ative gradient checkpointing no encoder ou use outra GPU."
+        )
     return escolhido
 
 
