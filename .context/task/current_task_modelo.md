@@ -133,21 +133,49 @@ registradas em `../plan/data/dataset_sintetico.md`: 3/1/1 bases reais por
 conjunto, referência de espalhamento da faixa 4–8% com só 4 placas e rótulo
 incompleto nas 14 placas de avaliação.
 
-## ML02C — Convergência do gerador em Linux
+## ML02C — Convergência do seed em Windows e Linux
 
-- [ ] Identificar por que a imagem de `ARM-001` não converge para o alvo de
-      31,00% de cobertura em Linux (medido 26,38%, tolerância de 2,0 pp),
-      comparando a cobertura da máscara antes e depois de `_finalizar_cena`
-      nas duas plataformas
-- [ ] Os 10 testes de `backend/tests/seed_demo/` passam em Linux, no CI
+- [x] Identificar a causa da não convergência e verificar a correção sem
+      alterar o teto de 35%, as tolerâncias nem a guarda do catálogo externo
+- [x] Os 14 testes de `backend/tests/seed_demo/` passam em Windows e Linux,
+      neste último pelo contêiner de `scripts/testar-backend.sh`
+- [x] Preservar a idempotência, as projeções de saturação e as 24 primeiras
+      amostras v5; os 84 testes de `tests/training/dataset_sintetico/` passam
 
 **Especificação:** `../plan/data/dataset_sintetico.md`, seção 5.3.
 **Dependências:** ML02.
 
-**Estado (2026-10-23):** em Linux, num checkout limpo, 329 testes passam e esses
-10 falham, todos com a mesma mensagem; no Windows passam. A causa raiz não foi
-determinada. A suíte de backend rodou em Linux pela primeira vez no CI de
-2026-10-22.
+**Estado (2026-10-29):** convergência verificada nas duas plataformas. A
+premissa de diferença entre Windows e Linux estava incorreta: os registros
+anteriores das 32 análises são idênticos entre plataformas, com 17 falhas
+(8 em ARM-001, 5 em ARM-002 e 4 em ARM-004). Os alvos antigos chegavam a 78%,
+mas o gerador legado limita a cobertura a 35%; sprites sem tamanho físico
+também esgotavam as 3.000 tentativas, e a perspectiva variava no timelapse.
+Na reprodução em memória do seed anterior a `7f3387d`, com o catálogo
+sintético dos testes e resolução 320×240, falharam 16/32 análises (8/4/4
+em ARM-001/002/004); o alvo de 31% mediu 26,3764%. Essa reprodução com
+catálogo sintético não substitui a medição dos 17 registros históricos.
+
+A correção já existia em `7f3387d`, documentada em `fd0519d`: alvos
+reescalados por 2/7, até 6.000 sprites somente no seed, tamanho físico de
+fallback somente no catálogo do seed e perspectiva fixa por câmera. Não foi
+necessária nova alteração no código nem nos testes.
+
+Validação local: seed com 14 testes verdes em Windows (508,68 s) e 14 em
+Linux (335,70 s), incluindo duas execuções idempotentes nos modos filesystem
+e database. As 32 análises convergem; o desvio máximo dos valores persistidos
+no teste Windows foi 0,15 pp. As projeções pelos alvos antigos com limiar 70,
+pelos alvos reescalados com limiar 20 e pelas medições atuais preservam
+ARM-001=0, ARM-002=5, ARM-003=34 e ARM-004=26 dias; ARM-005 e ARM-006 seguem
+sem projeção.
+
+A suíte do gerador passou em Linux: 84 testes (84,73 s). A coleta inicial
+falhou por ausência de PyTorch; a execução verde usou os grupos já declarados
+`baseline` e `inference` no contêiner oficial. Os SHA-256 dos 48 PNGs
+(imagens e máscaras) das 24 primeiras amostras v5 permaneceram idênticos
+antes/depois desta validação; o gerador não foi alterado nem o dataset
+regenerado. Ruff check e format check passaram nos oito arquivos Python do
+seed, seus testes e o gerador. Não houve execução remota do GitHub Actions.
 
 ## ML03 — Baseline OpenCV
 
