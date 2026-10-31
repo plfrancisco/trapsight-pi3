@@ -164,7 +164,7 @@ function EvolucaoGrafico({
             <span className="evolution-chart-card__forecast-copy">
               <span>Previsão de troca</span>
               <strong>{previsaoTroca.rotulo}</strong>
-              <small>Estimativa ao atingir 70% de cobertura</small>
+              <small>Estimativa ao atingir o limiar de troca</small>
             </span>
           </div>
         ) : null}
