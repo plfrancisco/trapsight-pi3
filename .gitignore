@@ -92,3 +92,13 @@ scratch_ml02a/
 
 # Pastas e arquivos temporários de teste
 backend/.pytest-*
+
+# Caches de ferramentas e cópias de segurança locais. O .pytest_cache criado
+# por contêiner pode ficar sem permissão de leitura e quebrar o git status.
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.uv-cache*/
+*.tsbuildinfo
+*.bak
+*.bak-*
