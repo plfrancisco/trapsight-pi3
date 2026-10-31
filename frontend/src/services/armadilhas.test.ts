@@ -41,6 +41,7 @@ describe('serviços de armadilhas', () => {
         percentual_atual: null,
         status: null,
         dias_ate_saturar: null,
+        limiar_trocar: 20,
         ultima_analise_em: null,
         em_alerta_desde: null,
       },
@@ -75,6 +76,7 @@ describe('serviços de armadilhas', () => {
       percentual_atual: null,
       status: null,
       dias_ate_saturar: null,
+      limiar_trocar: 20,
     }
     fetchSimulado.mockResolvedValue(respostaJson(saida, 201))
 

@@ -14,6 +14,7 @@ const armadilhaBase: ArmadilhaLista = {
   percentual_atual: 64.3,
   status: 'atencao',
   dias_ate_saturar: null,
+  limiar_trocar: 20,
   ultima_analise_em: '2026-10-14T08:00:00Z',
   em_alerta_desde: null,
 }
@@ -47,6 +48,7 @@ describe('CartaoArmadilha', () => {
       percentual_atual: null,
       status: null,
       dias_ate_saturar: null,
+      limiar_trocar: 20,
       ultima_analise_em: null,
     })
 
@@ -62,6 +64,7 @@ describe('CartaoArmadilha', () => {
       percentual_atual: null,
       status: null,
       dias_ate_saturar: null,
+      limiar_trocar: 20,
       ultima_analise_em: null,
     })
 

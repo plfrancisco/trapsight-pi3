@@ -27,6 +27,7 @@ export interface ArmadilhaLista {
   percentual_atual: number | null
   status: StatusAnalise | null
   dias_ate_saturar: number | null
+  limiar_trocar: number
   ultima_analise_em: string | null
   em_alerta_desde: string | null
 }
@@ -45,6 +46,7 @@ export interface ArmadilhaDetalhe {
   percentual_atual: number | null
   status: StatusAnalise | null
   dias_ate_saturar: number | null
+  limiar_trocar: number
 }
 
 /** Modelo de armadilha pré-cadastrado pelo fabricante. */

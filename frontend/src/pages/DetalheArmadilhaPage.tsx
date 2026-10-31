@@ -124,6 +124,7 @@ export default function DetalheArmadilhaPage() {
           key={armadilha.id}
           analisesAtivas={analises}
           diasAteSaturar={armadilha.dias_ate_saturar}
+          limiarTrocar={armadilha.limiar_trocar}
         />
       ) : null}
       <ListaAnalises

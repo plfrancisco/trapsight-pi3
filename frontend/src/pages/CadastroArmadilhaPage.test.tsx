@@ -30,6 +30,7 @@ const armadilha: ArmadilhaDetalhe = {
   percentual_atual: null,
   status: null,
   dias_ate_saturar: null,
+  limiar_trocar: 20,
 }
 
 const stickfly: ModeloArmadilha = {

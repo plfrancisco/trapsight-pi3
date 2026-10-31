@@ -13,6 +13,7 @@ const EvolucaoGrafico = lazy(() => import('./EvolucaoGrafico'))
 interface EvolucaoCoberturaProps {
   analisesAtivas: Analise[]
   diasAteSaturar?: number | null
+  limiarTrocar?: number
 }
 
 function ordenarAnalises(analises: readonly Analise[]): Analise[] {
@@ -63,6 +64,7 @@ function ImagemAnaliseUnica({ analise }: { analise: Analise }) {
 export default function EvolucaoCobertura({
   analisesAtivas,
   diasAteSaturar = null,
+  limiarTrocar,
 }: EvolucaoCoberturaProps) {
   const analises = useMemo(() => ordenarAnalises(analisesAtivas), [analisesAtivas])
   const [indiceSelecionado, setIndiceSelecionado] = useState(0)
@@ -125,6 +127,7 @@ export default function EvolucaoCobertura({
               marcador={instanteDoQuadro(instantes, indiceVisivel) ?? undefined}
               onMarcadorChange={changeMarcador}
               previsaoTroca={previsaoTroca}
+              limiarTrocar={limiarTrocar}
               resumo={resumo}
               serie={serie}
             />

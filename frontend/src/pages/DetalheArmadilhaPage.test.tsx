@@ -29,6 +29,7 @@ function buildArmadilha(
     percentual_atual: 42.5,
     status: 'atencao',
     dias_ate_saturar: 5,
+    limiar_trocar: 20,
     ...alteracoes,
   }
 }
@@ -181,6 +182,7 @@ describe('DetalheArmadilhaPage', () => {
         percentual_atual: null,
         status: null,
         dias_ate_saturar: null,
+        limiar_trocar: 20,
       }),
     )
     vi.mocked(listAnalises).mockResolvedValue([])

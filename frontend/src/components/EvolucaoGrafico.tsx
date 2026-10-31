@@ -22,6 +22,7 @@ interface EvolucaoGraficoProps {
   resumo: string
   marcador?: number
   previsaoTroca?: MesPrevistoTroca | null
+  limiarTrocar?: number
   onMarcadorChange?: (instante: number) => void
 }
 
@@ -52,6 +53,7 @@ function EvolucaoGrafico({
   resumo,
   marcador,
   previsaoTroca = null,
+  limiarTrocar = LIMIAR_TROCAR,
   onMarcadorChange,
 }: EvolucaoGraficoProps) {
   const arrastando = useRef(false)
@@ -164,7 +166,7 @@ function EvolucaoGrafico({
             <span className="evolution-chart-card__forecast-copy">
               <span>Previsão de troca</span>
               <strong>{previsaoTroca.rotulo}</strong>
-              <small>Estimativa ao atingir o limiar de troca</small>
+              <small>Estimativa ao atingir {limiarTrocar.toLocaleString('pt-BR')}% de cobertura</small>
             </span>
           </div>
         ) : null}
@@ -271,7 +273,7 @@ function EvolucaoGrafico({
               stroke={PALETA_STATUS.trocar.linha}
               strokeDasharray="6 4"
               strokeOpacity={0.72}
-              y={LIMIAR_TROCAR}
+              y={limiarTrocar}
             />
             {marcador === undefined ? null : (
               <ReferenceLine stroke={PALETA_STATUS.ok.linha} x={marcador} />

@@ -22,6 +22,7 @@ const armadilhaComRefil: ArmadilhaLista = {
   percentual_atual: null,
   status: null,
   dias_ate_saturar: null,
+  limiar_trocar: 20,
   ultima_analise_em: null,
   em_alerta_desde: null,
 }

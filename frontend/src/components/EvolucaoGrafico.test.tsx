@@ -46,16 +46,17 @@ describe('EvolucaoGrafico', () => {
     expect(screen.getByRole('group', { name: 'Evolução completa da cobertura' })).toBeVisible()
   })
 
-  it('descreve a previsão pelo limiar de troca, sem percentual fixo', () => {
+  it('descreve a previsão pelo limiar de troca recebido, sem percentual fixo', () => {
     render(
       <EvolucaoGrafico
+        limiarTrocar={30}
         previsaoTroca={{ inicio: Date.parse('2026-11-01T00:00:00Z'), fim: Date.parse('2026-12-01T00:00:00Z'), rotulo: 'Novembro de 2026' }}
         resumo="Evolução da cobertura: 1 medição, de 42,00% a 42,00%"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
-    expect(screen.getByText('Estimativa ao atingir o limiar de troca')).toBeVisible()
+    expect(screen.getByText('Estimativa ao atingir 30% de cobertura')).toBeVisible()
     expect(screen.queryByText(/70\s*%/)).not.toBeInTheDocument()
   })
 })
