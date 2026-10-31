@@ -148,6 +148,7 @@ dispensa CORS no uso normal (`login.md`, 4.2).
 | `CORS_ORIGENS` | `http://localhost:5173` | Sim |
 | `LIMIAR_ATENCAO` | `10` | Não — padrão 10 |
 | `LIMIAR_TROCAR` | `20` | Não — padrão 20 |
+| `FUSO_PRODUTO` | `America/Sao_Paulo` | Não — zona IANA da data civil que conta os dias em uso |
 | `AMBIENTE` | `producao` | Sim — `desenvolvimento`, `homologacao` ou `producao`; em `producao` a documentação interativa (`/docs`, `/redoc`, `/openapi.json`) é desativada |
 | `COOKIE_SECURE` | `true` | Não — padrão `true`; `false` só com `AMBIENTE=desenvolvimento` |
 | `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | Não — padrão 1800 (30 min) |
@@ -343,6 +344,12 @@ frontend não faz esse cálculo, conforme `../frontend/telas_spec.md`, seção 5
 | `percentual_atual`, `status`, `ultima_analise_em` | Nenhuma análise no refil ativo |
 | `dias_ate_saturar` | Menos de duas análises, ou inclinação não positiva |
 | `em_alerta_desde` | Armadilha não está em estado `trocar` |
+
+**Sobre `dias_em_uso`:** diferença entre a data de hoje e a data de instalação
+do refil, em dias inteiros. "Hoje" é a data civil no fuso `FUSO_PRODUTO`
+(padrão Brasília), não a data UTC: um refil instalado hoje tem 0 dia de uso
+mesmo depois das 21h locais. A mesma data valida a instalação, que não pode
+ser posterior a hoje. Os instantes continuam em UTC.
 
 **Sobre `limiar_trocar`:** percentual de cobertura a partir do qual a armadilha
 passa a `trocar`, igual ao `LIMIAR_TROCAR` configurado no backend. Também vem

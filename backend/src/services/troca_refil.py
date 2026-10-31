@@ -1,7 +1,7 @@
 """Orquestra a troca atômica de um ciclo de refil."""
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -59,7 +59,8 @@ def trocar_refil(
         session: sessão cuja transação será confirmada ou revertida pela rota.
         armadilha_id: UUID da armadilha que receberá o novo ciclo.
         data_instalacao: data informada para início do novo ciclo.
-        agora: instante UTC usado para validar datas e calcular dias em uso.
+        agora: instante no fuso do produto; sua data civil valida a instalação
+            e conta os dias em uso.
 
     Returns:
         Resumos do ciclo encerrado, se houver, e do novo ciclo ativo.
@@ -74,7 +75,7 @@ def trocar_refil(
     if armadilha is None:
         raise ArmadilhaNaoEncontrada(armadilha_id)
 
-    if data_instalacao > agora.astimezone(timezone.utc).date():
+    if data_instalacao > agora.date():
         raise DataInstalacaoFutura(data_instalacao)
 
     repositorio_refil = RefilRepository(session)

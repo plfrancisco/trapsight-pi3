@@ -23,6 +23,7 @@ def fake_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(name, value)
     monkeypatch.delenv("LIMIAR_ATENCAO", raising=False)
     monkeypatch.delenv("LIMIAR_TROCAR", raising=False)
+    monkeypatch.delenv("FUSO_PRODUTO", raising=False)
 
 
 def test_app_exposes_docs_and_keeps_settings_at_initialization(
@@ -230,3 +231,23 @@ def test_database_url_is_redacted_in_repr_and_validation_errors(
         Settings()
 
     assert _FAKE_DATABASE_URL not in str(captured.value)
+
+
+def test_fuso_do_produto_tem_padrao_de_brasilia(fake_environment: None) -> None:
+    """Sem FUSO_PRODUTO, a data civil do produto é a de Brasília."""
+    assert Settings().fuso_produto == "America/Sao_Paulo"
+    assert str(Settings().fuso) == "America/Sao_Paulo"
+
+
+def test_fuso_do_produto_rejeita_zona_inexistente(
+    fake_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Uma zona IANA inválida derruba a inicialização, sem revelar o valor."""
+    monkeypatch.setenv("FUSO_PRODUTO", "Marte/Olympus")
+
+    with pytest.raises(SettingsConfigurationError) as captured:
+        Settings()
+
+    assert "FUSO_PRODUTO" in str(captured.value)
+    assert "Marte" not in str(captured.value)

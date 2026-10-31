@@ -79,7 +79,7 @@ def listar_armadilhas(
             refil_por_armadilha.get(armadilha.id),
             pontos_por_refil,
             Decimal(settings.limiar_trocar),
-            agora,
+            agora.astimezone(settings.fuso),
         )
         for armadilha in armadilhas
     ]
@@ -146,7 +146,7 @@ def criar_armadilha(
         [],
         [],
         Decimal(settings.limiar_trocar),
-        agora,
+        agora.astimezone(settings.fuso),
     )
     session.commit()
     return resposta
@@ -196,7 +196,7 @@ def obter_armadilha(
         refis_anteriores,
         pontos,
         Decimal(settings.limiar_trocar),
-        agora,
+        agora.astimezone(settings.fuso),
     )
 
 
@@ -258,7 +258,7 @@ def atualizar_armadilha(
         refis_anteriores,
         pontos,
         Decimal(settings.limiar_trocar),
-        agora,
+        agora.astimezone(settings.fuso),
     )
     session.commit()
     return resposta
@@ -299,6 +299,7 @@ def trocar_refil(
     armadilha_id: UUID,
     dados: RefilTrocaCriar,
     session: Annotated[Session, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
     agora: Annotated[datetime, Depends(get_agora)],
 ) -> RefilTrocaSaida:
     """Encerra o ciclo atual e cria seu substituto na mesma transação.
@@ -307,6 +308,7 @@ def trocar_refil(
         armadilha_id: UUID da armadilha que receberá o novo refil.
         dados: data de instalação informada para o novo ciclo.
         session: sessão que mantém a troca em uma única transação.
+        settings: fuso do produto usado na data civil de hoje.
         agora: instante UTC usado para validar e resumir as datas.
 
     Returns:
@@ -320,7 +322,7 @@ def trocar_refil(
             session,
             armadilha_id,
             dados.data_instalacao,
-            agora,
+            agora.astimezone(settings.fuso),
         )
         resposta = RefilTrocaSaida(
             refil_encerrado=(

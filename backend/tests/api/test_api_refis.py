@@ -40,6 +40,8 @@ def client(session: Session, monkeypatch: pytest.MonkeyPatch) -> TestClient:
         monkeypatch.setenv(nome, valor)
     monkeypatch.setenv("LIMIAR_ATENCAO", "40")
     monkeypatch.setenv("LIMIAR_TROCAR", "70")
+    # Mantém a contagem de dias pela data UTC nos cenários antigos; o fuso tem testes próprios.
+    monkeypatch.setenv("FUSO_PRODUTO", "UTC")
 
     from src.main import create_app
 
@@ -280,6 +282,8 @@ def test_trocas_concorrentes_em_sessoes_reais_produzem_ciclos_coerentes(
         monkeypatch.setenv(nome, valor)
     monkeypatch.setenv("LIMIAR_ATENCAO", "40")
     monkeypatch.setenv("LIMIAR_TROCAR", "70")
+    # Mantém a contagem de dias pela data UTC nos cenários antigos; o fuso tem testes próprios.
+    monkeypatch.setenv("FUSO_PRODUTO", "UTC")
 
     identificador = f"ARM-CONCORRENTE-{uuid4()}"
     with Session(engine) as sessao_inicial:
@@ -361,3 +365,53 @@ def test_trocas_concorrentes_em_sessoes_reais_produzem_ciclos_coerentes(
                 delete(Usuario).where(Usuario.id == usuario_concorrente_id)
             )
             sessao_limpeza.commit()
+
+
+@pytest.mark.parametrize(
+    ("agora_utc", "data_instalacao", "dias_esperados"),
+    [
+        # 02:00Z ainda é 23:00 do dia 29 em Brasília: instalar "hoje" dá 0 dia.
+        (datetime(2026, 10, 30, 2, 0, tzinfo=timezone.utc), "2026-10-29", 0),
+        # 03:00Z é meia-noite em Brasília: o dia 29 já tem 1 dia de uso.
+        (datetime(2026, 10, 30, 3, 0, tzinfo=timezone.utc), "2026-10-29", 1),
+        (datetime(2026, 10, 30, 3, 0, tzinfo=timezone.utc), "2026-10-30", 0),
+    ],
+)
+def test_dias_em_uso_usam_a_data_civil_do_fuso_do_produto(
+    client: TestClient,
+    session: Session,
+    agora_utc: datetime,
+    data_instalacao: str,
+    dias_esperados: int,
+) -> None:
+    client.app.state.settings.fuso_produto = "America/Sao_Paulo"
+    client.app.dependency_overrides[get_agora] = lambda: agora_utc
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-FUSO")
+
+    troca = client.post(
+        f"/api/armadilhas/{armadilha.id}/refis",
+        json={"data_instalacao": data_instalacao},
+    )
+    detalhe = client.get(f"/api/armadilhas/{armadilha.id}")
+
+    assert troca.status_code == 201
+    assert troca.json()["refil_novo"]["dias_em_uso"] == dias_esperados
+    assert detalhe.json()["refil_ativo"]["dias_em_uso"] == dias_esperados
+
+
+def test_data_de_instalacao_de_amanha_no_fuso_do_produto_e_rejeitada(
+    client: TestClient,
+    session: Session,
+) -> None:
+    client.app.state.settings.fuso_produto = "America/Sao_Paulo"
+    client.app.dependency_overrides[get_agora] = lambda: datetime(
+        2026, 10, 30, 2, 0, tzinfo=timezone.utc
+    )
+    armadilha = ArmadilhaRepository(session).create(identificador="ARM-FUSO-FUTURO")
+
+    resposta = client.post(
+        f"/api/armadilhas/{armadilha.id}/refis",
+        json={"data_instalacao": "2026-10-30"},
+    )
+
+    assert resposta.status_code == 422

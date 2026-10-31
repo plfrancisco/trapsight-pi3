@@ -93,8 +93,9 @@ classificador de imagem isolado.
 - link para editar a armadilha
 
 **Comportamento do botão de troca:** encerra o refil ativo, registrando a data
-de troca, e cria um novo refil com data de instalação igual à data corrente. A
-partir daí a série temporal recomeça do zero.
+de troca, e cria um novo refil com data de instalação igual à data corrente no
+fuso do produto (Brasília por padrão). A partir daí a
+série temporal recomeça do zero.
 
 ### 4.2.1 Gráfico e foto selecionada
 

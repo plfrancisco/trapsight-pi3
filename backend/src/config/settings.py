@@ -1,6 +1,7 @@
 """Configuração validada do backend, carregada exclusivamente do ambiente."""
 
 from typing import Annotated, Any, Literal, Self
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import (
     Field,
@@ -28,6 +29,7 @@ _ENVIRONMENT_NAMES = {
     "limiar_atencao": "LIMIAR_ATENCAO",
     "limiar_trocar": "LIMIAR_TROCAR",
     "ambiente": "AMBIENTE",
+    "fuso_produto": "FUSO_PRODUTO",
     "cookie_secure": "COOKIE_SECURE",
     "sessao_inatividade_segundos": "SESSAO_INATIVIDADE_SEGUNDOS",
     "sessao_duracao_maxima_segundos": "SESSAO_DURACAO_MAXIMA_SEGUNDOS",
@@ -73,6 +75,8 @@ class Settings(BaseSettings):
     cors_origens: Annotated[list[str], NoDecode]
     limiar_atencao: int = 10
     limiar_trocar: int = 20
+    # Fuso da data civil usada na contagem de dias; instantes seguem em UTC.
+    fuso_produto: str = "America/Sao_Paulo"
     ambiente: Ambiente = "desenvolvimento"
     # None significa "decidir pelo ambiente": só desenvolvimento aceita cookie sem Secure.
     cookie_secure: bool | None = None
@@ -165,6 +169,21 @@ class Settings(BaseSettings):
         if any("*" in origin for origin in origins):
             raise ValueError("CORS_ORIGENS exige origens explícitas.")
         return origins
+
+    @field_validator("fuso_produto")
+    @classmethod
+    def _validate_fuso_produto(cls, value: str) -> str:
+        """Exige uma zona IANA existente para não calcular dias em fuso inválido."""
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError, OSError):
+            raise ValueError("FUSO_PRODUTO deve ser uma zona IANA válida.") from None
+        return value
+
+    @property
+    def fuso(self) -> ZoneInfo:
+        """Zona IANA do produto, já validada na inicialização."""
+        return ZoneInfo(self.fuso_produto)
 
     @property
     def cookie_seguro(self) -> bool:

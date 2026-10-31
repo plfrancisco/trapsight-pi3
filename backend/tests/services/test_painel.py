@@ -79,3 +79,17 @@ def test_montar_resumo_retorna_primeiro_cruzamento_enquanto_alerta_esta_ativo() 
     )
 
     assert resumo.em_alerta_desde == _AGORA - timedelta(days=5)
+
+
+def test_dias_em_uso_contam_a_data_civil_do_fuso_do_instante() -> None:
+    from zoneinfo import ZoneInfo
+
+    from src.services.painel import calcular_dias_em_uso
+
+    instante = datetime(2026, 10, 30, 2, 0, tzinfo=timezone.utc)
+
+    assert calcular_dias_em_uso(date(2026, 10, 29), instante) == 1
+    assert (
+        calcular_dias_em_uso(date(2026, 10, 29), instante.astimezone(ZoneInfo("America/Sao_Paulo")))
+        == 0
+    )

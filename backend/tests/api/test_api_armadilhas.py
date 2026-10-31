@@ -37,6 +37,8 @@ def client(
         monkeypatch.setenv(nome, valor)
     monkeypatch.setenv("LIMIAR_ATENCAO", "40")
     monkeypatch.setenv("LIMIAR_TROCAR", "70")
+    # Mantém a contagem de dias pela data UTC nos cenários antigos; o fuso tem testes próprios.
+    monkeypatch.setenv("FUSO_PRODUTO", "UTC")
 
     from src.main import create_app
 

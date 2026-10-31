@@ -80,21 +80,22 @@ def montar_resumo(
 
 
 def calcular_dias_em_uso(data_instalacao: date, agora: datetime) -> int:
-    """Calcula dias inteiros desde a instalação até a data UTC de referência.
+    """Calcula dias inteiros desde a instalação até a data civil de referência.
 
     Args:
         data_instalacao: data de início do ciclo ativo.
-        agora: instante de referência com fuso horário.
+        agora: instante de referência com fuso horário; a data civil é a do
+            próprio fuso do instante (o chamador o converte para o fuso do produto).
 
     Returns:
-        Diferença inteira entre a data de referência UTC e a instalação.
+        Diferença inteira entre a data civil de referência e a instalação.
 
     Raises:
         ValueError: se o instante de referência não tiver fuso horário.
     """
     if agora.tzinfo is None or agora.utcoffset() is None:
         raise ValueError("O instante atual deve incluir fuso horário.")
-    return (agora.astimezone(timezone.utc).date() - data_instalacao).days
+    return (agora.date() - data_instalacao).days
 
 
 def calcular_dias_ate_troca(data_instalacao: date, data_troca: date) -> int:
