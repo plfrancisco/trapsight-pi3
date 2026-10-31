@@ -124,8 +124,8 @@ está comprometida e o par precisa ser trocado, com novo backup de tudo.
 Com o certificado público no lugar, o backup é um comando:
 
 ```bash
-BACKUP_DATABASE_URL="postgresql://usuario:senha@host:5432/postgres" \
-  scripts/backup-banco.sh
+# BACKUP_DATABASE_URL exportada pelo gerenciador de segredos
+scripts/backup-banco.sh
 ```
 
 O resultado é `~/backups-trapsight/armadilhas-<data>.dump.cms` mais o
@@ -196,8 +196,8 @@ Supabase (`auth`, `storage`, `extensions`) são ignorados, porque nunca estão
 vazios em um projeto gerenciado.
 
 ```bash
-RESTORE_DATABASE_URL="postgresql://postgres:senha@host:5432/postgres" \
-  scripts/restaurar-banco.sh ~/backups-trapsight/armadilhas-<data>.dump.cms
+# RESTORE_DATABASE_URL exportada pelo gerenciador de segredos
+scripts/restaurar-banco.sh "$BACKUP_ARQUIVO"
 ```
 
 O dump é decifrado direto para o `pg_restore`, em uma transação única: nenhuma
@@ -211,6 +211,25 @@ dos dois lados mudar, o outro precisa mudar junto.
 
 ### No Supabase
 
+**Não testado contra Supabase real.** O backup e a restauração usam conexão
+direta ou pooler de sessão com TLS e papel de backup/migração com privilégios
+necessários; o papel runtime pode não conseguir ler todos os dados sob RLS.
+Use um cliente `pg_dump` compatível com a versão do servidor. Defina as URLs
+por gerenciador de segredos, sem registrá-las em histórico ou arquivos Git:
+
+```bash
+# BACKUP_DATABASE_URL e RESTORE_DATABASE_URL já exportadas com sslmode=require
+scripts/backup-banco.sh
+scripts/restaurar-banco.sh "$BACKUP_ARQUIVO"
+```
+
+O segundo comando é somente para um projeto descartável separado, após os
+pré-requisitos abaixo; `BACKUP_ARQUIVO` aponta ao dump cifrado com `.sha256`
+adjacente. Confirme o hash, o certificado/chave de backup e os privilégios
+antes de testar. Não rode migrations antes de restaurar: o schema `public`
+deve estar vazio. A existência de tabelas da plataforma em `public` também
+faz o script recusar a restauração; não as exclua para contornar a guarda.
+
 1. Use a conexão **direta** ou o pooler em modo sessão (porta `5432`) com o
    usuário `postgres`. O pooler transacional (`6543`) não serve a restauração,
    pela mesma razão que não serve a migrações.
@@ -219,11 +238,11 @@ dos dois lados mudar, o outro precisa mudar junto.
    ```sql
    CREATE ROLE trapsight_backend NOLOGIN;
    CREATE ROLE trapsight_runtime LOGIN PASSWORD '<senha-gerada>'
-     NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+     NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
    GRANT trapsight_backend TO trapsight_runtime;
    ```
    A senha é gerada na hora e guardada só no gerenciador de segredos.
-3. Confirme que o schema `public` está vazio (projeto recém-criado já está) e
+3. Confirme que o schema `public` está vazio (isso precisa ser verificado) e
    rode `scripts/restaurar-banco.sh`.
 4. Depois da restauração, confira a versão das migrações e um login:
    `SELECT version_num FROM alembic_version;`
@@ -245,5 +264,11 @@ estes scripts: crie um banco novo, restaure nele e só então aponte a aplicaç�
   executar o script (ou de um agendador do sistema operacional, ainda não
   configurado).
 - A rotação das cópias antigas é manual.
+- Falta configurar e monitorar o agendamento em máquina confiável, com acesso
+  ao gerenciador de segredos: semanal para demonstração e diário para dados
+  reais. Registre execução, falhas e cópias externas sem registrar a URL.
+- Falta testar backup e restauração contra um Supabase real descartável e
+  comparar contagens por tabela, SHA-256 das imagens e login autorizado;
+  registre a evidência sem incluir senhas, dumps ou dados sensíveis.
 - A guarda da chave privada e da cópia de segurança dela é manual: sem essa
   cópia, um disco perdido invalida de uma vez todos os backups já arquivados.

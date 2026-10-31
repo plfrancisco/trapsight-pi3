@@ -45,28 +45,102 @@ deploy.
 As migrações criam o papel de execução sozinhas; só a senha fica de fora, por
 não poder ir para o repositório.
 
-1. Rode `alembic upgrade head` com a conexão **direta** ou o pooler em modo
-   sessão (porta `5432`) e o usuário administrador `postgres`. Nunca pelo pooler
+1. Crie no Supabase um projeto exclusivo para o ambiente. Guarde a senha do
+   banco no gerenciador de segredos; selecione uma conexão direta ou pooler de
+   sessão com TLS e verifique a conectividade antes de continuar.
+2. Exporte `DATABASE_URL` pelo gerenciador de segredos, com o papel de migração
+   `postgres`, e rode na pasta `backend` `uv run alembic upgrade head` com a
+   conexão **direta** ou o pooler em modo sessão (porta `5432`) e o usuário
+   administrador `postgres`. Nunca pelo pooler
    transacional (`6543`), que não serve a migrações. A `0007` cria
    `trapsight_backend` (sem login) e habilita RLS nas tabelas; a `0008` cria
    `trapsight_runtime` (com login, sem senha, sem `SUPERUSER`, `CREATEROLE` nem
    `BYPASSRLS`) e lhe concede `trapsight_backend`.
-2. No SQL Editor, defina a senha do papel de execução, gerada na hora e guardada
+3. No SQL Editor, defina a senha do papel de execução, gerada na hora e guardada
    só no gerenciador de segredos (nunca no repositório nem no chat):
    `ALTER ROLE trapsight_runtime PASSWORD '<senha-gerada>';`
-3. Monte a `DATABASE_URL` de produção com o pooler transacional (`6543`) e o
+4. Monte a `DATABASE_URL` de produção com o pooler transacional (`6543`) e o
    usuário `trapsight_runtime.<project-ref>`, e cadastre-a no Vercel como
    sensível.
-4. Crie o gerente pela CLI, com a senha lida da entrada padrão:
+5. Crie o gerente pela CLI, com a senha lida da entrada padrão:
    `python -m src.cli criar-usuario --email <e-mail> --nome <nome> --papel gerente --senha-stdin`.
    A senha do gerente é a definitiva (a CLI não exige troca); os operadores
    criados depois pela tela Contas trocam a senha inicial no primeiro acesso.
-5. Confira que o papel não é privilegiado:
+6. Confira que o papel não é privilegiado:
    `SELECT rolsuper, rolcreaterole, rolbypassrls FROM pg_roles WHERE rolname = 'trapsight_runtime';`
    deve devolver três `false`.
 
 Em um Supabase novo e vazio, essas etapas se repetem do mesmo jeito; a `0007`
 e a `0008` só atuam enquanto o papel administrador puder criar papéis.
+
+O `head` atual é `0012`: `0001` a `0006` criam os dados, contas, catálogo e
+mídias; `0007` cria o papel sem login, concessões DML e políticas RLS; `0008`
+cria o login de execução; `0009` protege `alembic_version` com RLS; `0010`
+e `0011` acrescentam papéis e troca de senha; `0012` cria auditoria com apenas
+SELECT e INSERT para a aplicação. O papel de migração é separado do papel de
+execução. As migrações 0007 e 0008 podem pular a criação de papéis se faltar
+privilégio: uma execução sem erro não substitui as conferências abaixo.
+
+### Checklist após configurar (não testado contra Supabase real)
+
+Execute as consultas abaixo como administrador no SQL Editor. Não inclua
+senhas nos comandos compartilhados ou no histórico. Se alguma conferência
+falhar, interrompa a publicação e investigue as concessões e políticas; não
+considere a verificação aprovada apenas porque a migration terminou.
+
+```sql
+SELECT version_num FROM public.alembic_version;
+-- Esperado: 0012.
+SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolbypassrls
+FROM pg_roles WHERE rolname IN ('trapsight_backend', 'trapsight_runtime');
+-- Esperado: dois papéis; só runtime pode fazer login, quatro privilégios false.
+SELECT pg_has_role('trapsight_runtime', 'trapsight_backend', 'MEMBER');
+-- Esperado: true.
+SELECT c.relname, c.relrowsecurity
+FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') ORDER BY c.relname;
+-- Esperado: RLS true em todas as tabelas da aplicação e alembic_version.
+SELECT tablename, policyname, roles, cmd FROM pg_policies
+WHERE schemaname = 'public' ORDER BY tablename, policyname;
+-- Esperado: políticas de acesso do backend; auditoria apenas SELECT e INSERT;
+-- nenhuma política permite acesso a anon, authenticated ou PUBLIC.
+SELECT c.relname, has_table_privilege('trapsight_runtime', c.oid, 'SELECT') AS sel,
+       has_table_privilege('trapsight_runtime', c.oid, 'INSERT') AS ins,
+       has_table_privilege('trapsight_runtime', c.oid, 'UPDATE') AS upd,
+       has_table_privilege('trapsight_runtime', c.oid, 'DELETE') AS del
+FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') ORDER BY c.relname;
+-- Esperado: DML nas sete tabelas da aplicação; auditoria só SELECT/INSERT.
+-- alembic_version não deve ser acessível ao runtime pelas políticas RLS.
+```
+
+Para verificar o bloqueio efetivo, repita para `anon` e `authenticated`, em
+sessões administrativas separadas, uma transação por tabela abaixo. Substitua
+`<PAPEL>` e `<TABELA>` por identificadores fixos, nunca por entrada de usuário:
+
+```sql
+BEGIN;
+SET LOCAL ROLE <PAPEL>;
+SELECT count(*) FROM public.<TABELA>;
+ROLLBACK;
+```
+
+Em `armadilha`, `refil`, `analise`, `modelo_armadilha`, `usuario`, `sessao`,
+`tentativa_login`, `auditoria_cli` e `alembic_version`, espera-se permissão
+negada ou zero linhas, inclusive com dados de teste existentes. Após erro,
+execute `ROLLBACK` antes da próxima tentativa. Revise também as políticas e
+concessões herdadas: RLS restringe linhas, enquanto permissões restringem
+operações; verificar só uma delas é insuficiente. Para escrita, faça testes
+controlados na homologação descartável e confirme que INSERT, UPDATE e DELETE
+são negados ou não afetam linhas, sem dados reais.
+
+Com `psql` conectado pelo papel da aplicação usando TLS, execute
+`SELECT current_user, ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid();`:
+espera-se o papel de execução e `ssl = true`. No pooler, essa consulta mede
+a conexão do pooler ao banco; confirme separadamente que o cliente usa TLS
+com `sslmode=require`. Pelo papel de migração, `uv run alembic current`
+deve mostrar `0012 (head)`. Crie contas somente por `criar-usuario`; não há
+usuário padrão. A senha é recebida por `--senha-stdin` de forma segura.
 
 ## Carregar a demonstração no Supabase (não testado contra Supabase real)
 
