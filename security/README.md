@@ -6,16 +6,18 @@ contêiner. Especificação completa:
 Origem dos requisitos: [`.context/plan/foundation/login.md`](../.context/plan/foundation/login.md).
 
 > **Regra:** nada vai ao ar sem esta suíte verde e o relatório arquivado.
-> **Nada pode ficar aberto:** nem o banco, nem o backend, nem qualquer serviço
-> interno. Só as portas 80 e 443 do proxy.
+> No Compose local, nenhum serviço interno fica aberto; só 80 e 443 do proxy.
+> No publicado, TLS e controles do Supabase protegem o banco, pois a rede é do
+> provedor (decisão de 2026-10-26).
 
 ## ⚠️ Uso autorizado
 
 Aponte **somente** para sistemas do próprio projeto, com autorização:
 o ambiente local, a **homologação** e o definitivo. Nunca para terceiros.
 O modo `ativo` e os testes destrutivos rodam **apenas na homologação**
-(cópia descartável, dados fictícios). Contra o definitivo, só os modos `rede`
-e `passivo`.
+(cópia descartável, dados fictícios). No publicado, verifique TLS e rode ZAP
+*baseline* passivo; `rede` e as portas são exclusivos do Compose local porque
+a rede publicada é do provedor (decisão de 2026-10-26).
 
 ## Pré-requisitos
 
@@ -59,23 +61,29 @@ export DOCKER_NET=projeto-integrador_default
 export TARGET_URL=http://backend:8000          # dentro da rede do Compose
 bash security/scans/run_scans.sh pentest
 
-# 3) Homologação (duas passadas, ver abaixo)
+# 3) Homologação (três passadas, ver abaixo; nunca use modo tudo)
 export TARGET_URL=https://homologacao.exemplo.com
 export TARGET_HOST=homologacao.exemplo.com
 export SEC_USER_EMAIL=... SEC_USER_PASSWORD=...        # conta de teste descartável (operador)
 export SEC_MANAGER_EMAIL=... SEC_MANAGER_PASSWORD=...  # conta do gerente (criar-usuario --papel gerente)
 export SEC_LOCKOUT_EMAIL=... SEC_LOCKOUT_PASSWORD=...  # conta separada (fica bloqueada)
-bash security/scans/run_scans.sh tudo
+bash security/scans/run_scans.sh passivo
 CONFIRMO_HOMOLOGACAO=sim bash security/scans/run_scans.sh ativo
 
-# 4) Definitivo (SEM ataque): portas, TLS e varredura passiva
-export TARGET_URL=https://app.exemplo.com TARGET_HOST=app.exemplo.com
-bash security/scans/run_scans.sh rede
-bash security/scans/run_scans.sh passivo
+# 4) Definitivo: TLS e ZAP baseline separadamente; não use o modo passivo
+# do script, que também executa Nuclei. Siga o procedimento do revisor abaixo.
 ```
 
 Nunca coloque credenciais em arquivo versionado nem no histórico do shell
 compartilhado; use variáveis de ambiente da sessão.
+
+O modo `rede` também dispara nmap; não o use para testar TLS publicado. O
+modo `passivo` também dispara Nuclei e não equivale somente ao ZAP baseline.
+O revisor deve executar testssl.sh e ZAP baseline separadamente contra a URL
+HTTPS autorizada e arquivar a evidência conforme SEG05; o executor cego não
+deve contornar o fluxo de relatório cifrado. O modo `tudo` inclui `rede`, e os testes de exposição
+usam o host de `TARGET_URL` quando `TARGET_HOST` não é informado; não os
+aponte à rede publicada do provedor (decisão de 2026-10-26).
 
 ### Três passadas na homologação
 

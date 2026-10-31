@@ -32,6 +32,56 @@ Cadastre apenas no ambiente Production. Marque `DATABASE_URL` como sensível.
 | `VITE_API_URL` | `/api` (padrão do frontend) |
 | `VITE_AUTENTICACAO_ATIVA` | `true` (padrão em produção) |
 
+## Homologação descartável (Preview)
+
+Use um projeto Supabase separado do definitivo e somente dados e credenciais
+de teste. Configure variáveis no ambiente Preview da Vercel, sem reutilizar
+segredos de Production. Como variáveis `VITE_` entram no bundle, defina-as
+antes do build; não coloque nelas nenhum segredo.
+
+| Variável | Produção | Preview de homologação | Finalidade |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | Papel runtime do banco definitivo, pooler 6543 com TLS | Papel runtime de banco separado, pooler 6543 com TLS | Conexão sensível do backend |
+| `AMBIENTE` | `producao` | `homologacao` | Controles de ambiente |
+| `COOKIE_SECURE` | `true` | `true` | Cookie somente por HTTPS |
+| `CORS_ORIGENS` | Origem HTTPS definitiva exata | Origem HTTPS exata do Preview | Origens autorizadas; sem `*` |
+| `STORAGE_BACKEND` | `database` | `database` | Mídias persistentes no banco |
+| `UPLOADS_DIR` | `/tmp/trapsight` | `/tmp/trapsight` | Diretório exigido pela configuração |
+| `INFERENCE_MODE` | `stub` | `stub` | Inferência de demonstração |
+| `MODEL_WEIGHTS_PATH` | `/tmp/modelo-inativo` | `/tmp/modelo-inativo` | Caminho exigido pela configuração |
+| `MODEL_VERSION` | Versão semântica do stub | Versão semântica de teste | Identificação da inferência |
+| `VITE_API_URL` | `/api` | `/api` | API na mesma origem |
+| `VITE_AUTENTICACAO_ATIVA` | `true` | `true` | Interface autenticada |
+| `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | `1800` nas passadas 1 e 2; `5` na 3 | Expiração por inatividade |
+| `SESSAO_DURACAO_MAXIMA_SEGUNDOS` | `28800` | `28800` nas passadas 1 e 2; `15` na 3 | Duração máxima |
+| `LOGIN_FALHAS_POR_IP` | `30` | `100000` na passada 1; `30` na 2 | Limite de falhas por IP |
+| `ANALISES_POR_MINUTO` | `30` | Elevado na passada 1; `30` na 2 | Limite por usuário |
+
+Os demais limites ficam nos padrões do backend e da suíte. Antes da passada 3,
+configure também `SEC_IDLE_TIMEOUT_SECONDS=5` e
+`SEC_ABSOLUTE_TIMEOUT_SECONDS=15` no executor; para a passada 2, use os
+seletores e `SEC_RUN_RATE_LIMIT=1` de `security/README.md`. Variáveis do
+backend exigem novo deployment para produzir efeito. Execute três passadas
+separadas, com contas fictícias próprias, e restaure os parâmetros antes de
+qualquer outro uso. A criação e a execução efetivas ainda estão pendentes.
+
+### Verificação da CSP no Preview
+
+A spec `login.md` 10.3 prevê primeiro `Content-Security-Policy-Report-Only`;
+a política imposta no Preview é uma divergência aguardando decisão após a
+verificação real. A regra de cabeçalho aplica a CSP imposta ao hostname previsto
+`trapsight-pi3-git-dev-plfranciscos-projects.vercel.app`. Confirme esse nome
+após o primeiro Preview: ele deve ser exclusivo da homologação e não deve ser
+usado pela produção. Outros aliases de Preview não recebem essa regra. Confira
+os cabeçalhos nos dois ambientes antes de publicar. Abra o Preview no navegador,
+percorra login, nova análise
+com upload, detalhe com gráfico e tela Contas e examine o console em busca de
+violações de CSP. Se não houver, mantenha a política imposta no Preview; se
+houver, volte a `Content-Security-Policy-Report-Only` e relate as violações.
+Confirme também os cabeçalhos da resposta no Preview e em Production para
+garantir que a política imposta esteja limitada ao Preview. Este procedimento
+ainda não foi executado.
+
 Não crie variáveis Supabase com prefixo `VITE_`. A interface não acessa o
 Supabase diretamente. O papel de banco do backend não tem acesso por meio dos
 papéis `anon` ou `authenticated` e usa políticas RLS próprias.
