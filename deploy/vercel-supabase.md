@@ -24,7 +24,7 @@ Cadastre apenas no ambiente Production. Marque `DATABASE_URL` como sensível.
 | `AMBIENTE` | `producao` |
 | `COOKIE_SECURE` | `true` |
 | `CORS_ORIGENS` | Origem HTTPS oficial do projeto Vercel |
-| `INFERENCE_MODE` | `stub` enquanto não houver pesos; o padrão é `modelo` e, sem os pesos, a API não inicia |
+| `INFERENCE_MODE` | `stub` no deploy; o padrão é `modelo` e, sem os pesos, a API não inicia |
 | `MODEL_WEIGHTS_PATH` | `/tmp/modelo-inativo` enquanto a inferência usar o stub |
 | `MODEL_VERSION` | `v0.1.0-demo` |
 | `UPLOADS_DIR` | `/tmp/trapsight` (não usado para mídia com o backend `database`) |
@@ -114,5 +114,6 @@ privadas no Supabase, sem depender do disco temporário das funções. Isso é
 adequado para a demonstração de baixo volume até dezembro; a cota do banco
 gratuito precisa ser acompanhada se forem enviadas muitas análises.
 
-O modelo de visão segue como stub até que os pesos de inferência sejam
-distribuídos separadamente. Este deploy não inclui o dataset de treinamento.
+O deploy usa `INFERENCE_MODE=stub`: o PyTorch (`torch`) e os pesos de 93 MB
+não cabem na função Vercel. Como disponibilizar e ativar o modelo real é uma
+decisão em aberto. Este deploy não inclui o dataset de treinamento.
