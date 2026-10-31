@@ -35,28 +35,28 @@ export default function ResumoRefil({
       </h2>
       {refil ? (
         <>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="mt-4 grid grid-cols-2 gap-4">
             <div>
               <dt className="text-sm font-medium text-slate-700">Instalado em</dt>
-              <dd className="mt-1 font-semibold text-slate-950">
+              <dd className="mt-1 break-words font-semibold text-slate-950">
                 {formatData(refil.data_instalacao)}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-700">Dias em uso</dt>
-              <dd className="mt-1 font-semibold text-slate-950">
+              <dd className="mt-1 break-words font-semibold text-slate-950">
                 {refil.dias_em_uso} {refil.dias_em_uso === 1 ? 'dia' : 'dias'}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-700">Cobertura atual</dt>
-              <dd className="mt-1 font-semibold text-slate-950">
+              <dd className="mt-1 break-words font-semibold text-slate-950">
                 {formatPercentual(percentualAtual)}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-700">Estimativa</dt>
-              <dd className="mt-1 font-semibold text-slate-950">
+              <dd className="mt-1 break-words font-semibold text-slate-950">
                 {formatDiasAteSaturar(diasAteSaturar)}
               </dd>
             </div>

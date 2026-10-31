@@ -34,4 +34,19 @@ describe('ResumoRefil', () => {
     expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
     expect(screen.queryByText(/%/)).not.toBeInTheDocument()
   })
+
+  it('mantém os valores em duas colunas para não se sobreporem no cartão estreito', () => {
+    const { container } = render(
+      <ResumoRefil
+        diasAteSaturar={4}
+        percentualAtual={64.3}
+        refil={{ id: 'refil-1', data_instalacao: '2026-08-01', dias_em_uso: 20 }}
+        status="atencao"
+      />,
+    )
+
+    const lista = container.querySelector('dl')
+    expect(lista).toHaveClass('grid-cols-2')
+    expect(lista?.className).not.toMatch(/grid-cols-4/)
+  })
 })
