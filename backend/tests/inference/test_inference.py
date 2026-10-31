@@ -149,6 +149,23 @@ def test_derivar_status_respeita_fronteiras(
     assert derivar_status(percentual, Decimal("40"), Decimal("70")) is status_esperado
 
 
+@pytest.mark.parametrize(
+    ("percentual", "status_esperado"),
+    [
+        (Decimal("9.99"), StatusAnalise.OK),
+        (Decimal("10.00"), StatusAnalise.ATENCAO),
+        (Decimal("19.99"), StatusAnalise.ATENCAO),
+        (Decimal("20.00"), StatusAnalise.ATENCAO),
+        (Decimal("20.01"), StatusAnalise.TROCAR),
+    ],
+)
+def test_derivar_status_respeita_fronteiras_dos_limiares_do_produto(
+    percentual: Decimal,
+    status_esperado: StatusAnalise,
+) -> None:
+    assert derivar_status(percentual, Decimal("10"), Decimal("20")) is status_esperado
+
+
 def test_stub_produz_resultado_imutavel_e_coerente(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
