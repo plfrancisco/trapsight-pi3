@@ -101,7 +101,8 @@ async def criar_analise(
     except ArquivoMuitoGrande:
         raise ErroDeApi(
             CodigoErro.ARQUIVO_MUITO_GRANDE,
-            "O arquivo enviado excede o tamanho permitido.",
+            "A imagem tem resolução alta demais.",
+            detalhes={"motivo": "pixels"},
         ) from None
     except FormatoNaoSuportado:
         raise ErroDeApi(
@@ -447,6 +448,7 @@ async def _ler_upload_limitado(arquivo: UploadFile) -> bytes:
             raise ErroDeApi(
                 CodigoErro.ARQUIVO_MUITO_GRANDE,
                 "O arquivo enviado excede o tamanho permitido.",
+                detalhes={"motivo": "bytes"},
             )
         partes.append(bloco)
 

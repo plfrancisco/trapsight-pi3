@@ -174,6 +174,7 @@ def registrar_handlers(app: FastAPI) -> None:
             return _resposta_erro(
                 CodigoErro.ARQUIVO_MUITO_GRANDE,
                 "O arquivo enviado excede o tamanho permitido.",
+                {"motivo": "bytes"},
             )
         if 400 <= exc.status_code < 500:
             return _resposta_erro(

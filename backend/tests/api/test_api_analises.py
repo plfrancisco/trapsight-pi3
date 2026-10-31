@@ -311,8 +311,30 @@ def test_post_rejeita_arquivo_acima_de_dez_mib_antes_de_gravar(
         },
     )
 
-    _erro(response, 413, CodigoErro.ARQUIVO_MUITO_GRANDE)
+    erro = _erro(response, 413, CodigoErro.ARQUIVO_MUITO_GRANDE)
+    assert erro["detalhes"] == {"motivo": "bytes"}
     assert list(Path(client.app.state.settings.uploads_dir).iterdir()) == []
+    assert list(session.scalars(select(Analise))) == []
+
+
+def test_imagem_com_pixels_demais_devolve_413_com_motivo_pixels(
+    client: TestClient,
+    session: Session,
+) -> None:
+    armadilha, _refil = _criar_armadilha(session)
+    buffer = BytesIO()
+    # Poucos KB em disco, mas acima do teto de 20 milhões de pixels decodificados.
+    Image.new("L", (5000, 4001), 200).save(buffer, format="PNG")
+    assert len(buffer.getvalue()) < LIMITE_TAMANHO_UPLOAD_BYTES
+
+    response = client.post(
+        "/api/analises",
+        data={"armadilha_id": str(armadilha.id)},
+        files={"imagem": ("pixels.png", buffer.getvalue(), "image/png")},
+    )
+
+    erro = _erro(response, 413, CodigoErro.ARQUIVO_MUITO_GRANDE)
+    assert erro["detalhes"] == {"motivo": "pixels"}
     assert list(session.scalars(select(Analise))) == []
 
 

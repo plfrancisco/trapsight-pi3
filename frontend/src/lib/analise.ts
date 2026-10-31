@@ -72,6 +72,9 @@ export function isAbortError(erro: unknown): boolean {
  */
 export function buildFalhaMensagem(erro: unknown): string {
   if (erro instanceof ApiError) {
+    if (erro.codigo === 'ARQUIVO_MUITO_GRANDE' && erro.detalhes?.motivo === 'pixels') {
+      return 'A imagem tem resolução alta demais.'
+    }
     return buildMensagemErroAnalise(erro.codigo, erro.mensagem)
   }
   return 'Não foi possível concluir a análise. Tente novamente.'

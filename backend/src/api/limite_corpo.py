@@ -124,6 +124,7 @@ class LimiteCorpoMiddleware:
                 "erro": {
                     "codigo": CodigoErro.ARQUIVO_MUITO_GRANDE.value,
                     "mensagem": _MENSAGEM_CORPO_GRANDE,
+                    "detalhes": {"motivo": "bytes"},
                 }
             },
         )

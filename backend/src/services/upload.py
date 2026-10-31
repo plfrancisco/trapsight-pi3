@@ -19,7 +19,7 @@ _MENSAGEM_FORMATO_INVALIDO = "Envie uma imagem JPEG ou PNG válida."
 
 
 class ArquivoMuitoGrande(Exception):
-    """Indica que o conteúdo ou as dimensões excedem o limite aceito."""
+    """Indica que as dimensões decodificadas excedem o limite de pixels aceito."""
 
 
 class FormatoNaoSuportado(Exception):
@@ -52,7 +52,7 @@ def validar_imagem(conteudo: bytes) -> ImagemValidada:
     Raises:
         FormatoNaoSuportado: se o formato ou os dados decodificados forem inválidos.
         ResolucaoInsuficiente: se a imagem não alcançar a resolução mínima.
-        ArquivoMuitoGrande: se o conteúdo exceder um dos limites aceitos.
+        ArquivoMuitoGrande: se a imagem exceder o limite de pixels.
     """
     if conteudo.startswith(_ASSINATURA_JPEG):
         formato_esperado = "JPEG"

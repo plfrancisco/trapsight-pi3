@@ -214,7 +214,10 @@ def test_http_exception_eh_convertida_para_erro_padrao(
 
     assert response.status_code == status_http
     assert response.headers["content-type"].startswith("application/json")
-    assert response.json() == {"erro": {"codigo": codigo, "mensagem": mensagem}}
+    esperado = {"codigo": codigo, "mensagem": mensagem}
+    if status_http == 413:
+        esperado["detalhes"] = {"motivo": "bytes"}
+    assert response.json() == {"erro": esperado}
     assert "detalhe interno" not in response.text
     assert "/srv/segredo.py" not in response.text
 

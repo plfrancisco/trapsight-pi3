@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildMensagemErroAnalise, validateArquivoAnalise } from './analise'
+import { ApiError } from '../services/erros'
+import { buildFalhaMensagem, buildMensagemErroAnalise, validateArquivoAnalise } from './analise'
 
 describe('validateArquivoAnalise', () => {
   it('aceita JPEG e PNG com tipo e extensão correspondentes até 4 MB', () => {
@@ -81,5 +82,17 @@ describe('buildMensagemErroAnalise', () => {
     expect(
       buildMensagemErroAnalise('CODIGO_FUTURO', 'Mensagem original da API'),
     ).toBe('Mensagem original da API')
+  })
+})
+
+describe('buildFalhaMensagem', () => {
+  it('diferencia o excesso de pixels do excesso de bytes pelo motivo da API', () => {
+    const pixels = new ApiError('ARQUIVO_MUITO_GRANDE', 'texto', 413, { motivo: 'pixels' })
+    const bytes = new ApiError('ARQUIVO_MUITO_GRANDE', 'texto', 413, { motivo: 'bytes' })
+    const semMotivo = new ApiError('ARQUIVO_MUITO_GRANDE', 'texto', 413)
+
+    expect(buildFalhaMensagem(pixels)).toBe('A imagem tem resolução alta demais.')
+    expect(buildFalhaMensagem(bytes)).toBe('A imagem excede o limite de 4 MB.')
+    expect(buildFalhaMensagem(semMotivo)).toBe('A imagem excede o limite de 4 MB.')
   })
 })

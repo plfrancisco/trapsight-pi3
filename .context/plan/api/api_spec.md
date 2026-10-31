@@ -75,7 +75,7 @@ podem ser reescritas sem aviso, códigos não.
 | `ARQUIVO_AUSENTE` | 400 | Campo `imagem` não enviado |
 | `FORMATO_NAO_SUPORTADO` | 400 | Arquivo não é JPEG ou PNG |
 | `RESOLUCAO_INSUFICIENTE` | 400 | Menor que 512 px no maior lado |
-| `ARQUIVO_MUITO_GRANDE` | 413 | Acima de 4 MB |
+| `ARQUIVO_MUITO_GRANDE` | 413 | Acima de 4 MB ou de 20 milhões de pixels; `detalhes.motivo` é `bytes` ou `pixels` |
 | `VALIDACAO_FALHOU` | 422 | Campo obrigatório ausente ou inválido |
 | `PLACA_NAO_DETECTADA` | 500 | Modelo não localizou a superfície adesiva |
 | `FALHA_INFERENCIA` | 500 | Erro durante a execução do modelo |
@@ -106,6 +106,11 @@ podem ser reescritas sem aviso, códigos não.
 O mínimo de 512 px decorre da resolução de entrada do modelo, definida em
 `../model/modelo_spec.md`, seção 6. Imagens menores seriam ampliadas, sem
 ganho real de informação e com perda de precisão na segmentação.
+
+O `413` traz `detalhes.motivo`: `bytes` quando o arquivo passa de 4 MB e
+`pixels` quando as dimensões decodificadas passam do teto. O frontend usa o
+motivo para escolher a mensagem; clientes que o ignoram continuam
+funcionando.
 
 ## 2.5 Modo de execução da inferência
 

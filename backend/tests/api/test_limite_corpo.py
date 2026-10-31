@@ -105,6 +105,7 @@ def test_content_length_acima_do_limite_rejeita_sem_ler_nem_chamar_rota() -> Non
     status, cabecalhos, conteudo = _resposta(mensagens)
     assert status == 413
     assert b"ARQUIVO_MUITO_GRANDE" in conteudo
+    assert b"\"motivo\":\"bytes\"" in conteudo.replace(b" ", b"")
     assert cabecalhos[b"access-control-allow-origin"] == b"http://localhost:5173"
     assert leituras == 0
     assert contador["chamadas"] == 0
@@ -122,5 +123,6 @@ def test_corpo_em_stream_sem_content_length_rejeita_antes_de_chamar_rota() -> No
     status, cabecalhos, conteudo = _resposta(mensagens)
     assert status == 413
     assert b"ARQUIVO_MUITO_GRANDE" in conteudo
+    assert b"\"motivo\":\"bytes\"" in conteudo.replace(b" ", b"")
     assert cabecalhos[b"access-control-allow-origin"] == b"http://localhost:5173"
     assert contador["chamadas"] == 0
