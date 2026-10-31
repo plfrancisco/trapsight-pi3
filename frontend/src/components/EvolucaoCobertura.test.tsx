@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import EvolucaoCobertura from './EvolucaoCobertura'
 import type { Analise } from '../services/tipos'
 
@@ -27,10 +27,17 @@ const analisesAtivas = [
 ]
 
 describe('EvolucaoCobertura', () => {
+  // O gráfico entra por import dinâmico (lazy) e o Recharts é pesado: carregar o
+  // módulo aqui, uma vez, faz o lazy resolver na hora e tira a espera do teste.
+  // O limite maior vale só para esta carga, que é lenta quando a suíte roda em paralelo.
+  beforeAll(async () => {
+    await import('./EvolucaoGrafico')
+  }, 60000)
+
   it('mantém o gráfico interativo e a foto do registro selecionado sem controles de vídeo', async () => {
     render(<EvolucaoCobertura analisesAtivas={analisesAtivas} diasAteSaturar={12} />)
 
-    expect(await screen.findByText('Cobertura medida', {}, { timeout: 15000 })).toBeVisible()
+    expect(await screen.findByText('Cobertura medida')).toBeVisible()
     expect(screen.getByRole('group', { name: /Evolução da cobertura/ })).toBeVisible()
     expect(screen.getByText('Passe o cursor, toque ou use as setas no gráfico para ver a foto daquela data.')).toBeVisible()
     expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
@@ -40,7 +47,7 @@ describe('EvolucaoCobertura', () => {
     expect(screen.queryByRole('group', { name: 'Escopo temporal' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Reproduzir|Pausar/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('slider')).not.toBeInTheDocument()
-  }, 30000)
+  })
 
   it('exibe a foto quando há só uma medição', () => {
     render(<EvolucaoCobertura analisesAtivas={[analisesAtivas[0]]} />)
