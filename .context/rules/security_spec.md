@@ -126,7 +126,7 @@ Aplica-se a `POST /api/analises` (`../plan/api/api_spec.md`, seção 6.1).
 |---|---|
 | Verificar o tipo real do arquivo pelos primeiros bytes (magic bytes), não pela extensão do nome nem pelo `Content-Type` declarado pelo cliente | Um arquivo `.jpg` pode conter qualquer coisa — o cliente controla ambos os campos |
 | Rejeitar qualquer tipo fora de JPEG/PNG após essa verificação | Conforme `api_spec.md`, seção 2.4 |
-| Limite de tamanho de 10 MB aplicado **antes** de carregar o arquivo inteiro em memória | Streaming ou verificação de `Content-Length`, não `try/except` após o carregamento completo |
+| Limite de tamanho de 4 MB (limite de corpo da requisição na Vercel) aplicado **antes** de carregar o arquivo inteiro em memória | Streaming ou verificação de `Content-Length`, não `try/except` após o carregamento completo |
 
 ## 5.2 Proteção contra decompression bomb
 

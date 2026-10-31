@@ -1,6 +1,6 @@
 # TELAS — Projeto Integrador
 
-**Versão:** 1.1
+**Versão:** 1.2
 **Status:** ATIVO
 **Escopo:** telas da interface, conteúdo e comportamento esperado
 
@@ -87,7 +87,7 @@ classificador de imagem isolado.
 - dados da armadilha (identificador, modelo, localização, data de instalação)
 - dados do refil ativo (data de instalação, dias em uso)
 - **gráfico de evolução** do percentual ao longo do tempo
-- **timelapse** sincronizado ao gráfico — ver seção 4.2.1
+- foto original da análise selecionada no gráfico
 - lista das análises, com miniatura, data, percentual e status
 - botão **Registrar troca de refil**
 - link para editar a armadilha
@@ -96,45 +96,22 @@ classificador de imagem isolado.
 de troca, e cria um novo refil com data de instalação igual à data corrente. A
 partir daí a série temporal recomeça do zero.
 
-### 4.2.1 Timelapse
+### 4.2.1 Gráfico e foto selecionada
 
-Reprodução automática das imagens da armadilha em ordem cronológica, com o
-gráfico acompanhando em sincronia.
+O gráfico de evolução mostra o percentual de cobertura ao longo do refil
+ativo. Ao apontar, tocar ou usar as setas sobre um ponto, a foto original
+daquela análise aparece ao lado, com data, percentual e status. A interface
+não reproduz as imagens em sequência e não exibe a máscara de segmentação.
 
-**Comportamento:**
-
-- botão de reprodução inicia a animação, que avança pelas análises em
-  sequência
-- a cada quadro, a área de imagem exibe a foto e a máscara daquele momento
-- um marcador percorre o gráfico na posição temporal correspondente
-- o percentual exibido acompanha o quadro atual
-- o usuário pode arrastar o marcador manualmente para inspecionar um momento
-  específico, o que pausa a reprodução
-
-**Escopo temporal:** alternável entre dois modos.
-
-| Modo | Exibe | Uso |
-|---|---|---|
-| Refil ativo *(padrão)* | Apenas o ciclo atual | Acompanhamento operacional |
-| Histórico completo | Todos os refis da armadilha | Demonstração dos ciclos |
-
-No modo de histórico completo, a curva exibe o padrão de dente de serra —
-sobe conforme o refil satura, cai bruscamente na troca, e volta a subir. É a
-visualização que melhor comunica o ciclo de vida da armadilha e a proposta do
-projeto.
-
-**Justificativa:** os dados necessários já existem, pois cada análise
-armazena imagem e data. O custo de implementação é baixo e o ganho é
-demonstrar visualmente que o modelo acompanhou a evolução real — algo que o
-gráfico sozinho não evidencia, já que não mostra a imagem que originou cada
-medição.
+**Escopo:** apenas o refil ativo. Os ciclos anteriores aparecem na lista de
+refis anteriores, com as datas e a duração de cada um.
 
 **Estados de exceção:**
 
 | Situação | Comportamento |
 |---|---|
-| Menos de duas análises | Timelapse oculto; exibe apenas a imagem existente |
-| Nenhuma análise | Timelapse e gráfico ocultos |
+| Menos de duas análises | Gráfico oculto; exibe apenas a imagem existente |
+| Nenhuma análise | Gráfico e imagem ocultos |
 
 ## 4.3 Nova análise
 
@@ -150,7 +127,7 @@ Demonstra o modelo funcionando. É a tela central da apresentação à banca.
 
 **Resultado exibido:**
 
-- imagem original e imagem com a máscara sobreposta, lado a lado
+- imagem original enviada, sem máscara
 - percentual de cobertura, com destaque visual
 - status classificado
 - versão do modelo utilizada
@@ -357,7 +334,7 @@ não há evento assíncrono a notificar.
 
 ## 8.1 Biblioteca de gráfico
 
-**Recharts.** Possui `ReferenceLine`, usada como marcador móvel do timelapse,
+**Recharts.** Possui `ReferenceLine`, usada como marcador do ponto selecionado no gráfico,
 API declarativa em React e volume de dados compatível com a escala do projeto.
 
 ## 8.2 Paleta de status
@@ -375,13 +352,11 @@ daltonismo, e vermelho e verde são justamente o par mais afetado.
 **Grafia:** a API trafega `atencao`, sem acento. O frontend exibe "Atenção". A
 conversão ocorre apenas na camada de apresentação.
 
-## 8.3 Máscara sobreposta
+## 8.3 Máscara
 
-Gerada pelo backend e recebida pronta, conforme
-`../model/modelo_spec.md`, seção 7.1 — magenta a 40% de opacidade sobre a
-imagem original.
-
-O frontend exibe original e máscara lado a lado, sem processamento próprio.
+Retirada da interface. O backend continua gerando a máscara na inferência, e
+o percentual de cobertura vem dela, mas nenhuma tela a exibe. Ver
+`../model/modelo_spec.md`, seção 7.1.
 
 ## 8.4 Direção visual do dashboard
 
@@ -396,13 +371,9 @@ navegação principal passa para uma barra inferior com espaçamento para a áre
 segura do dispositivo. Esta adaptação cobre o dashboard; a experiência móvel
 completa das demais telas continua fora do MVP.
 
-## 8.5 Timelapse
+## 8.5 Reprodução em sequência
 
-| Item | Valor |
-|---|---|
-| Velocidade padrão | 500 ms por quadro |
-| Faixa ajustável | 200 ms a 2000 ms |
-| Comportamento ao final | Para no último quadro, sem repetir |
+Retirada do MVP: a interface não reproduz as análises em sequência.
 
 ## 8.6 Nomenclatura
 

@@ -75,7 +75,7 @@ podem ser reescritas sem aviso, códigos não.
 | `ARQUIVO_AUSENTE` | 400 | Campo `imagem` não enviado |
 | `FORMATO_NAO_SUPORTADO` | 400 | Arquivo não é JPEG ou PNG |
 | `RESOLUCAO_INSUFICIENTE` | 400 | Menor que 512 px no maior lado |
-| `ARQUIVO_MUITO_GRANDE` | 413 | Acima de 10 MB |
+| `ARQUIVO_MUITO_GRANDE` | 413 | Acima de 4 MB |
 | `VALIDACAO_FALHOU` | 422 | Campo obrigatório ausente ou inválido |
 | `PLACA_NAO_DETECTADA` | 500 | Modelo não localizou a superfície adesiva |
 | `FALHA_INFERENCIA` | 500 | Erro durante a execução do modelo |
@@ -98,7 +98,7 @@ podem ser reescritas sem aviso, códigos não.
 
 | Restrição | Valor |
 |---|---|
-| Tamanho máximo | 10 MB |
+| Tamanho máximo | 4 MB (a hospedagem na Vercel limita o corpo da requisição a 4,5 MiB) |
 | Formatos aceitos | JPEG, PNG |
 | Resolução mínima | 512 px no maior lado |
 | Resolução máxima | 20 milhões de pixels decodificados — protege contra *decompression bomb*; acima disso a resposta é `413` `ARQUIVO_MUITO_GRANDE`. Dentro do limite, a imagem é redimensionada no pré-processamento |
@@ -202,7 +202,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | `GET` | `/api/armadilhas/{id}/analises` | Detalhe (gráfico e histórico) |
 | `POST` | `/api/analises` | Nova análise |
 | `GET` | `/api/analises/{id}` | Nova análise (resultado) |
-| `GET` | `/api/analises/{id}/imagem` e `/mascara` | Nova análise e Detalhe (mídia) |
+| `GET` | `/api/analises/{id}/imagem` e `/mascara` | Imagem: Nova análise e Detalhe. A máscara não é consumida pela interface |
 | `POST` | `/api/auth/login` | Login |
 | `POST` | `/api/auth/logout` | Cabeçalho (sair) |
 | `GET` | `/api/auth/me` | Carga inicial do aplicativo |
@@ -516,6 +516,8 @@ Retorna resultado
 }
 ```
 
+O campo `mascara_url` continua na resposta, mas a interface não o consome.
+
 **Erros:**
 
 | Código | Situação |
@@ -531,7 +533,7 @@ poluiria a série temporal.
 
 ## 6.2 `GET /api/armadilhas/{id}/analises`
 
-Histórico de análises. Alimenta o gráfico e o timelapse da tela de detalhe.
+Histórico de análises. Alimenta o gráfico e a lista de análises da tela de detalhe.
 
 **Parâmetros de consulta:**
 
@@ -556,8 +558,8 @@ entre refis e renderizar o gráfico corretamente no modo `completo`.
 
 O padrão é `refil_ativo` porque misturar refis distorce a leitura operacional:
 a curva apresentaria quedas abruptas a cada troca. O modo `completo` existe
-para o timelapse de demonstração, onde essas quedas são justamente o que se
-quer mostrar.
+para consultas de histórico completo (a interface atual não o consome),
+onde essas quedas são justamente o que se quer mostrar.
 
 ## 6.3 `GET /api/analises/{id}`
 
@@ -568,7 +570,7 @@ Detalhe de uma análise. Mesmo formato da seção 6.1.
 | Rota | Retorno |
 |---|---|
 | `GET /api/analises/{id}/imagem` | Imagem original |
-| `GET /api/analises/{id}/mascara` | Imagem com máscara sobreposta |
+| `GET /api/analises/{id}/mascara` | Imagem com máscara sobreposta. A interface não a consome mais; o endpoint permanece |
 
 Servidas como binário com `Content-Type` apropriado, não como base64 embutido
 no JSON. Base64 aumenta o payload em cerca de 33% e impede o cache do

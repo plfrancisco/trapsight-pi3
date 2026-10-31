@@ -12,7 +12,7 @@ apresentação
 Especificar a carga de dados que permite demonstrar o sistema.
 
 Sem ela a apresentação é inviável. As telas centrais — projeção de saturação,
-timelapse e painel de alertas — dependem de histórico acumulado ao longo de
+o gráfico de evolução e o painel de alertas — dependem de histórico acumulado ao longo de
 semanas. Em uma instalação limpa não há nada para exibir, e não é possível
 gerar esse histórico ao vivo.
 
@@ -64,7 +64,7 @@ de troca de 20% definido no produto; o limiar de atenção permanece em 10%.
 | 1 | `ARM-001` | Em alerta | Painel de alertas e status `trocar` |
 | 2 | `ARM-002` | Atenção, taxa constante | Projeção de dias até saturar |
 | 3 | `ARM-003` | Refil novo | Estado saudável, poucas análises |
-| 4 | `ARM-004` | Histórico com dois refis anteriores | Timelapse completo e padrão de dente de serra |
+| 4 | `ARM-004` | Histórico com dois refis anteriores | Histórico de ciclos e padrão de dente de serra |
 | 5 | `ARM-005` | Sem análises | Estado vazio no dashboard |
 | 6 | `ARM-006` | Sem refil ativo | Bloqueio de nova análise |
 
@@ -110,8 +110,8 @@ Estado saudável com projeção já disponível, por haver duas análises.
 | Refil ativo | Instalado 15 dias atrás |
 | Análises | Distribuídas pelos três refis |
 
-É a armadilha usada para demonstrar o timelapse em modo de histórico
-completo. A curva sobe até a troca, cai bruscamente e volta a subir,
+É a armadilha usada para demonstrar o histórico de refis anteriores. A
+curva sobe até a troca, cai bruscamente e volta a subir,
 evidenciando os ciclos.
 
 Os ciclos anteriores terminam perto do limiar de troca (cerca de 19%) e o
@@ -148,7 +148,7 @@ Cada análise do seed exige uma imagem e a máscara correspondente.
 | Local | `data/uploads/`, conforme `data_model.md`, seção 7.1 |
 
 A correspondência entre imagem e percentual registrado é obrigatória. Se as
-imagens forem aleatórias, o timelapse exibirá uma placa que não corresponde à
+imagens forem aleatórias, a foto selecionada no gráfico exibirá uma placa que não corresponde à
 curva do gráfico — e a incoerência fica visível na apresentação, exatamente na
 tela que deveria comprovar que o modelo funciona.
 
