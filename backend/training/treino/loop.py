@@ -250,6 +250,11 @@ def _contexto_amp(configuracao: Configuracao, dispositivo: torch.device):
     return nullcontext()
 
 
+def _exigir_perda_finita(valor: float, contexto: str) -> None:
+    if not math.isfinite(valor):
+        raise FloatingPointError(f"Perda não finita em {contexto}: {valor}.")
+
+
 @torch.no_grad()
 def validar(
     modelo: nn.Module,
@@ -258,7 +263,7 @@ def validar(
     configuracao: Configuracao,
     dispositivo: torch.device,
 ) -> tuple[dict[str, Any], float]:
-    """Avalia um conjunto sem gradiente; devolve métricas e a perda média."""
+    """Devolve métricas e perda média; lança FloatingPointError se não for finita."""
     modelo.eval()
     acumulador = AcumuladorMetricas()
     soma_perda, lotes = 0.0, 0
@@ -268,7 +273,10 @@ def validar(
         mascaras = mascaras.to(dispositivo)
         with _contexto_amp(configuracao, dispositivo):
             logits = modelo(imagens)
-        soma_perda += float(perda(logits, mascaras).total)
+        valor_perda = float(perda(logits, mascaras).total)
+        _exigir_perda_finita(valor_perda, f"validação, lote {lotes + 1}")
+        soma_perda += valor_perda
+        _exigir_perda_finita(soma_perda, "validação, perda acumulada")
         lotes += 1
         selecionadas = [amostras[int(i)] for i in indices]
         acumulador.atualizar(
@@ -285,7 +293,7 @@ def treinar(
     registro: Registro = print,
     dispositivo: torch.device | None = None,
 ) -> Path:
-    """Treina o modelo e devolve a pasta da execução."""
+    """Treina e devolve a pasta; registra e propaga perdas não finitas como erro."""
     configuracao.validar()
     configurar_determinismo(configuracao.semente_global)
     dispositivo = dispositivo or torch.device(
@@ -407,6 +415,12 @@ def treinar(
                 with _contexto_amp(configuracao, dispositivo):
                     logits = modelo(imagens)
                 resultado = perda(logits, mascaras)
+                # A verificação precede a retropropagação para não contaminar
+                # os pesos e o estado do otimizador com uma perda inválida.
+                _exigir_perda_finita(
+                    float(resultado.total.detach()),
+                    f"treino, época {epoca}, lote {indice_lote + 1}",
+                )
                 escalador.scale(resultado.total / acumulo).backward()
                 for chave, valor in (
                     ("total", resultado.total),
@@ -434,6 +448,9 @@ def treinar(
                     otimizador.zero_grad(set_to_none=True)
                     passo += 1
 
+            _exigir_perda_finita(
+                somas["total"], f"treino, época {epoca}, perda acumulada"
+            )
             pico = (
                 torch.cuda.max_memory_allocated(dispositivo) / 2**20
                 if dispositivo.type == "cuda"
@@ -445,6 +462,9 @@ def treinar(
             metricas, perda_validacao = validar(
                 modelo, loader_validacao, perda, configuracao, dispositivo
             )
+            # Nenhuma decisão de seleção ou gravação pode usar uma época
+            # cuja validação tenha falhado numericamente.
+            _exigir_perda_finita(perda_validacao, f"validação, época {epoca}")
             decisao = selecao.atualizar(metricas)
             epocas_executadas = epoca
 
@@ -499,6 +519,19 @@ def treinar(
                 parou_antes = True
                 registro("parada antecipada")
                 break
+    except FloatingPointError as erro:
+        mensagem = f"Treino interrompido na época {epoca}: {erro}"
+        execucao.update(
+            status="abortada",
+            erro={"tipo": type(erro).__name__, "mensagem": mensagem, "epoca": epoca},
+            finalizada_em=datetime.now(timezone.utc).isoformat(),
+            tempo_total_s=round(time.monotonic() - inicio, 1),
+            epocas_executadas=epocas_executadas,
+            melhor_ponto=melhor,
+            modelo_versao=melhor.get("modelo_versao"),
+        )
+        gravar_json(pasta / "execucao.json", execucao)
+        raise FloatingPointError(mensagem) from erro
     except torch.cuda.OutOfMemoryError as erro:
         raise RuntimeError(
             "Memória de vídeo insuficiente. Defina um batch_por_passo menor na "
