@@ -32,7 +32,7 @@ propriedade**, com autorização do responsável.
 |---|---|
 | Alvos permitidos | O ambiente local, a **homologação** e o ambiente definitivo do TrapSight. **Nunca** terceiros, nem o servidor do provedor, nem sistemas da empresa parceira |
 | Ataque ativo | **Somente em homologação**: cópia descartável, com dados fictícios, que pode ser destruída. Varredura ativa (ZAP *full/API*, sqlmap, testes de força bruta) **nunca** roda contra o definitivo |
-| Contra o definitivo | Apenas verificações **sem ataque**: varredura de portas, teste de TLS, ZAP *baseline* (passivo) e os testes da suíte marcados como somente leitura |
+| Contra o definitivo publicado | Apenas TLS e ZAP *baseline* (passivo); a varredura de portas vale para o Compose local, pois Vercel e Supabase controlam suas redes (decisão de 2026-10-26) |
 | Credenciais de teste | Contas **dedicadas e descartáveis**, criadas por `criar-usuario` na homologação (seção 7). **Nunca** a conta de uma pessoa real. Valores só em variáveis de ambiente, nunca no repositório, nunca em relatório |
 | Efeitos colaterais | Os testes criam armadilhas e análises fictícias, bloqueiam contas de teste e consomem limites de taxa. Por isso só rodam na homologação |
 | Relatórios | Podem conter detalhes da superfície e evidências; ficam em `security/reports/` (ignorado pelo Git) e **nunca** são publicados |
@@ -50,7 +50,7 @@ outra não pega, e todas rodam antes de publicar.
 | **2. Dependências (SCA)** | Vulnerabilidades conhecidas em pacotes | **pip-audit**, **npm audit**, **Trivy** (`fs`) | Antes de publicar e semanalmente |
 | **3. Código (SAST)** | Padrões inseguros no código | **Semgrep** (regras OWASP Top 10, Python, TypeScript), **Bandit** (Python) | Antes de publicar |
 | **4. Contêineres e configuração (IaC)** | Imagens vulneráveis, Dockerfile e Compose inseguros, exposição | **Trivy** (`image`, `config`), **hadolint** | Antes de publicar |
-| **5. Exposição de rede** | Portas abertas, banco acessível, serviços internos | **nmap** (`-p-`), testes de porta da suíte | Antes de publicar, **contra o definitivo** |
+| **5. Exposição de rede** | Portas abertas, banco acessível, serviços internos | **nmap** (`-p-`), testes de porta da suíte | Antes de publicar, contra o Compose local; as redes publicadas são dos provedores (decisão de 2026-10-26) |
 | **6. Transporte (TLS)** | Versões, cifras, certificado, HSTS | **testssl.sh**, testes de TLS da suíte | Antes de publicar, contra o definitivo |
 | **7. Caixa-preta da aplicação** | Autenticação, sessão, CSRF, autorização, injeção, upload, vazamento de informação | **Suíte `security/pentest` (pytest + httpx)** | Antes de publicar, na homologação |
 | **8. DAST** | Varredura de vulnerabilidades web por ferramenta | **OWASP ZAP** (*baseline*, *API scan*, *full*), **Nuclei** | *Baseline* no definitivo; *API* e *full* só na homologação |
@@ -125,7 +125,7 @@ relatório; uma varredura não reproduzível não serve de evidência.
 | npm audit | `node:24` | `npm audit --omit=dev` em `frontend/` | Zero alto e crítico |
 | Semgrep | `semgrep/semgrep` | `--config p/owasp-top-ten --config p/python --config p/typescript` | Zero achado alto; médio triado |
 | Bandit | `python:3.12-slim` + `bandit` | `-r backend/src -ll` | Zero alto |
-| nmap | `instrumentisto/nmap` | `-p- -sV -Pn --open` no host | **Somente 80 e 443** (mais SSH restrito, se houver) |
+| nmap | `instrumentisto/nmap` | `-p- -sV -Pn --open` no host do Compose local | **Somente 80 e 443** (mais SSH restrito, se houver); não varrer a rede do provedor publicado (decisão de 2026-10-26) |
 | testssl.sh | `drwetter/testssl.sh` | `--severity MEDIUM --quiet` | Sem TLS 1.0/1.1, sem cifras fracas, certificado válido, HSTS presente |
 | OWASP ZAP *baseline* | `ghcr.io/zaproxy/zaproxy:stable` | `zap-baseline.py -t URL -r relatorio.html -J relatorio.json` (passivo) | Nenhum alerta alto; médios triados |
 | OWASP ZAP *API scan* | idem | `zap-api-scan.py -t openapi.json -f openapi -n contexto -U usuario` (ativo, só homologação, autenticado) | Nenhum alerta alto |
@@ -187,7 +187,7 @@ Nenhum valor aqui é versionado.
 |---|---|---|
 | `TARGET_URL` | Sim | Origem do sistema (`https://homologacao.exemplo.com` ou `http://backend:8000` no baseline local) |
 | `API_PREFIX` | Não (`/api`) | Prefixo da API |
-| `TARGET_HOST` | Não | Host para varredura de portas (padrão: o host de `TARGET_URL`) |
+| `TARGET_HOST` | Não | Host do Compose local para varredura de portas; a suíte usa o host de `TARGET_URL` por padrão, portanto não use o teste de portas no publicado, cuja rede é do provedor (decisão de 2026-10-26) |
 | `EXPECTED_OPEN_PORTS` | Não (`80,443`) | Portas que **podem** estar abertas |
 | `SEC_USER_EMAIL`, `SEC_USER_PASSWORD` | Para testes autenticados | Conta de teste da homologação (precisa ser **operador**) |
 | `SEC_MANAGER_EMAIL`, `SEC_MANAGER_PASSWORD` | Para a gestão de contas | Conta do **gerente** (`criar-usuario --papel gerente`); cria as contas fictícias dos testes |
@@ -269,8 +269,10 @@ primeira publicação e a cada mudança de autenticação.
 - [ ] Colar a senha no campo funciona (gerenciador de senha).
 - [ ] Revisão do `docker-compose.prod.yml`: **nenhum** `ports:` além do proxy;
       nenhum `privileged`, `network_mode: host`, `docker.sock`; nenhuma senha em claro.
-- [ ] Em um terminal **fora do servidor**: `Test-NetConnection <host> -Port 5432`
-      (ou `nc -vz`) falha; só 80 e 443 respondem.
+- [ ] No Compose local, em um terminal **fora do servidor**:
+      `Test-NetConnection <host> -Port 5432` (ou `nc -vz`) falha; só 80 e
+      443 respondem. No publicado, a rede é do provedor e verificam-se TLS e
+      controles do Supabase (decisão de 2026-10-26).
 - [ ] Os logs do servidor registram falhas de login e **não** contêm senhas,
       hashes nem tokens.
 
