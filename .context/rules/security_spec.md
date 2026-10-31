@@ -27,10 +27,13 @@ este documento antes de ser aprovada.
 
 O protótipo será **hospedado e acessível pela internet** (decisão de
 2026-10-16). A partir daí **todos os controles deste documento valem sem
-exceção**, e a autenticação, o HTTPS e a regra de **exposição zero** (nenhum
-serviço interno alcançável de fora; só as portas 80 e 443) deixam de ser
-"Fase 2": estão especificados em `../plan/foundation/login.md` e são
-verificados pela suíte de `../validation/seguranca_testes.md`. Segredo
+exceção**, e a autenticação e o HTTPS deixam de ser "Fase 2". No Compose
+local, a **exposição zero** exige nenhum serviço interno alcançável de fora e
+somente as portas 80 e 443. No ambiente publicado, o Supabase protege o banco
+com TLS obrigatório, papel dedicado de menor privilégio, RLS, `anon` e
+`authenticated` sem acesso às tabelas e nenhuma chave no navegador, pois sua
+rede é do provedor (decisão de 2026-10-26). Os controles são verificados pela
+suíte de `../validation/seguranca_testes.md`. Segredo
 hardcoded continua sendo problema em qualquer ambiente, local ou não: entra no
 histórico do Git, é lido por qualquer pessoa com acesso ao repositório, e
 sobrevive à mudança de ambiente sem que ninguém perceba.
@@ -44,7 +47,7 @@ sobrevive à mudança de ambiente sem que ninguém perceba.
 | Carregamento do modelo (`MODEL_WEIGHTS_PATH`) | Arquivo binário desserializado na inicialização do backend |
 | CORS | Define quem pode chamar a API a partir de um navegador |
 | Login e sessão (`/api/auth/*`) | Porta de entrada pública: força bruta, enumeração de contas, roubo e fixação de sessão, CSRF (`login.md`, seções 6 a 8) |
-| Serviços internos (banco, backend, servidor de desenvolvimento) | Se alcançáveis de fora, anulam todo o resto; a regra de exposição zero os mantém na rede interna (`login.md`, 10.5) |
+| Serviços internos (banco, backend, servidor de desenvolvimento) | No Compose local, a exposição zero os mantém na rede interna; no publicado, TLS, papel dedicado de menor privilégio, RLS, bloqueio de `anon` e `authenticated` e ausência de chave no navegador protegem o Supabase, cuja rede é do provedor (decisão de 2026-10-26) |
 | Proxy reverso e TLS | Única superfície pública: certificado, versões de TLS, cabeçalhos de segurança (`login.md`, 10.1 a 10.3) |
 | Variáveis de ambiente e segredos | Credenciais de banco, chaves de API, caminhos de sistema — ver seção 3 |
 
@@ -107,7 +110,7 @@ controles que não podem ser violados.
 | Senha com Argon2id e política do NIST (mínimo de 15 caracteres, sem regra de composição) | `login.md`, seção 5 |
 | Login com resposta única, limite por conta e por IP, sem bloqueio permanente | `login.md`, seção 6 |
 | CSRF: token sincronizado, verificação de `Origin` e `SameSite=Strict` | `login.md`, seção 8 |
-| **Exposição zero:** nenhum serviço interno público; o banco nunca é alcançável de fora; só as portas 80 e 443 | `login.md`, 10.5 |
+| **Exposição zero no Compose local:** nenhum serviço interno público; o banco nunca é alcançável de fora; só as portas 80 e 443 | No publicado, TLS obrigatório, papel dedicado de menor privilégio, RLS, `anon` e `authenticated` sem acesso às tabelas e nenhuma chave no navegador protegem o banco na rede do provedor (decisão de 2026-10-26) |
 | Sem usuário nem senha padrão em nenhum ambiente | `login.md`, 5.4 |
 | Nada é publicado sem a suíte de invasão verde e o relatório arquivado | `../validation/seguranca_testes.md` |
 

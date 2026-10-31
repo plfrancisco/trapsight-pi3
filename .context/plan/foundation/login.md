@@ -21,11 +21,14 @@ documentos afetados está na seção 13.
 
 ## 1.1 Princípios inegociáveis
 
-> **1. Nada fica aberto.** Nenhum serviço interno é alcançável pela internet:
+> **1. Nada fica aberto no Compose local.** Nenhum serviço interno é alcançável pela internet:
 > **nem o banco de dados, nem o backend, nem o servidor de desenvolvimento do
 > frontend, nem o diretório de uploads, nem o socket do Docker.** A única
 > superfície pública do sistema são as portas **80 e 443** do proxy reverso, e
-> toda rota de dados exige sessão. As regras estão na seção 10.5.
+> toda rota de dados exige sessão. No ambiente publicado, o Supabase protege o
+> banco com TLS obrigatório, papel dedicado de menor privilégio, RLS, `anon` e
+> `authenticated` sem acesso às tabelas e nenhuma chave no navegador, pois a
+> rede é do provedor (decisão de 2026-10-26). As regras estão na seção 10.5.
 >
 > **2. Nada vai ao ar sem passar nos testes de invasão.** Toda publicação
 > exige a suíte de segurança verde, com evidência arquivada. A suíte está
@@ -495,14 +498,14 @@ bloqueia a publicação.
 
 | # | Regra | Como se comprova |
 |---|---|---|
-| 1 | **O banco de dados nunca é alcançável de fora do Compose.** O serviço `db` não tem a chave `ports:` e não está em nenhuma rede publicada | Varredura externa de todas as portas TCP (1 a 65535) mostra a **5432 fechada**; teste de conexão direta ao Postgres falha |
-| 2 | **Só o proxy publica portas, e só 80 e 443.** `backend`, `frontend` e `db` usam `expose:` (rede interna) ou nada | A varredura externa lista **apenas 80 e 443** (e a porta de SSH, restrita por origem, se existir). Qualquer outra porta aberta reprova |
+| 1 | **No Compose local, o banco de dados nunca é alcançável de fora do Compose.** O serviço `db` não tem a chave `ports:` e não está em nenhuma rede publicada. No publicado, o Supabase usa TLS obrigatório, papel dedicado de menor privilégio, RLS, `anon` e `authenticated` sem acesso às tabelas e nenhuma chave no navegador, pois a rede é do provedor (decisão de 2026-10-26) | No Compose local, varredura externa de todas as portas TCP (1 a 65535) mostra a **5432 fechada**; teste de conexão direta ao Postgres falha. No Supabase, verificar TLS, privilégios e RLS |
+| 2 | **No Compose local, só o proxy publica portas, e só 80 e 443.** `backend`, `frontend` e `db` usam `expose:` (rede interna) ou nada. No publicado, Vercel e Supabase controlam suas redes; aplicam-se os controles do banco do item 1 (decisão de 2026-10-26) | No Compose local, a varredura externa lista **apenas 80 e 443** (e a porta de SSH, restrita por origem, se existir). Qualquer outra porta aberta reprova |
 | 3 | **Nenhuma porta de administração ou depuração aberta:** Docker (2375/2376), Redis, MongoDB, MySQL, Elasticsearch, Prometheus, painéis, `pgAdmin`, depurador | Mesma varredura, mais a lista de portas sensíveis da suíte |
 | 4 | **Nunca montar o socket do Docker** (`/var/run/docker.sock`) em nenhum contêiner, nem usar `privileged: true`, `network_mode: host` ou `cap_add` sem justificativa escrita | Análise de configuração (Trivy/hadolint) e revisão do Compose |
 | 5 | **Nenhum arquivo sensível servido pelo proxy:** `.env`, `.git/`, `backend/`, `uploads/`, mapas de código-fonte (`*.map`), listagem de diretório, backups | Testes de caminhos sensíveis da suíte e varredura de exposições (Nuclei) |
 | 6 | **Uploads nunca servidos como arquivos estáticos.** Só passam pelo endpoint autenticado, com cabeçalhos seguros | Teste de acesso direto ao diretório e aos caminhos de upload sem sessão |
 | 7 | **Documentação interativa fechada** (`/docs`, `/redoc`, `/openapi.json`) e **nenhum endpoint de métricas, de depuração ou de saúde detalhada** público | Testes de vazamento de informação |
-| 8 | **Firewall do servidor com negação por padrão:** entrada liberada só para 80/443 (e SSH por chave, limitado à origem do administrador). A regra do Docker não pode contornar o firewall do host | Varredura externa; revisão das regras (`iptables`/`nftables`/grupo de segurança do provedor) |
+| 8 | **No servidor próprio do Compose local, firewall com negação por padrão:** entrada liberada só para 80/443 (e SSH por chave, limitado à origem do administrador). A regra do Docker não pode contornar o firewall do host. No publicado, a rede é controlada pelos provedores (decisão de 2026-10-26) | Varredura externa; revisão das regras (`iptables`/`nftables`/grupo de segurança do provedor) |
 | 9 | **Segredos só em variáveis de ambiente** do servidor, fora do repositório, das imagens e dos logs (seção 3 de `security_spec.md`) | Varredura de segredos no repositório e no histórico (gitleaks, Trivy) |
 | 10 | **Sem credencial padrão em lugar nenhum** (banco, contas, painéis) | Teste de credenciais padrão (Nuclei `default-logins`) e testes de login da suíte |
 
@@ -518,10 +521,10 @@ atual já faz).
 
 | Item | Regra |
 |---|---|
-| Acesso ao Postgres | Somente pela rede interna do Compose, a partir do contêiner do backend |
+| Acesso ao Postgres | No Compose local, somente pela rede interna do Compose, a partir do contêiner do backend. No Supabase, TLS obrigatório e papel dedicado de menor privilégio, pois a rede é do provedor (decisão de 2026-10-26) |
 | Usuário da aplicação | **Não é o superusuário.** Papel com `CONNECT` no banco e `SELECT/INSERT/UPDATE/DELETE` nas tabelas da aplicação; sem `CREATEDB`, `CREATEROLE`, `SUPERUSER`. As migrations rodam com um papel separado |
 | Senha do banco | Gerada (mínimo 32 caracteres aleatórios), **única por ambiente**, só em variável de ambiente; nunca `postgres/postgres`, nunca `root/root` fora do desenvolvimento local |
-| `pg_hba.conf` | Aceita apenas a rede interna do Compose, com `scram-sha-256`; nada de `trust` nem de `0.0.0.0/0` |
+| `pg_hba.conf` | No Compose local, aceita apenas a rede interna do Compose, com `scram-sha-256`; nada de `trust` nem de `0.0.0.0/0`. No Supabase, a configuração é controlada pelo provedor; aplicam-se TLS obrigatório e papel dedicado de menor privilégio (decisão de 2026-10-26) |
 | Volume do banco | Volume nomeado, sem *bind mount* para diretório compartilhado |
 | Backups | Cópia periódica (`pg_dump`) **fora do servidor web**, com acesso restrito e, se sair da máquina, criptografada |
 | Contêineres | Usuário não-root (já em `security_spec.md`, 10.1), sistema de arquivos somente leitura quando possível, `no-new-privileges`, sem capacidades extras, limites de memória e CPU |
