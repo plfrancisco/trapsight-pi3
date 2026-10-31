@@ -1,0 +1,7 @@
+# Arquivos executados ou lidos dentro de contêineres Linux precisam terminar linha
+# em LF. Com core.autocrlf=true no Windows, um clone novo os converte para CRLF e
+# o contêiner falha (por exemplo, o script que cria os papéis do banco não roda).
+*.sh text eol=lf
+Dockerfile* text eol=lf
+Caddyfile text eol=lf
+deploy/db/*.conf text eol=lf
