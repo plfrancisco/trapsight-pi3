@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import Timelapse from './Timelapse'
+import EvolucaoCobertura from './EvolucaoCobertura'
 import type { Analise } from '../services/tipos'
 
 function buildAnalise(
@@ -17,7 +17,6 @@ function buildAnalise(
     status: percentual >= 20 ? 'trocar' : percentual >= 10 ? 'atencao' : 'ok',
     modelo_versao: '1.0.0',
     imagem_url: `/analises/${id}/imagem`,
-    mascara_url: `/analises/${id}/mascara`,
   }
 }
 
@@ -27,9 +26,9 @@ const analisesAtivas = [
   buildAnalise('analise-3', '2026-10-10T08:00:00Z', 72),
 ]
 
-describe('Timelapse', () => {
+describe('EvolucaoCobertura', () => {
   it('mantém o gráfico interativo e a foto do registro selecionado sem controles de vídeo', async () => {
-    render(<Timelapse analisesAtivas={analisesAtivas} diasAteSaturar={12} />)
+    render(<EvolucaoCobertura analisesAtivas={analisesAtivas} diasAteSaturar={12} />)
 
     expect(await screen.findByText('Cobertura medida', {}, { timeout: 15000 })).toBeVisible()
     expect(screen.getByRole('group', { name: /Evolução da cobertura/ })).toBeVisible()
@@ -44,14 +43,14 @@ describe('Timelapse', () => {
   }, 30000)
 
   it('exibe a foto quando há só uma medição', () => {
-    render(<Timelapse analisesAtivas={[analisesAtivas[0]]} />)
+    render(<EvolucaoCobertura analisesAtivas={[analisesAtivas[0]]} />)
 
     expect(screen.getByRole('img', { name: /Imagem da armadilha registrada/ })).toBeVisible()
     expect(screen.queryByRole('group', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
   })
 
   it('não renderiza conteúdo quando não há análises', () => {
-    const { container } = render(<Timelapse analisesAtivas={[]} />)
+    const { container } = render(<EvolucaoCobertura analisesAtivas={[]} />)
 
     expect(container).toBeEmptyDOMElement()
   })

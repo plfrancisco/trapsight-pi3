@@ -101,7 +101,7 @@ export interface RefilTrocaSaida {
   refil_novo: RefilNovo
 }
 
-/** Resultado persistido e URLs relativas da imagem e máscara. */
+/** Resultado persistido e URL relativa da imagem original. */
 export interface Analise {
   id: string
   refil_id: string
@@ -111,7 +111,6 @@ export interface Analise {
   status: StatusAnalise
   modelo_versao: string
   imagem_url: string
-  mascara_url: string
 }
 
 /** Escopos aceitos pela consulta do histórico de análises. */

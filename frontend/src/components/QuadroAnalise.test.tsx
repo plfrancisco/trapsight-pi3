@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import QuadroTimelapse from './QuadroTimelapse'
+import QuadroAnalise from './QuadroAnalise'
 import type { Analise } from '../services/tipos'
 
 const analise: Analise = {
@@ -12,13 +12,12 @@ const analise: Analise = {
   status: 'atencao',
   modelo_versao: '1.0.0',
   imagem_url: '/imagem',
-  mascara_url: '/mascara',
 }
 
-describe('QuadroTimelapse', () => {
+describe('QuadroAnalise', () => {
   it('exibe os dados, a imagem original e a leitura acessível do quadro', () => {
     render(
-      <QuadroTimelapse analise={analise} indice={1} quantidade={3} />,
+      <QuadroAnalise analise={analise} indice={1} quantidade={3} />,
     )
 
     expect(screen.getByRole('heading', { name: 'Análise 02' })).toBeVisible()

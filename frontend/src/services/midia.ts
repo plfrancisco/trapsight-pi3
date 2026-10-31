@@ -10,7 +10,7 @@ export function urlAbsoluta(caminhoRelativo: string): string {
   return url.toString()
 }
 
-function urlRecursoAnalise(analiseId: string, recurso: 'imagem' | 'mascara'): string {
+function urlRecursoAnalise(analiseId: string, recurso: 'imagem'): string {
   const prefixo = API_BASE.pathname.replace(/\/+$/, '')
   const caminho =
     prefixo + '/analises/' + encodeURIComponent(analiseId) + '/' + recurso
@@ -20,9 +20,4 @@ function urlRecursoAnalise(analiseId: string, recurso: 'imagem' | 'mascara'): st
 /** Retorna a URL absoluta da imagem original de uma análise sem fazer requisição. */
 export function urlImagemAnalise(analiseId: string): string {
   return urlRecursoAnalise(analiseId, 'imagem')
-}
-
-/** Retorna a URL absoluta da máscara de uma análise sem fazer requisição. */
-export function urlMascaraAnalise(analiseId: string): string {
-  return urlRecursoAnalise(analiseId, 'mascara')
 }

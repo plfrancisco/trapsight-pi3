@@ -672,7 +672,7 @@ select {
   font-size: 0.88rem;
 }
 
-.timelapse-analysis-grid {
+.analysis-evolution-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(290px, 0.78fr);
   align-items: stretch;
@@ -2264,7 +2264,7 @@ select {
     padding: 0 13px 18px;
   }
 
-  .timelapse-analysis-grid {
+  .analysis-evolution-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

@@ -4,7 +4,7 @@ import type { Analise } from '../services/tipos'
 import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
 
-interface QuadroTimelapseProps {
+interface QuadroAnaliseProps {
   analise: Analise
   indice: number
   quantidade: number
@@ -14,24 +14,24 @@ interface QuadroTimelapseProps {
  * @param props Análise selecionada e sua posição na sequência cronológica.
  * @returns Foto original e dados acessíveis do quadro atual.
  */
-function QuadroTimelapse({
+function QuadroAnalise({
   analise,
   indice,
   quantidade,
-}: QuadroTimelapseProps) {
+}: QuadroAnaliseProps) {
   const dataHora = formatDataHora(analise.analisado_em)
   const percentual = formatPercentual(analise.percentual_coberto)
   const numeroQuadro = indice + 1
 
   return (
     <section
-      aria-labelledby="titulo-quadro-timelapse"
+      aria-labelledby="titulo-quadro-analise"
       className="analysis-frame-card"
     >
       <header className="analysis-frame-card__header">
         <div>
           <p className="analysis-frame-card__eyebrow">Registro selecionado</p>
-          <h3 id="titulo-quadro-timelapse">Análise {numeroQuadro.toString().padStart(2, '0')}</h3>
+          <h3 id="titulo-quadro-analise">Análise {numeroQuadro.toString().padStart(2, '0')}</h3>
           <p className="analysis-frame-card__date">{dataHora}</p>
         </div>
         <StatusBadge status={analise.status} />
@@ -63,4 +63,4 @@ function QuadroTimelapse({
   )
 }
 
-export default memo(QuadroTimelapse)
+export default memo(QuadroAnalise)

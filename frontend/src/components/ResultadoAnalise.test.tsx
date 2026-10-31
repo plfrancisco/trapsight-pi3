@@ -12,7 +12,6 @@ const analise: Analise = {
   status: 'atencao',
   modelo_versao: 'v1.2.0+a3f9c2e1',
   imagem_url: '/api/analises/analise-1/imagem',
-  mascara_url: '/api/analises/analise-1/mascara',
 }
 
 describe('ResultadoAnalise', () => {

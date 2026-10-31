@@ -10,7 +10,7 @@ import LinkBotao from '../components/LinkBotao'
 import MensagemErro from '../components/MensagemErro'
 import ResumoArmadilha from '../components/ResumoArmadilha'
 import ResumoRefil from '../components/ResumoRefil'
-import Timelapse from '../components/Timelapse'
+import EvolucaoCobertura from '../components/EvolucaoCobertura'
 import TrocaRefil from '../components/TrocaRefil'
 import { useCarregamento } from '../hooks/useCarregamento'
 import { isArmadilhaAusente } from '../lib/armadilha'
@@ -120,7 +120,7 @@ export default function DetalheArmadilhaPage() {
           />
         </section>
       ) : !armadilha.removida_em ? (
-        <Timelapse
+        <EvolucaoCobertura
           key={armadilha.id}
           analisesAtivas={analises}
           diasAteSaturar={armadilha.dias_ate_saturar}

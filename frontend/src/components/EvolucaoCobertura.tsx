@@ -2,15 +2,15 @@ import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { buildResumoCobertura, buildSerieCobertura } from '../lib/cobertura'
 import { formatDataHora, formatPercentual } from '../lib/formatacao'
 import { calcularMesPrevistoTroca } from '../lib/previsaoTroca'
-import { instanteDoQuadro, mapearArrastoParaIndice } from '../lib/timelapse'
+import { instanteDoQuadro, mapearArrastoParaIndice } from '../lib/marcadorGrafico'
 import { urlImagemAnalise } from '../services/midia'
 import type { Analise } from '../services/tipos'
-import QuadroTimelapse from './QuadroTimelapse'
+import QuadroAnalise from './QuadroAnalise'
 import StatusBadge from './StatusBadge'
 
 const EvolucaoGrafico = lazy(() => import('./EvolucaoGrafico'))
 
-interface TimelapseProps {
+interface EvolucaoCoberturaProps {
   analisesAtivas: Analise[]
   diasAteSaturar?: number | null
 }
@@ -60,10 +60,10 @@ function ImagemAnaliseUnica({ analise }: { analise: Analise }) {
  * @param props Análises do refil ativo e estimativa de troca.
  * @returns Gráfico interativo e foto correspondente à medição atual.
  */
-export default function Timelapse({
+export default function EvolucaoCobertura({
   analisesAtivas,
   diasAteSaturar = null,
-}: TimelapseProps) {
+}: EvolucaoCoberturaProps) {
   const analises = useMemo(() => ordenarAnalises(analisesAtivas), [analisesAtivas])
   const [indiceSelecionado, setIndiceSelecionado] = useState(0)
   const indiceVisivel = Math.max(0, Math.min(analises.length - 1, indiceSelecionado))
@@ -109,7 +109,7 @@ export default function Timelapse({
       </div>
 
       {analiseAtual && possuiGrafico ? (
-        <div className="timelapse-analysis-grid">
+        <div className="analysis-evolution-grid">
           <Suspense
             fallback={(
               <div
@@ -129,7 +129,7 @@ export default function Timelapse({
               serie={serie}
             />
           </Suspense>
-          <QuadroTimelapse
+          <QuadroAnalise
             analise={analiseAtual}
             indice={indiceVisivel}
             quantidade={analises.length}

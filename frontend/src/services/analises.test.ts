@@ -62,7 +62,6 @@ describe('serviços de análises', () => {
       status: 'atencao',
       modelo_versao: 'v1',
       imagem_url: '/api/analises/analise-1/imagem',
-      mascara_url: '/api/analises/analise-1/mascara',
     }
     fetchSimulado.mockResolvedValue(respostaJson(resposta, 201))
 

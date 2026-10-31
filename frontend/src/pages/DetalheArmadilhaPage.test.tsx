@@ -47,7 +47,6 @@ function buildAnalise(
     status: 'atencao',
     modelo_versao: '1.0.0',
     imagem_url: `/analises/${id}/imagem`,
-    mascara_url: `/analises/${id}/mascara`,
   }
 }
 
