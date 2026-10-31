@@ -16,3 +16,5 @@ __pycache__
 **/.tmp-*
 .pytest-*
 **/.pytest-*
+.pytest_cache
+**/.pytest_cache
