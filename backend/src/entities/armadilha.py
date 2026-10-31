@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, Uuid
+from sqlalchemy import DateTime, ForeignKey, LargeBinary, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.entities.base import Base, UUIDTimestampMixin
@@ -34,6 +34,14 @@ class Armadilha(UUIDTimestampMixin, Base):
     localizacao: Mapped[str | None] = mapped_column(String, nullable=True)
     data_instalacao: Mapped[date | None] = mapped_column(nullable=True)
     removida_em: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Cópia reduzida (JPEG, sem EXIF) da foto real; nula usa a foto padrão do
+    # modelo. Adiada para que listar armadilhas nunca leia o blob.
+    foto_identificacao: Mapped[bytes | None] = mapped_column(
+        LargeBinary, nullable=True, deferred=True
+    )
+    foto_atualizada_em: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 

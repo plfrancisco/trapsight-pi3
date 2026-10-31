@@ -228,7 +228,8 @@ def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
 ) -> None:
     repositorio = ArmadilhaRepository(session)
     for indice in range(quantidade):
-        repositorio.create(identificador=f"ARM-{indice:03d}")
+        armadilha = repositorio.create(identificador=f"ARM-{indice:03d}")
+        repositorio.definir_foto(armadilha.id, bytes(2048), _AGORA)
 
     consultas: list[str] = []
 
@@ -248,6 +249,8 @@ def test_listagem_executa_tres_selects_com_qualquer_quantidade_de_armadilhas(
 
     assert response.status_code == 200
     assert len(consultas) == 3
+    # A foto real existe, mas a listagem nunca lê o blob (coluna adiada).
+    assert not any("foto_identificacao" in consulta for consulta in consultas)
 
 
 def test_criar_armadilha_com_e_sem_refil_inicial(

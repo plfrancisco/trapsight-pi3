@@ -204,6 +204,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | `GET` | `/api/armadilhas/{id}` | Detalhe |
 | `PATCH` | `/api/armadilhas/{id}` | Cadastro (edição) |
 | `DELETE` | `/api/armadilhas/{id}` | Detalhe (remoção) |
+| `PUT`, `DELETE`, `GET` | `/api/armadilhas/{id}/foto` | Cadastro e edição, cartão e detalhe (foto de identificação) |
 | `POST` | `/api/armadilhas/{id}/refis` | Detalhe (troca de refil) |
 | `GET` | `/api/armadilhas/{id}/analises` | Detalhe (gráfico e histórico) |
 | `POST` | `/api/analises` | Nova análise |
@@ -328,6 +329,8 @@ frontend não faz esse cálculo, conforme `../frontend/telas_spec.md`, seção 5
     "status": "atencao",
     "dias_ate_saturar": 4,
     "limiar_trocar": 20,
+    "foto_tipo": "padrao",
+    "foto_url": null,
     "ultima_analise_em": "2026-08-21T09:12:00Z",
     "em_alerta_desde": null
   }
@@ -421,7 +424,9 @@ anteriores.
   "percentual_atual": 64.30,
   "status": "atencao",
   "dias_ate_saturar": 4,
-  "limiar_trocar": 20
+  "limiar_trocar": 20,
+  "foto_tipo": "real",
+  "foto_url": "/api/armadilhas/3f2a.../foto?v=1793323816151"
 }
 ```
 
@@ -445,6 +450,37 @@ removida deixa de aparecer na listagem e não aceita novas operações
 
 **Resposta `204`:** sem corpo. **Erros:** `404 ARMADILHA_NAO_ENCONTRADA` se
 a armadilha não existir ou já tiver sido removida.
+
+## 4.6 Foto de identificação
+
+A armadilha mostra sempre uma foto: a **foto padrão do modelo**, que é um
+recurso estático do frontend, ou uma **foto real** enviada por quem cadastra.
+A listagem (4.1) e o detalhe (4.3) trazem dois campos:
+
+| Campo | Valores |
+|---|---|
+| `foto_tipo` | `padrao` ou `real` |
+| `foto_url` | Caminho relativo com `?v=<instante>` quando o tipo é `real`; nulo quando é `padrao`. O parâmetro muda a cada envio e invalida o cache |
+
+**`PUT /api/armadilhas/{id}/foto`** — `multipart/form-data` com o campo
+`arquivo`. Exige sessão e CSRF; gerente e operador podem usar. Aplica as
+validações do upload de análise (seção 2.4): conteúdo real JPEG ou PNG, 4 MB,
+20 milhões de pixels e 512 px de resolução mínima, com os mesmos códigos de
+erro. O servidor reduz a imagem a no máximo 800 px no maior lado, converte para
+JPEG (qualidade 85) e **descarta os metadados EXIF**, que podem conter a
+localização; só a cópia reduzida é guardada.
+
+**Resposta `200`:** `{ "foto_tipo": "real", "foto_url": "/api/armadilhas/{id}/foto?v=..." }`.
+**Erros:** `400` arquivo ausente, formato inválido ou resolução insuficiente;
+`413` acima do limite (com `detalhes.motivo`); `404 ARMADILHA_NAO_ENCONTRADA`.
+
+**`DELETE /api/armadilhas/{id}/foto`** — volta à foto padrão. Idempotente:
+`204` mesmo quando já não há foto real; `404` se a armadilha não existir.
+
+**`GET /api/armadilhas/{id}/foto`** — devolve o JPEG reduzido (`image/jpeg`,
+`Cache-Control: private`, `ETag`, `X-Content-Type-Options: nosniff`). Exige
+sessão. `404 ARMADILHA_NAO_ENCONTRADA` quando a armadilha não existe, foi
+removida ou usa a foto padrão. Armadilha removida não serve nem aceita foto.
 
 ---
 

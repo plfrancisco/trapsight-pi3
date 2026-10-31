@@ -1,5 +1,6 @@
 """Limita o corpo multipart antes que o parser crie o arquivo da requisição."""
 
+import re
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -19,12 +20,24 @@ ASGIApp = Callable[
 ]
 
 
+_ROTA_FOTO = re.compile(r"^/api/armadilhas/[0-9a-fA-F-]{36}/foto$")
+
+
+def _rota_com_upload(scope: dict[str, Any]) -> bool:
+    """Indica as rotas multipart limitadas: análise (POST) e foto da armadilha (PUT)."""
+    metodo = scope.get("method")
+    caminho = scope.get("path", "")
+    return (metodo == "POST" and caminho == "/api/analises") or (
+        metodo == "PUT" and _ROTA_FOTO.match(caminho) is not None
+    )
+
+
 class _CorpoAcimaDoLimite(Exception):
     """Interrompe a leitura multipart assim que o teto de bytes é ultrapassado."""
 
 
 class LimiteCorpoMiddleware:
-    """Conta o corpo apenas na rota de análise e padroniza rejeições por tamanho."""
+    """Conta o corpo nas rotas de upload e padroniza rejeições por tamanho."""
 
     def __init__(self, app: ASGIApp) -> None:
         """Guarda a aplicação ASGI que receberá requisições abaixo do limite.
@@ -47,11 +60,7 @@ class LimiteCorpoMiddleware:
             receive: fonte dos blocos recebidos do cliente.
             send: destino das mensagens da resposta.
         """
-        if (
-            scope["type"] != "http"
-            or scope.get("path") != "/api/analises"
-            or scope.get("method") != "POST"
-        ):
+        if scope["type"] != "http" or not _rota_com_upload(scope):
             await self._app(scope, receive, send)
             return
 

@@ -672,6 +672,43 @@ select {
   font-size: 0.88rem;
 }
 
+.detail-hero__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.detail-hero__photo {
+  flex: 0 0 auto;
+  width: 148px;
+  height: 148px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--app-primary) 14%, var(--app-line));
+  border-radius: 20px;
+  background: var(--app-photo-surface);
+}
+
+.detail-hero__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-field__preview {
+  width: 160px;
+  height: 160px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  background: var(--app-photo-surface);
+}
+
+.photo-field__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .analysis-evolution-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(290px, 0.78fr);
@@ -2428,6 +2465,11 @@ select {
     gap: 19px;
     padding: 21px 18px;
     border-radius: 22px;
+  }
+
+  .detail-hero__photo {
+    width: 100%;
+    height: 180px;
   }
 
   .detail-hero__meta {

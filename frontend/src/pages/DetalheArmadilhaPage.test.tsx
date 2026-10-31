@@ -30,6 +30,8 @@ function buildArmadilha(
     status: 'atencao',
     dias_ate_saturar: 5,
     limiar_trocar: 20,
+    foto_tipo: 'padrao',
+    foto_url: null,
     ...alteracoes,
   }
 }
@@ -183,6 +185,8 @@ describe('DetalheArmadilhaPage', () => {
         status: null,
         dias_ate_saturar: null,
         limiar_trocar: 20,
+        foto_tipo: 'padrao',
+        foto_url: null,
       }),
     )
     vi.mocked(listAnalises).mockResolvedValue([])

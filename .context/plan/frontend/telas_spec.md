@@ -1,6 +1,6 @@
 # TELAS — Projeto Integrador
 
-**Versão:** 1.2
+**Versão:** 1.3
 **Status:** ATIVO
 **Escopo:** telas da interface, conteúdo e comportamento esperado
 
@@ -61,8 +61,8 @@ alerta. Ver seção 6.
 - status visual (`ok` verde, `atencao` âmbar, `trocar` vermelho)
 - estimativa de dias até saturar
 - data da última análise
-- miniatura da foto mais recente registrada para a armadilha, quando houver
-  análise; sem foto, a interface informa que ainda não há imagem disponível
+- foto de identificação da armadilha: a foto real enviada pelo usuário ou, na
+  falta dela, a foto padrão do modelo; o cartão nunca fica sem imagem
 
 **Ordenação:** por urgência — armadilhas em `trocar` primeiro, depois por
 menor número de dias estimados até saturar.
@@ -84,6 +84,7 @@ classificador de imagem isolado.
 
 **Conteúdo:**
 
+- foto de identificação (real ou padrão do modelo), no topo da tela
 - dados da armadilha (identificador, modelo, localização, data de instalação)
 - dados do refil ativo (data de instalação, dias em uso)
 - **gráfico de evolução** do percentual ao longo do tempo
@@ -149,12 +150,22 @@ um resultado ruim veio da versão atual ou de uma anterior.
 
 **Rotas:** `/armadilhas/nova` e `/armadilhas/:id/editar`
 
-Formulário simples com: identificador, modelo, localização e data de
-instalação.
+Formulário simples com: identificador, modelo, localização, data de
+instalação e foto de identificação.
 
 Ao criar uma armadilha, o sistema deve oferecer a criação imediata do primeiro
 refil — uma armadilha sem refil ativo não aceita análises, e essa dependência
 não é óbvia para quem usa.
+
+**Foto de identificação.** O campo tem duas opções: *Foto padrão do modelo*
+(escolha inicial, o recurso estático do modelo) e *Foto real da armadilha*,
+que abre a seleção de arquivo com pré-visualização. A tela recusa, antes do
+envio, o que não for JPEG ou PNG e o que passar de 4 MB, com os mesmos
+critérios da análise. O botão *Voltar à foto padrão* descarta a foto real. A
+escolha é gravada depois de salvar a armadilha; se o envio da foto falhar na
+criação, a armadilha já existe e a tela de edição abre com o aviso para
+reenviar. O servidor reduz a imagem e remove os metadados (ver `api_spec.md`,
+seção 4.6).
 
 ## 4.5 Login e sessão
 
@@ -363,9 +374,9 @@ o percentual de cobertura vem dela, mas nenhuma tela a exibe. Ver
 
 O dashboard usa uma base verde-floresta escura, cartões em tons de carvão,
 destaques verde-lima e sinais âmbar ou vermelhos para os estados de atenção e
-troca. Cada armadilha pode exibir a foto mais recente do seu histórico; a
-imagem é carregada sob demanda e não é substituída por uma fotografia
-ilustrativa quando ainda não existe análise.
+troca. Cada armadilha mostra a sua foto de identificação, real ou padrão do
+modelo; a imagem é carregada sob demanda e, se a foto real falhar, o cartão
+volta à foto padrão.
 
 Em telas estreitas, os cartões empilham a fotografia e os indicadores, e a
 navegação principal passa para uma barra inferior com espaçamento para a área

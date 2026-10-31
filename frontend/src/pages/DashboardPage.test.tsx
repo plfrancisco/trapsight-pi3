@@ -24,6 +24,8 @@ const buildArmadilha = (
   status: dados.status === undefined ? 'atencao' : dados.status,
   dias_ate_saturar: dados.dias_ate_saturar === undefined ? 5 : dados.dias_ate_saturar,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
   ultima_analise_em:
     dados.ultima_analise_em === undefined
       ? '2026-10-14T08:00:00Z'
@@ -53,6 +55,8 @@ describe('DashboardPage', () => {
         status: null,
         dias_ate_saturar: null,
         limiar_trocar: 20,
+        foto_tipo: 'padrao',
+        foto_url: null,
         ultima_analise_em: null,
       }),
       buildArmadilha({ id: 'arm-3', identificador: 'ARM-ATENCAO', status: 'atencao' }),
@@ -99,6 +103,8 @@ describe('DashboardPage', () => {
         status: null,
         dias_ate_saturar: null,
         limiar_trocar: 20,
+        foto_tipo: 'padrao',
+        foto_url: null,
         ultima_analise_em: null,
       }),
     ])
@@ -119,6 +125,8 @@ describe('DashboardPage', () => {
         status: null,
         dias_ate_saturar: null,
         limiar_trocar: 20,
+        foto_tipo: 'padrao',
+        foto_url: null,
         ultima_analise_em: null,
       }),
     ])

@@ -183,6 +183,60 @@ class ArmadilhaRepository:
         self._session.flush()
         return armadilha
 
+    def definir_foto(
+        self,
+        armadilha_id: UUID,
+        conteudo: bytes,
+        atualizada_em: datetime,
+    ) -> Armadilha | None:
+        """Grava a foto de identificação já reduzida e registra o instante.
+
+        Args:
+            armadilha_id: UUID da armadilha ativa.
+            conteudo: JPEG reduzido, sem metadados.
+            atualizada_em: instante usado para invalidar o cache da imagem.
+
+        Returns:
+            A armadilha atualizada ou None se não existir ou estiver removida.
+        """
+        armadilha = self.get_by_id_for_update(armadilha_id)
+        if armadilha is None:
+            return None
+        armadilha.foto_identificacao = conteudo
+        armadilha.foto_atualizada_em = atualizada_em
+        self._session.flush()
+        return armadilha
+
+    def remover_foto(self, armadilha_id: UUID) -> Armadilha | None:
+        """Volta à foto padrão do modelo; é idempotente quando já não há foto."""
+        armadilha = self.get_by_id_for_update(armadilha_id)
+        if armadilha is None:
+            return None
+        armadilha.foto_identificacao = None
+        armadilha.foto_atualizada_em = None
+        self._session.flush()
+        return armadilha
+
+    def obter_foto(self, armadilha_id: UUID) -> tuple[bytes, datetime] | None:
+        """Lê só a foto real de uma armadilha ativa, sem carregar a entidade.
+
+        Returns:
+            O JPEG e o instante da atualização, ou None quando a armadilha não
+            existe, foi removida ou usa a foto padrão.
+        """
+        statement = select(
+            Armadilha.foto_identificacao,
+            Armadilha.foto_atualizada_em,
+        ).where(
+            Armadilha.id == armadilha_id,
+            Armadilha.removida_em.is_(None),
+            Armadilha.foto_identificacao.is_not(None),
+        )
+        linha = self._session.execute(statement).one_or_none()
+        if linha is None or linha.foto_atualizada_em is None:
+            return None
+        return bytes(linha.foto_identificacao), linha.foto_atualizada_em
+
     def _flush_or_raise_duplicate(self) -> None:
         """Converte apenas a violação do identificador único em erro de domínio."""
         try:

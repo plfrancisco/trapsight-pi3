@@ -1,9 +1,10 @@
-import { request } from './http'
+import { request, TIMEOUT_UPLOAD_MS } from './http'
 import type {
   ArmadilhaAtualizar,
   ArmadilhaCriar,
   ArmadilhaDetalhe,
   ArmadilhaLista,
+  FotoArmadilhaSaida,
   RefilTrocaCriar,
   RefilTrocaSaida,
 } from './tipos'
@@ -72,5 +73,30 @@ export function replaceRefil(
   return request<RefilTrocaSaida>(
     'armadilhas/' + encodeURIComponent(armadilhaId) + '/refis',
     { method: 'POST', body: dados, signal },
+  )
+}
+
+/** Envia a foto real da armadilha; o servidor reduz a imagem e remove os metadados. */
+export function sendFotoArmadilha(
+  armadilhaId: string,
+  arquivo: File,
+  signal?: AbortSignal,
+): Promise<FotoArmadilhaSaida> {
+  const dados = new FormData()
+  dados.append('arquivo', arquivo)
+  return request<FotoArmadilhaSaida>(
+    'armadilhas/' + encodeURIComponent(armadilhaId) + '/foto',
+    { method: 'PUT', body: dados, signal, timeoutMs: TIMEOUT_UPLOAD_MS },
+  )
+}
+
+/** Volta a armadilha à foto padrão do modelo; repetir a chamada não causa erro. */
+export function deleteFotoArmadilha(
+  armadilhaId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return request<void>(
+    'armadilhas/' + encodeURIComponent(armadilhaId) + '/foto',
+    { method: 'DELETE', signal },
   )
 }

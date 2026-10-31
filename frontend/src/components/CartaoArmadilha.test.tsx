@@ -15,6 +15,8 @@ const armadilhaBase: ArmadilhaLista = {
   status: 'atencao',
   dias_ate_saturar: null,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
   ultima_analise_em: '2026-10-14T08:00:00Z',
   em_alerta_desde: null,
 }
@@ -49,6 +51,8 @@ describe('CartaoArmadilha', () => {
       status: null,
       dias_ate_saturar: null,
       limiar_trocar: 20,
+      foto_tipo: 'padrao',
+      foto_url: null,
       ultima_analise_em: null,
     })
 
@@ -65,11 +69,34 @@ describe('CartaoArmadilha', () => {
       status: null,
       dias_ate_saturar: null,
       limiar_trocar: 20,
+      foto_tipo: 'padrao',
+      foto_url: null,
       ultima_analise_em: null,
     })
 
     expect(screen.getByText('Sem análises neste refil')).toBeVisible()
     expect(screen.queryByText('Estimativa: Sem estimativa')).not.toBeInTheDocument()
     expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
+  })
+
+  it('mostra a foto padrão do modelo quando a armadilha não tem foto real', () => {
+    renderCartao(armadilhaBase)
+
+    expect(screen.getByRole('img', { name: /Foto padrão do modelo StickFly K-45/ })).toBeVisible()
+    expect(screen.getByText('Foto padrão do modelo')).toBeVisible()
+  })
+
+  it('mostra a foto real pela foto_url sem consultar as análises', () => {
+    renderCartao({
+      ...armadilhaBase,
+      foto_tipo: 'real',
+      foto_url: '/api/armadilhas/arm-1/foto?v=9',
+    })
+
+    expect(screen.getByRole('img', { name: 'Foto da armadilha ARM-001' })).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/armadilhas/arm-1/foto?v=9',
+    )
+    expect(screen.getByText('Foto da armadilha', { selector: 'span' })).toBeVisible()
   })
 })

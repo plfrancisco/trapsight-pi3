@@ -9,7 +9,7 @@ import pytest
 from PIL import Image
 
 from src.api.erros import CodigoErro, ErroDeApi
-from src.api.rotas.analises import _ler_upload_limitado
+from src.api.rotas.analises import ler_upload_limitado
 from src.inference.contrato import LIMITE_PIXELS_IMAGEM
 from src.services.upload import (
     LIMITE_TAMANHO_UPLOAD_BYTES,
@@ -70,13 +70,13 @@ def test_validar_imagem_rejeita_conteudo_invalido_ou_pequeno(
 
 def test_leitura_limitada_aceita_ate_dez_mib_e_rejeita_o_byte_seguinte() -> None:
     aceito = asyncio.run(
-        _ler_upload_limitado(_ArquivoEmMemoria(b"x" * LIMITE_TAMANHO_UPLOAD_BYTES))
+        ler_upload_limitado(_ArquivoEmMemoria(b"x" * LIMITE_TAMANHO_UPLOAD_BYTES))
     )
     assert len(aceito) == LIMITE_TAMANHO_UPLOAD_BYTES
 
     with pytest.raises(ErroDeApi) as erro:
         asyncio.run(
-            _ler_upload_limitado(
+            ler_upload_limitado(
                 _ArquivoEmMemoria(b"x" * (LIMITE_TAMANHO_UPLOAD_BYTES + 1))
             )
         )

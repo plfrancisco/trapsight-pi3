@@ -23,6 +23,8 @@ const armadilhaComRefil: ArmadilhaLista = {
   status: null,
   dias_ate_saturar: null,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
   ultima_analise_em: null,
   em_alerta_desde: null,
 }

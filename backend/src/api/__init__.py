@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from src.api.rotas.analises import router as analises_router
 from src.api.rotas.armadilhas import router as armadilhas_router
 from src.api.rotas.auth import router as auth_router
+from src.api.rotas.fotos import router as fotos_router
 from src.api.rotas.historico import router as historico_router
 from src.api.rotas.modelos_armadilha import router as modelos_router
 from src.api.rotas.usuarios import router as usuarios_router
@@ -15,6 +16,7 @@ api_router = APIRouter(prefix="/api")
 api_router.include_router(auth_router)
 api_router.include_router(analises_router)
 api_router.include_router(armadilhas_router)
+api_router.include_router(fotos_router)
 api_router.include_router(historico_router)
 api_router.include_router(modelos_router)
 api_router.include_router(usuarios_router)

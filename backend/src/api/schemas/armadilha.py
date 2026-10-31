@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -111,6 +112,8 @@ class ArmadilhaLista(BaseModel):
     status: StatusAnalise | None
     dias_ate_saturar: int | None
     limiar_trocar: Decimal
+    foto_tipo: Literal["padrao", "real"]
+    foto_url: str | None
     ultima_analise_em: datetime | None
     em_alerta_desde: datetime | None
 
@@ -145,6 +148,8 @@ class ArmadilhaDetalhe(BaseModel):
     status: StatusAnalise | None
     dias_ate_saturar: int | None
     limiar_trocar: Decimal
+    foto_tipo: Literal["padrao", "real"]
+    foto_url: str | None
 
     @field_serializer("percentual_atual", "limiar_trocar", when_used="json")
     def _serializar_percentual(self, valor: Decimal | None) -> float | None:

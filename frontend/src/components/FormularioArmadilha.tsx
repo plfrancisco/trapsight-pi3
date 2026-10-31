@@ -1,13 +1,19 @@
 import { useCallback, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { useCarregamento } from '../hooks/useCarregamento'
 import { localDateIso } from '../lib/datas'
 import { ApiError } from '../services/erros'
-import { createArmadilha, updateArmadilha } from '../services/armadilhas'
+import {
+  createArmadilha,
+  deleteFotoArmadilha,
+  sendFotoArmadilha,
+  updateArmadilha,
+} from '../services/armadilhas'
 import { listModelos } from '../services/modelos'
 import type { ArmadilhaDetalhe } from '../services/tipos'
 import Botao from './Botao'
 import CampoFormulario from './CampoFormulario'
+import CampoFotoArmadilha, { type ModoFoto } from './CampoFotoArmadilha'
 import EstadoCarregando from './EstadoCarregando'
 import LinkBotao from './LinkBotao'
 import MensagemErro from './MensagemErro'
@@ -32,6 +38,10 @@ export default function FormularioArmadilha({
   dados,
 }: FormularioArmadilhaProps) {
   const navigate = useNavigate()
+  const avisoFoto = (useLocation().state as { avisoFoto?: string } | null)?.avisoFoto ?? null
+  const [fotoModo, setFotoModo] = useState<ModoFoto>(dados?.foto_tipo ?? 'padrao')
+  const [fotoArquivo, setFotoArquivo] = useState<File | null>(null)
+  const [erroFoto, setErroFoto] = useState<string | null>(null)
   const identificadorRef = useRef<HTMLInputElement>(null)
   const dataInstalacaoRef = useRef<HTMLInputElement>(null)
   const [erroIdentificador, setErroIdentificador] = useState<string | null>(null)
@@ -50,12 +60,22 @@ export default function FormularioArmadilha({
   const [erroEnvio, setErroEnvio] = useState<ApiError | string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
+  /** Grava a escolha de foto depois que a armadilha existe: envia a real ou volta à padrão. */
+  const aplicarFoto = async (armadilhaId: string) => {
+    if (fotoModo === 'real' && fotoArquivo !== null) {
+      await sendFotoArmadilha(armadilhaId, fotoArquivo)
+    } else if (fotoModo === 'padrao' && dados?.foto_tipo === 'real') {
+      await deleteFotoArmadilha(armadilhaId)
+    }
+  }
+
   const saveArmadilha = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault()
     setErroIdentificador(null)
     setErroDataInstalacao(null)
     setErroModelo(null)
     setErroEnvio(null)
+    setErroFoto(null)
 
     const formulario = new FormData(evento.currentTarget)
     const identificador = String(formulario.get('identificador') ?? '').trim()
@@ -81,6 +101,11 @@ export default function FormularioArmadilha({
       return
     }
 
+    if (fotoModo === 'real' && fotoArquivo === null && dados?.foto_tipo !== 'real') {
+      setErroFoto('Escolha a imagem da foto real ou volte à foto padrão.')
+      return
+    }
+
     setEnviando(true)
     try {
       if (id) {
@@ -89,6 +114,7 @@ export default function FormularioArmadilha({
           modelo_id: modeloId,
           localizacao: parseOptionalValue(formulario.get('localizacao')),
         })
+        await aplicarFoto(armadilhaAtualizada.id)
         navigate(`/armadilhas/${encodeURIComponent(armadilhaAtualizada.id)}`)
         return
       }
@@ -100,6 +126,18 @@ export default function FormularioArmadilha({
         data_instalacao: dataInstalacao,
         criar_refil_inicial: criarRefilInicial,
       })
+      try {
+        await aplicarFoto(armadilhaCriada.id)
+      } catch {
+        // A armadilha já existe: leva à edição, onde a foto pode ser reenviada.
+        navigate(`/armadilhas/${encodeURIComponent(armadilhaCriada.id)}/editar`, {
+          state: {
+            avisoFoto:
+              'A armadilha foi cadastrada, mas a foto não foi enviada. Escolha a foto de novo e salve.',
+          },
+        })
+        return
+      }
       navigate(`/armadilhas/${encodeURIComponent(armadilhaCriada.id)}`)
     } catch (falha: unknown) {
       if (falha instanceof ApiError && falha.codigo === 'IDENTIFICADOR_DUPLICADO') {
@@ -141,6 +179,7 @@ export default function FormularioArmadilha({
         noValidate
         onSubmit={saveArmadilha}
       >
+        {avisoFoto ? <MensagemErro erro={avisoFoto} /> : null}
         {erroEnvio ? <MensagemErro erro={erroEnvio} /> : null}
         <CampoFormulario
           descricao="O identificador deve ser único e não pode começar ou terminar com espaços."
@@ -223,6 +262,22 @@ export default function FormularioArmadilha({
             </p>
           </div>
         ) : null}
+
+        <CampoFotoArmadilha
+          arquivo={fotoArquivo}
+          erro={erroFoto}
+          fotoAtualUrl={dados?.foto_tipo === 'real' ? dados.foto_url : null}
+          modo={fotoModo}
+          onArquivoChange={(arquivo, erro) => {
+            setFotoArquivo(arquivo)
+            setErroFoto(erro)
+          }}
+          onModoChange={(modo) => {
+            setFotoModo(modo)
+            setErroFoto(null)
+            if (modo === 'padrao') setFotoArquivo(null)
+          }}
+        />
 
         <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
           <Botao

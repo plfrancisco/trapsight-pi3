@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { API_URL } from '../config'
 import {
   createArmadilha,
+  deleteFotoArmadilha,
   getArmadilha,
   listArmadilhas,
   replaceRefil,
+  sendFotoArmadilha,
   updateArmadilha,
 } from './armadilhas'
 import { listModelos } from './modelos'
@@ -42,6 +44,8 @@ describe('serviços de armadilhas', () => {
         status: null,
         dias_ate_saturar: null,
         limiar_trocar: 20,
+        foto_tipo: 'padrao',
+        foto_url: null,
         ultima_analise_em: null,
         em_alerta_desde: null,
       },
@@ -77,6 +81,8 @@ describe('serviços de armadilhas', () => {
       status: null,
       dias_ate_saturar: null,
       limiar_trocar: 20,
+      foto_tipo: 'padrao',
+      foto_url: null,
     }
     fetchSimulado.mockResolvedValue(respostaJson(saida, 201))
 
@@ -140,6 +146,38 @@ describe('serviço de modelos', () => {
     expect(fetchSimulado).toHaveBeenCalledWith(
       urlDaApi('modelos-armadilha'),
       expect.objectContaining({ method: 'GET' }),
+    )
+  })
+
+  it('envia a foto como multipart no campo arquivo, sem Content-Type manual', async () => {
+    fetchSimulado.mockResolvedValue(
+      respostaJson({ foto_tipo: 'real', foto_url: '/api/armadilhas/arm-1/foto?v=1' }),
+    )
+    const arquivo = new File(['x'], 'foto.jpg', { type: 'image/jpeg' })
+
+    await expect(sendFotoArmadilha('arm-1', arquivo)).resolves.toEqual({
+      foto_tipo: 'real',
+      foto_url: '/api/armadilhas/arm-1/foto?v=1',
+    })
+
+    expect(fetchSimulado).toHaveBeenCalledWith(
+      urlDaApi('armadilhas/arm-1/foto'),
+      expect.objectContaining({ method: 'PUT' }),
+    )
+    const opcoes = fetchSimulado.mock.calls[0][1]
+    expect(opcoes.body).toBeInstanceOf(FormData)
+    expect((opcoes.body as FormData).get('arquivo')).toBe(arquivo)
+    expect(opcoes.headers['Content-Type']).toBeUndefined()
+  })
+
+  it('volta à foto padrão com DELETE e aceita a resposta 204', async () => {
+    fetchSimulado.mockResolvedValue({ ok: true, status: 204, text: async () => '' } as Response)
+
+    await expect(deleteFotoArmadilha('arm-1')).resolves.toBeUndefined()
+
+    expect(fetchSimulado).toHaveBeenCalledWith(
+      urlDaApi('armadilhas/arm-1/foto'),
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 })

@@ -1,6 +1,9 @@
 /** Valores persistidos pela API; a apresentação aplica os rótulos acentuados. */
 export type StatusAnalise = 'ok' | 'atencao' | 'trocar'
 
+/** Origem da foto mostrada para a armadilha: a do modelo ou uma enviada pelo usuário. */
+export type FotoTipo = 'padrao' | 'real'
+
 /** Resumo do ciclo de refil atualmente instalado. */
 export interface RefilAtivo {
   id: string
@@ -28,6 +31,8 @@ export interface ArmadilhaLista {
   status: StatusAnalise | null
   dias_ate_saturar: number | null
   limiar_trocar: number
+  foto_tipo: FotoTipo
+  foto_url: string | null
   ultima_analise_em: string | null
   em_alerta_desde: string | null
 }
@@ -47,6 +52,8 @@ export interface ArmadilhaDetalhe {
   status: StatusAnalise | null
   dias_ate_saturar: number | null
   limiar_trocar: number
+  foto_tipo: FotoTipo
+  foto_url: string | null
 }
 
 /** Modelo de armadilha pré-cadastrado pelo fabricante. */
@@ -157,4 +164,10 @@ export interface SessaoAtual {
 /** Resultado da troca de senha: a sessão é renovada e traz um novo token CSRF. */
 export interface TrocaSenhaSaida {
   csrf_token: string
+}
+
+/** Estado da foto de identificação depois de um envio. */
+export interface FotoArmadilhaSaida {
+  foto_tipo: FotoTipo
+  foto_url: string
 }

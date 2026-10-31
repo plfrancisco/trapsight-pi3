@@ -194,6 +194,8 @@ Unidade física instalada em um estabelecimento.
 | `localizacao` | `varchar` | Descrição do ponto de instalação |
 | `data_instalacao` | `date` | |
 | `removida_em` | `timestamptz` | Nulo enquanto a armadilha está ativa. Preenchido pela remoção lógica; o histórico (refis, análises, imagens) permanece |
+| `foto_identificacao` | `bytea` | Foto real da armadilha, reduzida a 800 px no maior lado, em JPEG e sem metadados (EXIF). Nulo usa a foto padrão do modelo. Carregamento adiado: a listagem nunca lê esta coluna |
+| `foto_atualizada_em` | `timestamptz` | Instante do último envio da foto; nulo quando vale a foto padrão. Versiona a URL da imagem para invalidar o cache |
 | `criado_em` | `timestamptz` | Default `now()` |
 
 ## 6.3 `refil`

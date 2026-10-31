@@ -17,6 +17,8 @@ const armadilha: ArmadilhaDetalhe = {
   status: null,
   dias_ate_saturar: null,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
   removida_em: null,
 }
 
@@ -54,5 +56,26 @@ describe('ResumoArmadilha', () => {
     expect(screen.getByRole('link', { name: 'Voltar ao painel' })).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Excluir armadilha' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Nova análise' })).not.toBeInTheDocument()
+  })
+
+  it('mostra a foto padrão do modelo ou a real, conforme o tipo informado', () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <ResumoArmadilha armadilha={armadilha} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('img', { name: /Foto padrão do modelo/ })).toBeVisible()
+
+    rerender(
+      <MemoryRouter>
+        <ResumoArmadilha
+          armadilha={{ ...armadilha, foto_tipo: 'real', foto_url: '/api/armadilhas/arm-1/foto?v=5' }}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('img', { name: 'Foto da armadilha ARM-001' })).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/armadilhas/arm-1/foto?v=5',
+    )
   })
 })

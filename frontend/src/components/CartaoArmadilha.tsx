@@ -1,79 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { formatDataHora, formatDiasAteSaturar, formatPercentual } from '../lib/formatacao'
-import { imagemDoModelo } from '../lib/modeloImagem'
 import { PALETA_STATUS } from '../lib/paleta'
 import type { ArmadilhaLista } from '../services/tipos'
-import { listAnalises } from '../services/analises'
-import { urlImagemAnalise } from '../services/midia'
+import FotoArmadilha from './FotoArmadilha'
 import StatusBadge from './StatusBadge'
 
 interface CartaoArmadilhaProps {
   armadilha: ArmadilhaLista
 }
 
-/** Resume estado, última fotografia e urgência operacional de uma armadilha.
+/** Resume estado, foto de identificação e urgência operacional de uma armadilha.
  * @param props Armadilha consolidada recebida da API.
  * @returns Um cartão com imagem, medição atual e acesso aos detalhes.
  */
 export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
-  const referenciaCartao = useRef<HTMLElement | null>(null)
-  const [imagemUrl, setImagemUrl] = useState<string | null>(null)
-  const [carregandoImagem, setCarregandoImagem] = useState(true)
-  const [imagemIndisponivel, setImagemIndisponivel] = useState(false)
   const semRefil = armadilha.refil_ativo === null
   const semAnalise = armadilha.ultima_analise_em === null
-  const imagemModelo = imagemDoModelo(armadilha.modelo)
-  const imagemExibida = imagemUrl ?? imagemModelo
   const percentual = armadilha.percentual_atual
   const percentualSeguro = Math.min(100, Math.max(0, percentual ?? 0))
-
-  // O estado de imagem reinicia por remontagem: o pai usa `key={armadilha.id}`.
-  useEffect(() => {
-    const controlador = new AbortController()
-    let observador: IntersectionObserver | null = null
-
-    const carregarImagem = () => {
-      void listAnalises(
-        armadilha.id,
-        { escopo: 'completo', limite: 1 },
-        controlador.signal,
-      )
-        .then((analises) => {
-          if (controlador.signal.aborted) return
-          const ultimaAnalise = analises[0]
-          setImagemUrl(ultimaAnalise ? urlImagemAnalise(ultimaAnalise.id) : null)
-          setImagemIndisponivel(false)
-          setCarregandoImagem(false)
-        })
-        .catch(() => {
-          if (controlador.signal.aborted) return
-          setImagemIndisponivel(true)
-          setCarregandoImagem(false)
-        })
-    }
-
-    const elemento = referenciaCartao.current
-    if (!elemento || typeof IntersectionObserver === 'undefined') {
-      carregarImagem()
-      return () => controlador.abort()
-    }
-
-    observador = new IntersectionObserver(
-      (entradas) => {
-        if (!entradas.some((entrada) => entrada.isIntersecting)) return
-        observador?.disconnect()
-        carregarImagem()
-      },
-      { rootMargin: '180px' },
-    )
-    observador.observe(elemento)
-
-    return () => {
-      observador?.disconnect()
-      controlador.abort()
-    }
-  }, [armadilha.id])
 
   return (
     <Link
@@ -84,44 +28,16 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
     <article
       aria-labelledby={`titulo-${armadilha.id}`}
       className="trap-card"
-      ref={referenciaCartao}
     >
       <div className="trap-card__photo">
-        {imagemExibida ? (
-          <img
-            alt={imagemUrl
-              ? `Foto mais recente da armadilha ${armadilha.identificador}`
-              : `Imagem de referência do modelo ${armadilha.modelo ?? 'de armadilha'}`}
-            className="trap-card__image"
-            decoding="async"
-            loading="lazy"
-            onError={() => {
-              if (imagemUrl) {
-                setImagemUrl(null)
-                setImagemIndisponivel(true)
-              }
-            }}
-            src={imagemExibida}
-          />
-        ) : (
-          <div className={`trap-photo-placeholder${carregandoImagem ? ' trap-photo-placeholder--loading' : ''}`}>
-            <span aria-hidden="true" className="trap-photo-placeholder__symbol">
-              <svg className="size-9" fill="none" viewBox="0 0 40 40">
-                <rect height="26" rx="4" stroke="currentColor" strokeWidth="1.5" width="30" x="5" y="7" />
-                <path d="M10 12h20M10 17h20M10 22h20M12 27h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.35" />
-              </svg>
-            </span>
-            <p>
-              {carregandoImagem
-                ? 'Buscando foto…'
-                : imagemIndisponivel
-                  ? 'Foto indisponível no momento'
-                  : semAnalise
-                    ? 'A foto aparece após a primeira análise'
-                    : 'Sem foto registrada'}
-            </p>
-          </div>
-        )}
+        <FotoArmadilha
+          className="trap-card__image"
+          fotoTipo={armadilha.foto_tipo}
+          fotoUrl={armadilha.foto_url}
+          identificador={armadilha.identificador}
+          key={armadilha.foto_url ?? 'padrao'}
+          modelo={armadilha.modelo}
+        />
         <div aria-hidden="true" className="trap-card__photo-scrim" />
         <span className="trap-card__photo-label">
           <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 20 20">
@@ -129,11 +45,7 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
             <circle cx="7.5" cy="8" r="1.2" stroke="currentColor" strokeWidth="1.2" />
             <path d="m5 14 3.5-3 2.5 2 2-1.5 2 2.5" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.2" />
           </svg>
-          {imagemUrl
-            ? 'Última leitura'
-            : imagemModelo
-              ? 'Imagem do modelo'
-              : 'Imagem da armadilha'}
+          {armadilha.foto_tipo === 'real' ? 'Foto da armadilha' : 'Foto padrão do modelo'}
         </span>
         <span className="trap-card__photo-index">
           {armadilha.identificador}

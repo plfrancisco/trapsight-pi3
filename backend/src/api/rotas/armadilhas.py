@@ -31,6 +31,7 @@ from src.repositories.armadilha_repository import ArmadilhaRepository
 from src.repositories.exceptions import DataTrocaInvalida, IdentificadorDuplicado
 from src.repositories.modelo_armadilha_repository import ModeloArmadilhaRepository
 from src.repositories.refil_repository import RefilRepository
+from src.services.foto_armadilha import url_da_foto
 from src.services.painel import (
     calcular_dias_ate_troca,
     calcular_dias_em_uso,
@@ -388,6 +389,8 @@ def _montar_item_lista(
         status=resumo.status,
         dias_ate_saturar=resumo.dias_ate_saturar,
         limiar_trocar=limiar_trocar,
+        foto_tipo="padrao" if armadilha.foto_atualizada_em is None else "real",
+        foto_url=_url_foto(armadilha),
         ultima_analise_em=resumo.ultima_analise_em,
         em_alerta_desde=resumo.em_alerta_desde,
     )
@@ -434,6 +437,8 @@ def _montar_detalhe(
         status=resumo.status,
         dias_ate_saturar=resumo.dias_ate_saturar,
         limiar_trocar=limiar_trocar,
+        foto_tipo="padrao" if armadilha.foto_atualizada_em is None else "real",
+        foto_url=_url_foto(armadilha),
     )
 
 
@@ -509,3 +514,13 @@ def _erro_data_instalacao_refil(mensagem: str) -> ErroDeApi:
         mensagem,
         detalhes={"campo": "data_instalacao"},
     )
+
+
+def _url_foto(armadilha: Armadilha) -> str | None:
+    """Devolve a URL versionada da foto real, ou None quando vale a do modelo.
+
+    Usa só ``foto_atualizada_em``: a coluna do blob é adiada e nunca é lida aqui.
+    """
+    if armadilha.foto_atualizada_em is None:
+        return None
+    return url_da_foto(armadilha.id, armadilha.foto_atualizada_em)

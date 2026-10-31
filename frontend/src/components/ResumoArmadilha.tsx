@@ -1,6 +1,7 @@
 import { formatData } from '../lib/formatacao'
 import type { ArmadilhaDetalhe } from '../services/tipos'
 import AcaoExcluirArmadilha from './AcaoExcluirArmadilha'
+import FotoArmadilha from './FotoArmadilha'
 import LinkBotao from './LinkBotao'
 
 interface ResumoArmadilhaProps {
@@ -14,7 +15,16 @@ interface ResumoArmadilhaProps {
 export default function ResumoArmadilha({ armadilha }: ResumoArmadilhaProps) {
   return (
     <header className="detail-hero">
-      <div>
+      <figure className="detail-hero__photo">
+        <FotoArmadilha
+          fotoTipo={armadilha.foto_tipo}
+          fotoUrl={armadilha.foto_url}
+          identificador={armadilha.identificador}
+          key={armadilha.foto_url ?? 'padrao'}
+          modelo={armadilha.modelo}
+        />
+      </figure>
+      <div className="detail-hero__info">
         <p className="page-kicker">
           Detalhe da armadilha
         </p>

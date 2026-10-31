@@ -19,6 +19,8 @@ const buildArmadilha = (
   status: dados.status ?? 'trocar',
   dias_ate_saturar: 0,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
   ultima_analise_em: '2026-10-14T08:00:00Z',
   em_alerta_desde: dados.em_alerta_desde ?? null,
 })

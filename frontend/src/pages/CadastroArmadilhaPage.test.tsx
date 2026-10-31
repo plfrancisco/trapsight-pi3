@@ -13,9 +13,17 @@ vi.mock('../services/armadilhas', () => ({
   createArmadilha: vi.fn(),
   getArmadilha: vi.fn(),
   updateArmadilha: vi.fn(),
+  sendFotoArmadilha: vi.fn(),
+  deleteFotoArmadilha: vi.fn(),
 }))
 
-import { createArmadilha, getArmadilha, updateArmadilha } from '../services/armadilhas'
+import {
+  createArmadilha,
+  deleteFotoArmadilha,
+  getArmadilha,
+  sendFotoArmadilha,
+  updateArmadilha,
+} from '../services/armadilhas'
 import { listModelos } from '../services/modelos'
 
 const armadilha: ArmadilhaDetalhe = {
@@ -31,6 +39,8 @@ const armadilha: ArmadilhaDetalhe = {
   status: null,
   dias_ate_saturar: null,
   limiar_trocar: 20,
+  foto_tipo: 'padrao',
+  foto_url: null,
 }
 
 const stickfly: ModeloArmadilha = {
@@ -65,6 +75,9 @@ beforeEach(() => {
   vi.mocked(createArmadilha).mockReset()
   vi.mocked(getArmadilha).mockReset()
   vi.mocked(updateArmadilha).mockReset()
+  vi.mocked(sendFotoArmadilha).mockReset()
+  vi.mocked(deleteFotoArmadilha).mockReset()
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:previa'), revokeObjectURL: vi.fn() }))
   vi.mocked(listModelos).mockReset()
   vi.mocked(listModelos).mockResolvedValue([stickfly])
 })
@@ -282,5 +295,82 @@ describe('CadastroArmadilhaPage', () => {
 
     expect(await screen.findByText('Armadilha não encontrada')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument()
+  })
+
+  it('começa na foto padrão e só pede o arquivo quando a foto real é escolhida', async () => {
+    const usuario = userEvent.setup()
+    renderCadastro('/armadilhas/nova')
+
+    expect(screen.getByRole('radio', { name: 'Foto padrão do modelo' })).toBeChecked()
+    expect(screen.queryByLabelText('Arquivo da foto')).not.toBeInTheDocument()
+
+    await usuario.click(screen.getByRole('radio', { name: 'Foto real da armadilha' }))
+
+    expect(screen.getByLabelText('Arquivo da foto')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Voltar à foto padrão' })).toBeVisible()
+  })
+
+  it('recusa na tela um arquivo que não é JPEG nem PNG e um arquivo acima de 4 MB', async () => {
+    const usuario = userEvent.setup({ applyAccept: false })
+    renderCadastro('/armadilhas/nova')
+    await usuario.click(screen.getByRole('radio', { name: 'Foto real da armadilha' }))
+    const campo = screen.getByLabelText('Arquivo da foto')
+
+    await usuario.upload(campo, new File(['x'], 'nota.txt', { type: 'text/plain' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/JPEG/)
+
+    const grande = new File([new Uint8Array(4 * 1024 * 1024 + 1)], 'grande.jpg', { type: 'image/jpeg' })
+    await usuario.upload(campo, grande)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/4 MB/)
+    expect(sendFotoArmadilha).not.toHaveBeenCalled()
+  })
+
+  it('exige um arquivo quando a foto real é escolhida sem arquivo', async () => {
+    const usuario = userEvent.setup()
+    renderCadastro('/armadilhas/nova')
+    await screen.findByText('StickFly K-45', { selector: '.model-picker__selected-name' })
+    await usuario.type(screen.getByLabelText('Identificador *'), 'ARM-FOTO')
+    await usuario.click(screen.getByRole('radio', { name: 'Foto real da armadilha' }))
+    await usuario.click(screen.getByRole('button', { name: 'Cadastrar armadilha' }))
+
+    expect(await screen.findByText(/Escolha a imagem da foto real/)).toBeVisible()
+    expect(createArmadilha).not.toHaveBeenCalled()
+  })
+
+  it('cadastra a armadilha e envia a foto real escolhida', async () => {
+    const usuario = userEvent.setup()
+    vi.mocked(createArmadilha).mockResolvedValue({ ...armadilha, id: 'arm-nova' })
+    vi.mocked(sendFotoArmadilha).mockResolvedValue({ foto_tipo: 'real', foto_url: '/api/x' })
+    renderCadastro('/armadilhas/nova')
+    await screen.findByText('StickFly K-45', { selector: '.model-picker__selected-name' })
+    await usuario.type(screen.getByLabelText('Identificador *'), 'ARM-FOTO')
+    await usuario.click(screen.getByRole('radio', { name: 'Foto real da armadilha' }))
+    const foto = new File(['x'], 'foto.jpg', { type: 'image/jpeg' })
+    await usuario.upload(screen.getByLabelText('Arquivo da foto'), foto)
+    await usuario.click(screen.getByRole('button', { name: 'Cadastrar armadilha' }))
+
+    await screen.findByText('Detalhe da armadilha arm-nova')
+    expect(sendFotoArmadilha).toHaveBeenCalledWith('arm-nova', foto)
+  })
+
+  it('volta à foto padrão na edição e remove a foto real no servidor', async () => {
+    const usuario = userEvent.setup()
+    vi.mocked(getArmadilha).mockResolvedValue({
+      ...armadilha,
+      foto_tipo: 'real',
+      foto_url: '/api/armadilhas/arm-1/foto?v=1',
+    })
+    vi.mocked(updateArmadilha).mockResolvedValue(armadilha)
+    vi.mocked(deleteFotoArmadilha).mockResolvedValue(undefined)
+    renderCadastro('/armadilhas/arm-1/editar')
+    await screen.findByDisplayValue('ARM-001')
+
+    expect(screen.getByRole('radio', { name: 'Foto real da armadilha' })).toBeChecked()
+    await usuario.click(screen.getByRole('button', { name: 'Voltar à foto padrão' }))
+    await usuario.click(screen.getByRole('button', { name: 'Salvar alterações' }))
+
+    await screen.findByText('Detalhe da armadilha arm-1')
+    expect(deleteFotoArmadilha).toHaveBeenCalledWith('arm-1')
+    expect(sendFotoArmadilha).not.toHaveBeenCalled()
   })
 })

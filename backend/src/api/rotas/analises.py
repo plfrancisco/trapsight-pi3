@@ -34,6 +34,7 @@ from src.services.upload import (
     TAMANHO_BLOCO_UPLOAD_BYTES,
     ArquivoMuitoGrande,
     FormatoNaoSuportado,
+    ImagemValidada,
     ResolucaoInsuficiente,
     validar_imagem,
 )
@@ -95,25 +96,8 @@ async def criar_analise(
             detalhes={"campo": "imagem"},
         )
 
-    conteudo = await _ler_upload_limitado(imagem)
-    try:
-        imagem_validada = await asyncio.to_thread(validar_imagem, conteudo)
-    except ArquivoMuitoGrande:
-        raise ErroDeApi(
-            CodigoErro.ARQUIVO_MUITO_GRANDE,
-            "A imagem tem resolução alta demais.",
-            detalhes={"motivo": "pixels"},
-        ) from None
-    except FormatoNaoSuportado:
-        raise ErroDeApi(
-            CodigoErro.FORMATO_NAO_SUPORTADO,
-            "Envie uma imagem JPEG ou PNG válida.",
-        ) from None
-    except ResolucaoInsuficiente:
-        raise ErroDeApi(
-            CodigoErro.RESOLUCAO_INSUFICIENTE,
-            "A imagem precisa ter ao menos 512 pixels no maior lado.",
-        ) from None
+    conteudo = await ler_upload_limitado(imagem)
+    imagem_validada = await validar_upload_imagem(conteudo)
 
     armadilha, refil = await asyncio.to_thread(
         _buscar_armadilha_e_refil,
@@ -344,7 +328,7 @@ def _servir_recurso_analise(
                 "X-Content-Type-Options": "nosniff",
             },
         )
-        if _requisicao_nao_modificada(request, resposta):
+        if requisicao_nao_modificada(request, resposta):
             return Response(
                 status_code=304,
                 headers={
@@ -376,7 +360,7 @@ def _servir_recurso_analise(
         },
         stat_result=metadados,
     )
-    if _requisicao_nao_modificada(request, resposta):
+    if requisicao_nao_modificada(request, resposta):
         return Response(
             status_code=304,
             headers=dict(resposta.headers.items()),
@@ -401,7 +385,7 @@ def _erro_recurso_analise(
     )
 
 
-def _requisicao_nao_modificada(request: Request, resposta: Response) -> bool:
+def requisicao_nao_modificada(request: Request, resposta: Response) -> bool:
     """Aplica validadores GET para evitar reenviar um arquivo imutável."""
     etag_atual = resposta.headers["etag"]
     etag_solicitado = request.headers.get("if-none-match")
@@ -433,7 +417,39 @@ def _requisicao_nao_modificada(request: Request, resposta: Response) -> bool:
     ).replace(microsecond=0)
 
 
-async def _ler_upload_limitado(arquivo: UploadFile) -> bytes:
+async def validar_upload_imagem(conteudo: bytes) -> ImagemValidada:
+    """Valida o conteúdo real e traduz as falhas para erros públicos da API.
+
+    Args:
+        conteudo: bytes já limitados do arquivo recebido.
+
+    Returns:
+        Imagem validada, com a extensão deduzida do formato real.
+
+    Raises:
+        ErroDeApi: se o formato, a resolução ou o total de pixels forem inválidos.
+    """
+    try:
+        return await asyncio.to_thread(validar_imagem, conteudo)
+    except ArquivoMuitoGrande:
+        raise ErroDeApi(
+            CodigoErro.ARQUIVO_MUITO_GRANDE,
+            "A imagem tem resolução alta demais.",
+            detalhes={"motivo": "pixels"},
+        ) from None
+    except FormatoNaoSuportado:
+        raise ErroDeApi(
+            CodigoErro.FORMATO_NAO_SUPORTADO,
+            "Envie uma imagem JPEG ou PNG válida.",
+        ) from None
+    except ResolucaoInsuficiente:
+        raise ErroDeApi(
+            CodigoErro.RESOLUCAO_INSUFICIENTE,
+            "A imagem precisa ter ao menos 512 pixels no maior lado.",
+        ) from None
+
+
+async def ler_upload_limitado(arquivo: UploadFile) -> bytes:
     """Lê blocos multipart na camada HTTP e rejeita o primeiro byte excedente."""
     partes: list[bytes] = []
     total = 0
