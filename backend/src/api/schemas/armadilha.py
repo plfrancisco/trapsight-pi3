@@ -110,12 +110,13 @@ class ArmadilhaLista(BaseModel):
     percentual_atual: Decimal | None
     status: StatusAnalise | None
     dias_ate_saturar: int | None
+    limiar_trocar: Decimal
     ultima_analise_em: datetime | None
     em_alerta_desde: datetime | None
 
-    @field_serializer("percentual_atual", when_used="json")
+    @field_serializer("percentual_atual", "limiar_trocar", when_used="json")
     def _serializar_percentual(self, valor: Decimal | None) -> float | None:
-        """Emite percentuais como números JSON em vez de strings decimais."""
+        """Emite percentuais e o limiar como números JSON em vez de strings decimais."""
         return None if valor is None else float(valor)
 
     @field_serializer("ultima_analise_em", "em_alerta_desde", when_used="json")
@@ -143,8 +144,9 @@ class ArmadilhaDetalhe(BaseModel):
     percentual_atual: Decimal | None
     status: StatusAnalise | None
     dias_ate_saturar: int | None
+    limiar_trocar: Decimal
 
-    @field_serializer("percentual_atual", when_used="json")
+    @field_serializer("percentual_atual", "limiar_trocar", when_used="json")
     def _serializar_percentual(self, valor: Decimal | None) -> float | None:
-        """Emite percentuais como números JSON em vez de strings decimais."""
+        """Emite percentuais e o limiar como números JSON em vez de strings decimais."""
         return None if valor is None else float(valor)

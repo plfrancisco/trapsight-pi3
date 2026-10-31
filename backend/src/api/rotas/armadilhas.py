@@ -385,6 +385,7 @@ def _montar_item_lista(
         percentual_atual=resumo.percentual_atual,
         status=resumo.status,
         dias_ate_saturar=resumo.dias_ate_saturar,
+        limiar_trocar=limiar_trocar,
         ultima_analise_em=resumo.ultima_analise_em,
         em_alerta_desde=resumo.em_alerta_desde,
     )
@@ -430,6 +431,7 @@ def _montar_detalhe(
         percentual_atual=resumo.percentual_atual,
         status=resumo.status,
         dias_ate_saturar=resumo.dias_ate_saturar,
+        limiar_trocar=limiar_trocar,
     )
 
 

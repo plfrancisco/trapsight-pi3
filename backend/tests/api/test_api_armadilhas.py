@@ -189,6 +189,8 @@ def test_listar_armadilhas_consolida_campos_nulos_estados_e_ordem(
     ]
     assert itens[0]["status"] == "trocar"
     assert itens[0]["dias_ate_saturar"] == 0
+    assert itens[0]["limiar_trocar"] == 70.0
+    assert isinstance(itens[0]["limiar_trocar"], float)
     assert itens[0]["em_alerta_desde"] == "2026-03-15T00:00:00Z"
     assert itens[1]["status"] == "atencao"
     assert itens[1]["dias_ate_saturar"] == 2
@@ -378,6 +380,7 @@ def test_get_detalhe_inclui_historico_e_duracao_dos_refis(
     detalhe = response.json()
     assert detalhe["id"] == str(armadilha.id)
     assert detalhe["refil_ativo"]["id"] == str(ativo.id)
+    assert detalhe["limiar_trocar"] == 70.0
     assert detalhe["refil_ativo"]["dias_em_uso"] == 20
     assert detalhe["refis_anteriores"] == [
         {

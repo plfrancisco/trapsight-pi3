@@ -321,6 +321,7 @@ frontend não faz esse cálculo, conforme `../frontend/telas_spec.md`, seção 5
     "percentual_atual": 64.30,
     "status": "atencao",
     "dias_ate_saturar": 4,
+    "limiar_trocar": 20,
     "ultima_analise_em": "2026-08-21T09:12:00Z",
     "em_alerta_desde": null
   }
@@ -337,6 +338,11 @@ frontend não faz esse cálculo, conforme `../frontend/telas_spec.md`, seção 5
 | `percentual_atual`, `status`, `ultima_analise_em` | Nenhuma análise no refil ativo |
 | `dias_ate_saturar` | Menos de duas análises, ou inclinação não positiva |
 | `em_alerta_desde` | Armadilha não está em estado `trocar` |
+
+**Sobre `limiar_trocar`:** percentual de cobertura a partir do qual a armadilha
+passa a `trocar`, igual ao `LIMIAR_TROCAR` configurado no backend. Também vem
+no detalhe (4.3). O frontend o usa no texto e na linha de referência do
+gráfico, em vez de repetir o valor. Nunca é nulo.
 
 **Sobre `em_alerta_desde`:** data da primeira análise do refil ativo cujo
 percentual cruzou o limiar de troca. Alimenta o painel de alertas descrito em
@@ -402,7 +408,8 @@ anteriores.
   ],
   "percentual_atual": 64.30,
   "status": "atencao",
-  "dias_ate_saturar": 4
+  "dias_ate_saturar": 4,
+  "limiar_trocar": 20
 }
 ```
 
