@@ -1,14 +1,14 @@
 import { formatPercentual } from '../lib/formatacao'
 import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
-import { urlImagemAnalise } from '../services/midia'
+import ImagemAnalise from './ImagemAnalise'
 import StatusBadge from './StatusBadge'
 
 interface ResultadoAnaliseProps {
   analise: Analise
 }
 
-/** Apresenta os dados do processamento e a foto original enviada para análise. */
+/** Apresenta os dados do processamento e a imagem com a identificação do modelo. */
 export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
   return (
     <section
@@ -55,17 +55,17 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
       <div className="grid gap-5">
         <figure className="min-w-0">
           <figcaption className="mb-2 text-sm font-semibold text-slate-900">
-            Imagem original
+            Imagem analisada
           </figcaption>
-          <div className="aspect-[4/3] max-h-[36rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-            <img
-              alt="Imagem original enviada para análise da armadilha"
-              className="size-full object-contain"
-              height={480}
-              src={urlImagemAnalise(analise.id)}
-              width={640}
-            />
-          </div>
+          <ImagemAnalise
+            analiseId={analise.id}
+            descricao="enviada para análise da armadilha"
+            height={480}
+            imagemClassName="size-full object-contain"
+            moldura="aspect-[4/3] max-h-[36rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+            permitirAlternar
+            width={640}
+          />
         </figure>
       </div>
     </section>

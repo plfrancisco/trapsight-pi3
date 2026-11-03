@@ -15,7 +15,7 @@ const analise: Analise = {
 }
 
 describe('QuadroAnalise', () => {
-  it('exibe os dados, a imagem original e a leitura acessível do quadro', () => {
+  it('exibe os dados, a identificação do modelo e a leitura acessível do quadro', () => {
     render(
       <QuadroAnalise analise={analise} indice={1} quantidade={3} />,
     )
@@ -23,11 +23,10 @@ describe('QuadroAnalise', () => {
     expect(screen.getByRole('heading', { name: 'Análise 02' })).toBeVisible()
     expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
-    expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
-      'src',
-      'http://localhost:8000/api/analises/analise-1/imagem',
-    )
-    expect(screen.queryByRole('img', { name: /Máscara da análise/ })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: /Identificação do modelo na imagem da análise/ }),
+    ).toHaveAttribute('src', 'http://localhost:8000/api/analises/analise-1/mascara')
+    expect(screen.getByRole('button', { name: 'Ver foto original' })).toBeVisible()
     expect(screen.getByText(/Quadro 2 de 3/, { selector: 'p' })).toHaveAttribute(
       'aria-live',
       'polite',

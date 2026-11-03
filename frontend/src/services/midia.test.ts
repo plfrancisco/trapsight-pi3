@@ -3,6 +3,7 @@ import { API_URL } from '../config'
 import {
   urlAbsoluta,
   urlImagemAnalise,
+  urlMascaraAnalise,
 } from './midia'
 
 describe('URLs de mídia', () => {
@@ -11,6 +12,12 @@ describe('URLs de mídia', () => {
     expect(urlImagemAnalise('analise-1')).toBe(
       origem + new URL(API_URL).pathname.replace(/\/+$/, '') + '/analises/analise-1/imagem',
     )
+  })
+
+  it('monta a URL da máscara do modelo e codifica o identificador', () => {
+    const base = new URL(API_URL).origin + new URL(API_URL).pathname.replace(/\/+$/, '')
+    expect(urlMascaraAnalise('analise-1')).toBe(base + '/analises/analise-1/mascara')
+    expect(urlMascaraAnalise('a/b')).toBe(base + '/analises/a%2Fb/mascara')
   })
 
   it('combina um caminho relativo com a origem pública da API', () => {

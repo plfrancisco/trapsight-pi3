@@ -1,7 +1,7 @@
 import { formatDataHora } from '../lib/formatacao'
 import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
-import { urlImagemAnalise } from '../services/midia'
+import ImagemAnalise from './ImagemAnalise'
 import StatusBadge from './StatusBadge'
 
 interface ListaAnalisesProps {
@@ -44,12 +44,13 @@ export default function ListaAnalises({
               className="surface-panel flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               key={analise.id}
             >
-              <img
-                alt={`Imagem original da análise de ${instante}, saturação de ${percentual}`}
-                className="size-24 shrink-0 rounded-xl bg-slate-100 object-cover"
+              <ImagemAnalise
+                analiseId={analise.id}
+                descricao={`da análise de ${instante}, saturação de ${percentual}`}
                 height={96}
+                imagemClassName="size-24 shrink-0 rounded-xl bg-slate-100 object-cover"
                 loading="lazy"
-                src={urlImagemAnalise(analise.id)}
+                mostrarLegenda={false}
                 width={96}
               />
               <div className="min-w-0 space-y-2">

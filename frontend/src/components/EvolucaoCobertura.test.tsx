@@ -40,10 +40,10 @@ describe('EvolucaoCobertura', () => {
     expect(await screen.findByText('Saturação medida')).toBeVisible()
     expect(screen.getByRole('group', { name: /Evolução da saturação/ })).toBeVisible()
     expect(screen.getByText('Passe o cursor, toque ou use as setas no gráfico para ver a foto daquela data.')).toBeVisible()
-    expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
-      'src',
-      'http://localhost:8000/api/analises/analise-1/imagem',
-    )
+    expect(
+      screen.getByRole('img', { name: /Identificação do modelo na imagem da análise/ }),
+    ).toHaveAttribute('src', 'http://localhost:8000/api/analises/analise-1/mascara')
+    expect(screen.getByRole('button', { name: 'Ver foto original' })).toBeVisible()
     expect(screen.queryByRole('group', { name: 'Escopo temporal' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Reproduzir|Pausar/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('slider')).not.toBeInTheDocument()
@@ -52,7 +52,11 @@ describe('EvolucaoCobertura', () => {
   it('exibe a foto quando há só uma medição', () => {
     render(<EvolucaoCobertura analisesAtivas={[analisesAtivas[0]]} />)
 
-    expect(screen.getByRole('img', { name: /Imagem da armadilha registrada/ })).toBeVisible()
+    expect(
+      screen.getByRole('img', {
+        name: /Identificação do modelo na imagem da armadilha registrada/,
+      }),
+    ).toBeVisible()
     expect(screen.queryByRole('group', { name: /Evolução da saturação/ })).not.toBeInTheDocument()
   })
 

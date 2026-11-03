@@ -4,8 +4,8 @@ import { formatDataHora } from '../lib/formatacao'
 import { formatIndiceSaturacao } from '../lib/saturacao'
 import { calcularMesPrevistoTroca } from '../lib/previsaoTroca'
 import { instanteDoQuadro, mapearArrastoParaIndice } from '../lib/marcadorGrafico'
-import { urlImagemAnalise } from '../services/midia'
 import type { Analise } from '../services/tipos'
+import ImagemAnalise from './ImagemAnalise'
 import QuadroAnalise from './QuadroAnalise'
 import StatusBadge from './StatusBadge'
 
@@ -45,16 +45,15 @@ function ImagemAnaliseUnica({
         <StatusBadge status={analise.status} />
       </header>
       <figure className="analysis-frame-card__figure">
-        <div className="analysis-frame-card__image-wrap">
-          <img
-            alt={`Imagem da armadilha registrada em ${dataHora}, com ${percentual} de saturação`}
-            className="analysis-frame-card__image"
-            decoding="async"
-            height={480}
-            src={urlImagemAnalise(analise.id)}
-            width={640}
-          />
-        </div>
+        <ImagemAnalise
+          analiseId={analise.id}
+          descricao={`da armadilha registrada em ${dataHora}, com ${percentual} de saturação`}
+          height={480}
+          imagemClassName="analysis-frame-card__image"
+          moldura="analysis-frame-card__image-wrap"
+          permitirAlternar
+          width={640}
+        />
         <figcaption className="analysis-frame-card__caption">
           <span>Última análise</span>
           <strong>Saturação <b>{percentual}</b></strong>

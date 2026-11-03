@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { formatDataHora, rotuloStatus } from '../lib/formatacao'
 import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
-import { urlImagemAnalise } from '../services/midia'
+import ImagemAnalise from './ImagemAnalise'
 import StatusBadge from './StatusBadge'
 
 interface QuadroAnaliseProps {
@@ -12,9 +12,9 @@ interface QuadroAnaliseProps {
   limiarTrocar?: number
 }
 
-/** Apresenta a foto original da análise selecionada no gráfico.
+/** Apresenta a imagem com a identificação do modelo da análise selecionada no gráfico.
  * @param props Análise selecionada e sua posição na sequência cronológica.
- * @returns Foto original e dados acessíveis do quadro atual.
+ * @returns Imagem e dados acessíveis do quadro atual.
  */
 function QuadroAnalise({
   analise,
@@ -46,17 +46,16 @@ function QuadroAnalise({
       </p>
 
       <figure className="analysis-frame-card__figure">
-        <div className="analysis-frame-card__image-wrap">
-          <img
-            key={analise.id}
-            alt={`Imagem original da análise de ${dataHora}, saturação ${percentual}`}
-            className="analysis-frame-card__image"
-            decoding="async"
-            height={480}
-            src={urlImagemAnalise(analise.id)}
-            width={640}
-          />
-        </div>
+        <ImagemAnalise
+          analiseId={analise.id}
+          descricao={`da análise de ${dataHora}, saturação ${percentual}`}
+          height={480}
+          imagemClassName="analysis-frame-card__image"
+          key={analise.id}
+          moldura="analysis-frame-card__image-wrap"
+          permitirAlternar
+          width={640}
+        />
         <figcaption className="analysis-frame-card__caption">
           <span>Quadro {numeroQuadro} de {quantidade}</span>
           <strong>Saturação <b>{percentual}</b></strong>
