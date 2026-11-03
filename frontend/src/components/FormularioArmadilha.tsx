@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useCarregamento } from '../hooks/useCarregamento'
+import { useAvisoAlteracoes } from '../hooks/useAvisoAlteracoes'
 import { localDateIso } from '../lib/datas'
 import { ApiError } from '../services/erros'
 import {
@@ -59,6 +60,8 @@ export default function FormularioArmadilha({
   } = useCarregamento(carregarModelos)
   const [erroEnvio, setErroEnvio] = useState<ApiError | string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const formularioRef = useRef<HTMLFormElement>(null)
+  const marcarSalvo = useAvisoAlteracoes(formularioRef, modelos !== null)
 
   /** Grava a escolha de foto depois que a armadilha existe: envia a real ou volta à padrão. */
   const aplicarFoto = async (armadilhaId: string) => {
@@ -115,6 +118,7 @@ export default function FormularioArmadilha({
           localizacao: parseOptionalValue(formulario.get('localizacao')),
         })
         await aplicarFoto(armadilhaAtualizada.id)
+        marcarSalvo()
         navigate(`/armadilhas/${encodeURIComponent(armadilhaAtualizada.id)}`)
         return
       }
@@ -130,6 +134,7 @@ export default function FormularioArmadilha({
         await aplicarFoto(armadilhaCriada.id)
       } catch {
         // A armadilha já existe: leva à edição, onde a foto pode ser reenviada.
+        marcarSalvo()
         navigate(`/armadilhas/${encodeURIComponent(armadilhaCriada.id)}/editar`, {
           state: {
             avisoFoto:
@@ -138,6 +143,7 @@ export default function FormularioArmadilha({
         })
         return
       }
+      marcarSalvo()
       navigate(`/armadilhas/${encodeURIComponent(armadilhaCriada.id)}`)
     } catch (falha: unknown) {
       if (falha instanceof ApiError && falha.codigo === 'IDENTIFICADOR_DUPLICADO') {
@@ -174,7 +180,8 @@ export default function FormularioArmadilha({
       </header>
 
       <form
-        className="form-panel space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+        ref={formularioRef}
+        className="armadilha-form form-panel space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
         key={id ?? 'nova-armadilha'}
         noValidate
         onSubmit={saveArmadilha}
@@ -186,6 +193,7 @@ export default function FormularioArmadilha({
           erro={erroIdentificador}
           id="identificador"
           nome="identificador"
+          placeholder="Ex.: ARM-007…"
           onChange={() => setErroIdentificador(null)}
           obrigatorio
           referencia={identificadorRef}
@@ -220,6 +228,7 @@ export default function FormularioArmadilha({
         <CampoFormulario
           id="localizacao"
           nome="localizacao"
+          placeholder="Ex.: Cozinha — bancada…"
           rotulo="Localização"
           valorPadrao={dados?.localizacao ?? ''}
         />

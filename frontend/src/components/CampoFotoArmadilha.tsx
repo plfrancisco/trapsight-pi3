@@ -91,6 +91,7 @@ export default function CampoFotoArmadilha({
               aria-invalid={erro ? true : undefined}
               className="mt-1 block w-full text-sm"
               id="foto-arquivo"
+              name="foto_arquivo"
               onChange={escolherArquivo}
               type="file"
             />

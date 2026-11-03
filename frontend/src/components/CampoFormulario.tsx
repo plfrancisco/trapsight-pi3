@@ -7,6 +7,7 @@ interface CampoFormularioProps {
   tipo?: 'text' | 'date' | 'email' | 'password'
   /** Sugestão de preenchimento do navegador e dos gerenciadores de senha. */
   autoComplete?: string
+  placeholder?: string
   valorPadrao?: string
   obrigatorio?: boolean
   somenteLeitura?: boolean
@@ -23,6 +24,7 @@ export default function CampoFormulario({
   rotulo,
   tipo = 'text',
   autoComplete,
+  placeholder,
   valorPadrao,
   obrigatorio = false,
   somenteLeitura = false,
@@ -54,6 +56,7 @@ export default function CampoFormulario({
         defaultValue={somenteLeitura ? undefined : valorPadrao}
         id={id}
         name={nome}
+        placeholder={placeholder}
         onChange={onChange}
         readOnly={somenteLeitura}
         ref={referencia}
