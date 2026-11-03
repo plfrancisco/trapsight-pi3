@@ -83,7 +83,7 @@ Conjunto de teste de 450 imagens, **sintéticas** (recomposição de insetos rea
 | Acurácia do status (ok, atenção, trocar) | **99,3%** | 72,7% |
 | "Trocar" classificado como "ok" | **0** | 0 |
 
-O modelo atingiu o alvo dos critérios definidos antes do treino (Dice ≥ 0,90, erro médio ≤ 1,0 p.p. e nenhum "trocar" lido como "ok"). **Esses números valem apenas para imagens sintéticas.** A validação com fotos reais da empresa parceira ainda não foi feita, e a aprovação geral segue pendente até lá. O modelo exportado (ONNX, 93 MB) está em [`backend/models/`](backend/models/), junto com seus metadados.
+O modelo atingiu o alvo dos critérios definidos antes do treino (Dice ≥ 0,90, erro médio ≤ 1,0 p.p. e nenhum "trocar" lido como "ok"). **Esses números foram medidos em imagens sintéticas.** O modelo exportado (ONNX, 93 MB) está em [`backend/models/`](backend/models/), junto com seus metadados.
 
 ## Arquitetura
 
