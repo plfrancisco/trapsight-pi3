@@ -25,6 +25,22 @@ def criar_inferidor(settings: Settings) -> Inferidor:
             limiar_trocar=limiar_trocar,
         )
 
+    if settings.inference_mode == "onnx":
+        from pathlib import Path
+
+        from src.inference.onnx import InferidorOnnx
+
+        caminho = settings.model_weights_path.strip() or str(
+            Path(__file__).resolve().parents[2] / "models" / "modelo.onnx"
+        )
+        return InferidorOnnx(
+            caminho_pesos=caminho,
+            modelo_versao=settings.model_version,
+            limiar_atencao=limiar_atencao,
+            limiar_trocar=limiar_trocar,
+            threads=settings.inference_threads,
+        )
+
     from src.inference.modelo import InferidorModelo
 
     return InferidorModelo(

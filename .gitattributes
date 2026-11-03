@@ -5,3 +5,4 @@
 Dockerfile* text eol=lf
 Caddyfile text eol=lf
 deploy/db/*.conf text eol=lf
+*.onnx binary

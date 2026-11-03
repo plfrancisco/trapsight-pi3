@@ -1,5 +1,7 @@
 alembic==1.20.0
 fastapi==0.142.2
+numpy==2.5.4
+onnxruntime==1.31.0
 pillow==12.3.0
 psycopg[binary]==3.3.6
 pwdlib[argon2]==0.3.1

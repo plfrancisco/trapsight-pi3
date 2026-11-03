@@ -24,9 +24,9 @@ Cadastre apenas no ambiente Production. Marque `DATABASE_URL` como sensível.
 | `AMBIENTE` | `producao` |
 | `COOKIE_SECURE` | `true` |
 | `CORS_ORIGENS` | Origem HTTPS oficial do projeto Vercel |
-| `INFERENCE_MODE` | `stub` no deploy; o padrão é `modelo` e, sem os pesos, a API não inicia |
-| `MODEL_WEIGHTS_PATH` | `/tmp/modelo-inativo` enquanto a inferência usar o stub |
-| `MODEL_VERSION` | `v0.1.0-demo` |
+| `INFERENCE_MODE` | `onnx` para ativar o modelo; o padrão do backend continua `modelo` |
+| `MODEL_WEIGHTS_PATH` | Vazio para usar o modelo ONNX incluído no backend |
+| `MODEL_VERSION` | `v0.1.0-e1` |
 | `UPLOADS_DIR` | `/tmp/trapsight` (não usado para mídia com o backend `database`) |
 | `STORAGE_BACKEND` | `database` |
 | `VITE_API_URL` | `/api` (padrão do frontend) |
@@ -47,9 +47,9 @@ antes do build; não coloque nelas nenhum segredo.
 | `CORS_ORIGENS` | Origem HTTPS definitiva exata | Origem HTTPS exata do Preview | Origens autorizadas; sem `*` |
 | `STORAGE_BACKEND` | `database` | `database` | Mídias persistentes no banco |
 | `UPLOADS_DIR` | `/tmp/trapsight` | `/tmp/trapsight` | Diretório exigido pela configuração |
-| `INFERENCE_MODE` | `stub` | `stub` | Inferência de demonstração |
-| `MODEL_WEIGHTS_PATH` | `/tmp/modelo-inativo` | `/tmp/modelo-inativo` | Caminho exigido pela configuração |
-| `MODEL_VERSION` | Versão semântica do stub | Versão semântica de teste | Identificação da inferência |
+| `INFERENCE_MODE` | `onnx` | `onnx` | Motor de inferência |
+| `MODEL_WEIGHTS_PATH` | Vazio | Vazio | Usa o ONNX empacotado |
+| `MODEL_VERSION` | `v0.1.0-e1` | `v0.1.0-e1` | Versão sem o hash, conferida nos metadados |
 | `VITE_API_URL` | `/api` | `/api` | API na mesma origem |
 | `VITE_AUTENTICACAO_ATIVA` | `true` | `true` | Interface autenticada |
 | `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | `1800` nas passadas 1 e 2; `5` na 3 | Expiração por inatividade |
@@ -238,6 +238,8 @@ privadas no Supabase, sem depender do disco temporário das funções. Isso é
 adequado para a demonstração de baixo volume até dezembro; a cota do banco
 gratuito precisa ser acompanhada se forem enviadas muitas análises.
 
-O deploy usa `INFERENCE_MODE=stub`: o PyTorch (`torch`) e os pesos de 93 MB
-não cabem na função Vercel. Como disponibilizar e ativar o modelo real é uma
-decisão em aberto. Este deploy não inclui o dataset de treinamento.
+O modelo ONNX e seus metadados acompanham o repositório. A ativação depende de
+configurar `INFERENCE_MODE=onnx`, `MODEL_VERSION=v0.1.0-e1` e
+`MODEL_WEIGHTS_PATH` vazio na Vercel; isso ainda precisa ser aplicado e testado
+no serviço. O modelo foi avaliado em recomposições, não em fotos de campo.
+Este deploy não inclui o dataset de treinamento.

@@ -386,6 +386,20 @@ O hash é calculado uma vez, na inicialização, e mantido em memória. Resultad
 
 ---
 
+## 8.2 Inferência ONNX
+
+O modo `onnx` usa ONNX Runtime em CPU e `INFERENCE_THREADS` para limitar as
+threads. Com `MODEL_WEIGHTS_PATH` vazio, carrega `backend/models/modelo.onnx`
+a partir da localização do módulo, independentemente do diretório corrente.
+O JSON junto ao modelo registra versão SemVer com hash do checkpoint, SHA-256
+completo do ONNX e do checkpoint de origem, resolução, normalização ImageNet,
+classes na ordem da seção 2 e data. O carregamento confere esses metadados e
+o hash antes de abrir o arquivo. Entrada e saída devem ser `1×3×576×768` e
+uma passagem de aquecimento deve produzir logits finitos; falhas impedem a
+inicialização. A saída mantém o contrato da seção 10.
+
+---
+
 # 9. Baseline OpenCV
 
 Implementação clássica para comparação, conforme

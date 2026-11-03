@@ -16,6 +16,20 @@ _REQUIRED_ENVIRONMENT = {
 }
 
 
+@pytest.mark.parametrize("modo", ["stub", "modelo", "onnx"])
+def test_caminho_vazio_somente_no_modo_onnx(monkeypatch, modo):
+    """Somente ONNX pode usar o caminho padrão empacotado."""
+    for nome, valor in _REQUIRED_ENVIRONMENT.items():
+        monkeypatch.setenv(nome, valor)
+    monkeypatch.setenv("INFERENCE_MODE", modo)
+    monkeypatch.setenv("MODEL_WEIGHTS_PATH", "")
+    if modo == "onnx":
+        assert Settings().model_weights_path == ""
+    else:
+        with pytest.raises(SettingsConfigurationError):
+            Settings()
+
+
 @pytest.fixture
 def fake_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """Fornece valores fictícios para criar configurações sem serviços reais."""

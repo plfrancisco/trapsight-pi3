@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     database_url: SecretStr
     model_weights_path: str = "/app/models/checkpoints/latest.pt"
     model_version: str
-    inference_mode: Literal["stub", "modelo"] = "modelo"
+    inference_mode: Literal["stub", "modelo", "onnx"] = "modelo"
     inference_threads: int = Field(default=1, ge=1)
     uploads_dir: str
     storage_backend: Literal["filesystem", "database"] = "filesystem"
@@ -141,7 +141,6 @@ class Settings(BaseSettings):
 
     @field_validator(
         "database_url",
-        "model_weights_path",
         "model_version",
         "uploads_dir",
         mode="before",
@@ -152,6 +151,13 @@ class Settings(BaseSettings):
         if not isinstance(value, str) or not value.strip():
             raise ValueError("A variável obrigatória deve conter texto.")
         return value
+
+    @model_validator(mode="after")
+    def _validate_model_weights_path(self) -> Self:
+        """Exige caminho explícito quando o modo não oferece arquivo padrão."""
+        if self.inference_mode != "onnx" and not self.model_weights_path.strip():
+            raise ValueError("MODEL_WEIGHTS_PATH deve conter texto neste modo.")
+        return self
 
     @field_validator("cors_origens", mode="before")
     @classmethod

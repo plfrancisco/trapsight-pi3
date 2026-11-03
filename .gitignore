@@ -40,6 +40,7 @@ node_modules/
 *.h5
 *.hdf5
 *.onnx
+!backend/models/modelo.onnx
 *.pt
 *.pth
 *.pkl
