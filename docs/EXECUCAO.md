@@ -92,7 +92,7 @@ docker compose exec backend python -m src.cli criar-usuario \
   --email gerente@exemplo.com --nome "Gerente" --papel gerente
 ```
 
-O comando pede a senha. Ela precisa ter de **15 a 128 caracteres** e não pode ser uma senha comum, uma sequência simples nem derivada do e-mail ou do nome. Para automatizar, use `--senha-stdin` e passe a senha pela entrada padrão.
+O comando pede a senha. Ela precisa ter de **8 a 128 caracteres**, com pelo menos uma letra e um número, e não pode ser uma senha comum, uma sequência simples nem derivada do e-mail ou do nome. Para automatizar, use `--senha-stdin` e passe a senha pela entrada padrão.
 
 Abra http://localhost:5173 e entre. Depois, na tela **Contas**, o gerente cria contas de operador com senha inicial, e cada operador troca essa senha no primeiro acesso. Os outros comandos de administração (`definir-papel`, `redefinir-senha`, `desativar-usuario`, `ativar-usuario`, `desbloquear-usuario` e `listar-usuarios`) ficam em `python -m src.cli --help`.
 
@@ -225,7 +225,7 @@ A publicação usa um único projeto na Vercel (frontend Vite e API FastAPI) e u
 | `Defina POSTGRES_USER no .env da raiz` | O `.env` da raiz não foi criado ou está com os valores vazios. |
 | A API não conecta ao banco | A `DATABASE_URL` do `backend/.env` não repete o usuário, a senha e o banco do `.env` da raiz, ou o host não é `db`. |
 | Login falha com `403` (`CSRF_INVALIDO`) | A origem do navegador não está em `CORS_ORIGENS`. Em desenvolvimento, use `http://localhost:5173`. |
-| `SENHA_FRACA` ao criar a conta | Use 15 caracteres ou mais, sem sequências, sem palavras comuns e sem partes do e-mail ou do nome. |
+| `SENHA_FRACA` ao criar a conta | Use 8 caracteres ou mais, com letras e números, sem palavras comuns e sem partes do e-mail ou do nome. |
 | O backend não sobe no modo `onnx` | Confira `MODEL_VERSION` (igual à de `backend/models/modelo.json`, sem o hash) e se `backend/models/modelo.onnx` está íntegro. A mensagem de erro diz qual conferência falhou. |
 | `PLACA_NAO_DETECTADA` ao analisar | A foto não mostra a placa adesiva com clareza (a placa ocupa menos de 5% da imagem). Fotografe a placa mais de perto e de frente. |
 | A primeira análise demora | O modelo roda em CPU, em cerca de 5 segundos por foto, e a primeira chamada após um período parado é mais lenta. |

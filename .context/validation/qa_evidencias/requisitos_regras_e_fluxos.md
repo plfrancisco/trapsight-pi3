@@ -11,8 +11,8 @@ Conferido diretamente no código do backend e do frontend em 03/11/2026. Onde a 
 | RF03 | A conta criada nasce com troca de senha pendente. Enquanto pendente, só `me`, `senha` e `logout` funcionam (`POST /api/auth/senha`). |
 | RF04 | Cadastro, edição e remoção de armadilha, com modelo escolhido no catálogo (`/api/modelos-armadilha`). O refil inicial é opcional no cadastro (`criar_refil_inicial`). |
 | RF05 | Foto de identificação da armadilha (`PUT/GET/DELETE /api/armadilhas/{id}/foto`). |
-| RF06 | Análise de foto (`POST /api/analises`, multipart): devolve o percentual coberto e o status. |
-| RF07 | Consulta da análise e do arquivo (`GET /api/analises/{id}`, `/imagem`, `/mascara`). |
+| RF06 | Análise de foto (`POST /api/analises`, multipart): devolve o percentual coberto e o status. Durante a análise, a tela mostra uma barra de progresso estimada que vai a 100% quando a resposta chega (a API não informa o andamento real). |
+| RF07 | Consulta da análise e do arquivo (`GET /api/analises/{id}`, `/imagem`, `/mascara`). A interface mostra por padrão a imagem com a máscara do modelo (área coberta em magenta) e oferece o botão "Ver foto original"; se a máscara faltar, cai para a foto enviada. |
 | RF08 | Painel (`GET /api/armadilhas`): percentual atual, status, última análise, dias até saturar, "em alerta desde" e dias em uso. A lista já vem ordenada por urgência (ver RN14), e o painel de alertas destaca as armadilhas em alerta. |
 | RF09 | Histórico (`GET /api/armadilhas/{id}/analises`) com `escopo=refil_ativo` ou `completo`, `refil_id` e `limite` de 1 a 1000 (padrão 100). |
 | RF10 | Troca de refil (`POST /api/armadilhas/{id}/refis`) com a data de instalação do novo ciclo. |
@@ -21,7 +21,7 @@ Conferido diretamente no código do backend e do frontend em 03/11/2026. Onde a 
 | RF13 | Seed de demonstração (`src/seed_demo.py`). |
 | RF14 | Exibir o resultado como índice de saturação do refil, em que o limiar de troca vale 80% (ver RN15). **Implementado** (tarefa FRONT-SAT01, commit `ca8bb51`): cartão, resumo do refil, lista de análises, quadro da análise e gráfico mostram a saturação; a tela de resultado mantém a cobertura real em texto menor. |
 
-A máscara é gerada e gravada pela inferência, mas a interface não a usa. O timelapse saiu do escopo por decisão da equipe.
+A máscara é gerada e gravada pela inferência e agora aparece na interface (decisão de 03/11/2026, que reverteu a de 30/10). O timelapse continua fora do escopo.
 
 ## 2. Requisitos não funcionais
 
@@ -31,7 +31,7 @@ A máscara é gerada e gravada pela inferência, mas a interface não a usa. O t
 - **RNF03:** o modo de inferência é configurável (`stub`, `modelo` ou `onnx`), assim como o armazenamento (`filesystem` ou `database`).
 
 ### Segurança
-- **RNF04:** Argon2id para as senhas. Política NIST SP 800-63B: mínimo de 15 e máximo de 128 caracteres, normalização NFC. Recusa senhas comuns, triviais (sequências e repetições) e derivadas do e-mail ou do nome.
+- **RNF04:** Argon2id para as senhas. Política de senha: de 8 a 128 caracteres, com ao menos uma letra e um número (alterada em 03/11/2026; antes eram 15 caracteres sem regra de composição), normalização NFC. Recusa senhas comuns, triviais (sequências e repetições) e derivadas do e-mail ou do nome.
 - **RNF05:** sessão com token guardado como hash no banco e `csrf_token`. Expira após 30 min de inatividade ou 8 h no total, com no máximo 5 sessões por usuário.
 - **RNF06:** o middleware exige sessão, CSRF e `Origin` antes de ler o corpo de qualquer rota `/api`. Um anônimo não consegue enviar um upload inteiro antes de receber 401.
 - **RNF07:** o login sempre executa o Argon2, mesmo para conta inexistente, para não revelar quais contas existem. A resposta de falha é única.

@@ -186,7 +186,7 @@ tela informa isso em uma frase.
 | Limite de tentativas (`429`) | Mensagem para tentar novamente mais tarde, sem revelar contas |
 | Sessão expirada ou revogada (`401 NAO_AUTENTICADO` em qualquer tela) | Volta ao login com o aviso "Sua sessão expirou. Entre novamente.", sem repetir a requisição em laço |
 | Logout | Botão **Sair** no cabeçalho em todas as telas; descarta os dados em memória |
-| Alterar senha (`/conta/senha`) | Senha atual, nova senha e confirmação; erros pelo código (`SENHA_FRACA`, `CREDENCIAIS_INVALIDAS`); sem regra de composição visível, apenas o mínimo de 15 caracteres; após o sucesso as outras sessões são encerradas |
+| Alterar senha (`/conta/senha`) | Senha atual, nova senha e confirmação; erros pelo código (`SENHA_FRACA`, `CREDENCIAIS_INVALIDAS`); o texto de ajuda informa o mínimo de 8 caracteres, com letras e números; após o sucesso as outras sessões são encerradas |
 
 Nenhum token, senha ou `csrf_token` é guardado em `localStorage` ou
 `sessionStorage`; o token CSRF vive só em memória. Requisitos completos em

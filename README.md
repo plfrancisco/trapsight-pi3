@@ -64,7 +64,7 @@ Na tela, o resultado aparece como **saturação do refil**, um índice em que o 
 
 ## Funcionalidades
 
-- **Análise por imagem:** envio da foto (JPEG ou PNG), percentual de saturação, cobertura real da placa e status;
+- **Análise por imagem:** envio da foto (JPEG ou PNG) com barra de progresso, percentual de saturação, cobertura real da placa, status e a imagem com a máscara do modelo (a área coberta por insetos em magenta), com opção de ver a foto original;
 - **Painel operacional:** armadilhas ordenadas por urgência, miniatura da última foto e painel de alertas, com navegação adaptada para celular;
 - **Histórico e projeção:** evolução por refil e previsão de dias até a saturação por regressão linear sobre todas as medições;
 - **Ciclo de vida do refil:** registro de trocas, com a duração de cada ciclo;
@@ -139,7 +139,7 @@ cp frontend/.env.example frontend/.env
 docker compose up --build -d
 docker compose exec backend python -m alembic upgrade head
 
-# 3. cria o gerente (o comando pede a senha, de 15 caracteres ou mais)
+# 3. cria o gerente (o comando pede a senha: 8 caracteres ou mais, com letras e números)
 docker compose exec backend python -m src.cli criar-usuario \
   --email gerente@exemplo.com --nome "Gerente" --papel gerente
 ```
@@ -187,7 +187,7 @@ O CI do GitHub Actions roda a cada push e pull request: lint, formatação, migr
 
 A segurança entrou no projeto desde o começo:
 
-- acesso só com login; contas criadas por um gerente; senha de 15 a 128 caracteres, guardada com Argon2id;
+- acesso só com login; contas criadas por um gerente; senha de 8 a 128 caracteres, com letras e números, guardada com Argon2id;
 - bloqueio da conta após tentativas erradas, limite de falhas por IP e limite de análises por usuário;
 - validação do upload pela assinatura e pela decodificação, com limites de tamanho e de pixels;
 - banco com permissões mínimas e RLS; só a aplicação fala com ele;

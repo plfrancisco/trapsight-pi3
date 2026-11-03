@@ -107,7 +107,7 @@ controles que não podem ser violados.
 |---|---|
 | Toda rota de dados exige sessão | Autenticação aplicada no roteador-raiz; rota pública é exceção explícita e testada (`login.md`, 9.2) |
 | Sessão opaca em cookie `HttpOnly`; nenhum token em `localStorage` | `login.md`, seção 7 |
-| Senha com Argon2id e política do NIST (mínimo de 15 caracteres, sem regra de composição) | `login.md`, seção 5 |
+| Senha com Argon2id e política do NIST (mínimo de 8 caracteres, com letras e números; decisão do produto de 2026-11-03) | `login.md`, seção 5 |
 | Login com resposta única, limite por conta e por IP, sem bloqueio permanente | `login.md`, seção 6 |
 | CSRF: token sincronizado, verificação de `Origin` e `SameSite=Strict` | `login.md`, seção 8 |
 | **Exposição zero no Compose local:** nenhum serviço interno público; o banco nunca é alcançável de fora; só as portas 80 e 443 | No publicado, TLS obrigatório, papel dedicado de menor privilégio, RLS, `anon` e `authenticated` sem acesso às tabelas e nenhuma chave no navegador protegem o banco na rede do provedor (decisão de 2026-10-26) |

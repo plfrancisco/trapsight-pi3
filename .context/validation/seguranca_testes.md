@@ -166,7 +166,7 @@ Arquivos, um por área, todos parametrizados por variáveis de ambiente
 | `test_07_autorizacao.py` | Toda rota exige sessão, normalização de caminho, verbos; gestão de contas só pelo gerente, escalada de papel e portão da troca obrigatória | Parcial (operador e gerente) | Cria contas fictícias |
 | `test_08_injecao.py` | SQL, XSS, SSTI, parâmetros malformados | Sim | Cria registros fictícios |
 | `test_09_upload.py` | Arquivos maliciosos, bomba de descompressão, travessia | Sim | Cria registros fictícios |
-| `test_11_politica_de_senha.py` | Política de senha: 14 rejeitadas, 15 aceitas, sem regra de composição, Unicode/NFC, teto de 128, lista mínima, senha contextual, padrões triviais, sem eco da senha | Sim (conta de troca) | **Sim** (troca a senha da conta de teste e a restaura) |
+| `test_11_politica_de_senha.py` | Política de senha: 7 rejeitadas, 8 com letras e números aceitas, só letras ou só números rejeitados, Unicode/NFC, teto de 128, lista mínima, senha contextual, padrões triviais, sem eco da senha | Sim (conta de troca) | **Sim** (troca a senha da conta de teste e a restaura) |
 | `test_12_banco_e_hash.py` | Banco: papel sem privilégios, sem alterar esquema, credenciais padrão recusadas, Argon2id com parâmetros mínimos, token só como hash, sem coluna de segredo em claro, `pg_hba` sem `trust`, gerente único e papel válido garantidos pelo banco, papel rebaixado vale na requisição seguinte | Sim (e acesso ao banco pela rede interna) | Não |
 | `test_10_abuso.py` | Limite de análises, limite de criação de contas, corpos gigantes e, **por último**, limite de tentativas por IP | Sim | **Sim** (esgota limites; a cota de criação do gerente e o IP do executor ficam bloqueados) |
 

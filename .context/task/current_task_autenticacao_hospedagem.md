@@ -96,8 +96,9 @@ projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
 
 - [x] Hash com Argon2id (`pwdlib[argon2]`), parâmetros iguais ou acima do mínimo
       do OWASP, configuráveis
-- [x] Política de senha completa (`login.md`, 5.2): 15 a 128 caracteres, sem
-      regra de composição, Unicode com normalização NFC, lista de bloqueio
+- [x] Política de senha completa (`login.md`, 5.2): 8 a 128 caracteres, com
+      letras e números (alterada em 2026-11-03; antes: 15 caracteres sem
+      composição), Unicode com normalização NFC, lista de bloqueio
       (**contendo ao menos** `security/pentest/senhas_bloqueadas_minimas.txt`),
       senha contextual e padrões triviais rejeitados, erro `SENHA_FRACA` sem eco
       da senha

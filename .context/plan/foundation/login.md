@@ -153,9 +153,9 @@ de complexidade.
 
 | Regra | Valor | Origem |
 |---|---|---|
-| Comprimento mínimo | **15 caracteres** (a senha é o único fator) | NIST 800-63B-4, 3.1.1.2; OWASP |
+| Comprimento mínimo | **8 caracteres** (decisão do produto de 2026-11-03; a versão anterior pedia 15, o patamar do NIST para um fator só) | Decisão do projeto |
 | Comprimento máximo aceito | **128 caracteres** (o padrão normativo é no mínimo 64; o teto evita abuso de CPU/memória) | NIST (≥ 64); decisão do projeto |
-| Regras de composição (maiúscula, número, símbolo) | **Proibidas** | NIST: *SHALL NOT*; OWASP |
+| Composição | **Ao menos uma letra e um número**; maiúscula e símbolo são opcionais (o NIST desaconselha regras de composição; o projeto as adotou por decisão do produto) | Decisão do projeto, 2026-11-03 |
 | Caracteres aceitos | Todos, inclusive Unicode e espaços; cada ponto de código conta como um caractere; normalizar em NFC antes do hash | NIST 3.1.1.2 |
 | Truncamento | **Proibido** | OWASP |
 | Troca periódica forçada | **Proibida**; só há troca por suspeita de comprometimento | NIST 3.1.1.2; OWASP |
@@ -595,7 +595,7 @@ somente no stdout estruturado; a persistência durável cobre apenas a CLI.
 
 | Risco | Por que se aceita | Mitigação atual |
 |---|---|---|
-| **Sem MFA** | O OWASP considera o MFA a melhor defesa contra ataques a senhas, mas exige fluxo de cadastro do segundo fator e recuperação | Senha mínima de 15 caracteres + lista de bloqueio + limites de tentativa. É o patamar que o NIST define para um fator só |
+| **Sem MFA** | O OWASP considera o MFA a melhor defesa contra ataques a senhas, mas exige fluxo de cadastro do segundo fator e recuperação | Senha mínima de 8 caracteres com letras e números + lista de bloqueio + recusa de senhas triviais e ligadas à conta + limites de tentativa + Argon2id. Patamar abaixo dos 15 caracteres que o NIST pede para um fator só, aceito pelo produto em 2026-11-03; os limites de tentativa e a lista de bloqueio compensam em parte |
 | Sem recuperação de senha por e-mail | Não há servidor de e-mail; o público é pequeno | Redefinição pelo administrador via CLI |
 | Criação de contas pelo gerente | Necessária à operação; gerente é confiável | Papel do banco, CSRF, corpo estrito, gerente único e auditoria |
 | Sem CAPTCHA nem WAF | Dependência e custo desproporcionais | Limites por conta e por IP; Caddy e firewall |
@@ -649,7 +649,7 @@ Dois níveis complementares:
 | Anti-enumeração | E-mail inexistente, senha errada, conta inativa e conta bloqueada produzem **resposta idêntica** (status, código, mensagem); a verificação de Argon2 roda nos dois caminhos |
 | Bloqueio | 5 falhas bloqueiam; durante o bloqueio, **a senha correta também falha**; expirado o prazo, entra |
 | Limite por IP | A 31ª falha em 15 min retorna `429` com `Retry-After`; `X-Forwarded-For` de origem não confiável é ignorado |
-| Política de senha | 14 caracteres rejeitados; 15 aceitos; senha da lista de bloqueio rejeitada; 129 caracteres rejeitados; Unicode aceito; sem exigência de composição |
+| Política de senha | 7 caracteres rejeitados; 8 com letras e números aceitos; só letras ou só números rejeitados; senha da lista de bloqueio rejeitada; 129 caracteres rejeitados; Unicode aceito; sem exigência de maiúscula ou símbolo |
 | Hash | A string PHC é `argon2id` com `m`, `t` e `p` iguais ou acima do mínimo; senha nunca aparece em log nem resposta; rehash quando os parâmetros mudam |
 | Cookie | `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, sem `Domain` e com o prefixo `__Host-` em produção |
 | Sessão | Token novo a cada login (sem fixação); logout invalida **no servidor** (o cookie antigo recebe `401`); expiram por inatividade e por duração absoluta; troca de senha revoga as demais; o 6º login revoga o mais antigo |
