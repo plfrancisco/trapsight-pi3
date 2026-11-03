@@ -65,7 +65,7 @@ A máscara é gerada e gravada pela inferência, mas a interface não a usa. O t
 - **RN13, auditoria:** eventos de autenticação (`login_ok`, `login_falhou`, `login_bloqueado`, `conta_criada` e outros) vão para o log (stdout) no formato `auth.<evento>`, sem dados sensíveis. As ações de administração por CLI são gravadas na tabela `auditoria_cli`. Não há endpoint para o gerente consultar a auditoria.
 - **RN14, ordem do painel:** a ordenação é feita no backend. Primeiro vêm as armadilhas com status `trocar`; depois as que têm previsão de saturação, da mais próxima para a mais distante; por último as sem previsão (`null`). O desempate é pelo identificador. O status `atencao` não tem prioridade própria: entra pela previsão.
 - **RN15, índice de saturação (apresentação):** o frontend passa a mostrar `índice = cobertura ÷ limiar de troca × 80`, limitado a 0..100. Com o limiar padrão de 20%, a tabela oficial é: 5% → 20%, 10% → 40%, 20% → 80%, 25% ou mais → 100%. Vale só na tela: a API, o banco, o modelo, o status e a previsão continuam usando a cobertura real. A tela de resultado mantém a cobertura real visível ("X% da placa coberta"). Rótulo adotado: "Saturação do refil".
-- **RN16, origem dos limiares:** 10% e 20% são pontos de partida, e a pendência de validação com a empresa parceira está registrada como `EXT02`. A troca é pensada por critério higiênico, não por a cola estar cheia. Uma primeira calibração previa 40% e 70% e foi descartada por irreal frente ao conjunto público usado (cobertura mediana de cerca de 5,6%, máximo de 27%). Subir o limiar de troca exige cuidado: o dataset de treino vai de 0% a 54% de cobertura e não tem imagem acima de 60%, então status acima disso não foi validado.
+- **RN16, origem dos limiares:** os limiares de 10% e 20% foram validados e adotados como definitivos em 03/11/2026, junto com a apresentação em índice de saturação (RN15); a pendência `EXT02` está encerrada. A troca é pensada por critério higiênico, não por a cola estar cheia. Uma primeira calibração previa 40% e 70% e foi descartada por irreal frente ao conjunto público usado (cobertura mediana de cerca de 5,6%, máximo de 27%). Subir o limiar de troca exige cuidado: o dataset de treino vai de 0% a 54% de cobertura e não tem imagem acima de 60%, então status acima disso não foi validado.
 
 ## 4. Fluxo de usuário
 
@@ -153,7 +153,6 @@ erDiagram
 
 - Modelo ONNX no ar: ativado no Preview e verificado com três imagens do conjunto de teste (cobertura prevista a menos de 1 ponto percentual do valor conhecido, cerca de 5 s por análise). A ativação em produção está descrita na seção 10.
 - Faltam as linhas de referência do gráfico (40% e 80%) conferidas no navegador: os testes automatizados não desenham o gráfico.
-- Confirmar os limiares de status com a empresa parceira (`EXT02`).
 - Limites de análise e de criação de conta só valem por instância (RNF09). Para valer globalmente, precisam de armazenamento compartilhado.
 - Validar o modelo em fotos reais (hoje só imagens sintéticas) e criar subconjuntos de robustez.
 

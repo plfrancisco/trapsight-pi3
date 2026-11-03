@@ -208,13 +208,11 @@ A segurança entrou no projeto desde o começo:
 | Treino e avaliação do modelo em imagens sintéticas | Concluída |
 | Publicação (Vercel e Supabase) com o modelo real | Concluída |
 | Testes de invasão (relatório final) | Em andamento |
-| Validação com fotos reais da empresa parceira e ajuste fino | Não iniciada |
-| Confirmação dos limiares de status com a empresa parceira | Pendente |
+| Definição dos limiares de status e do índice de saturação | Concluída |
 
 **Limitações conhecidas:**
 
 - o modelo só foi medido em imagens sintéticas; o desempenho em fotos de campo é desconhecido;
-- os limiares de 10% e 20% são um ponto de partida e precisam ser confirmados com a empresa parceira;
 - não há subconjuntos de teste de robustez (iluminação, ângulo, reflexo);
 - a análise roda em CPU e leva cerca de 5 segundos por foto, mais na primeira chamada depois de um período parado;
 - as fotos são enviadas manualmente, sem câmera instalada em campo;
