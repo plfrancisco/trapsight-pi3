@@ -1,0 +1,27 @@
+{
+  "versao": "v0.1.0-e1+a982b9a5",
+  "onnx_sha256": "f8416cd3b945bc2ec4bed8a1dccc0e6297b42a993707bb93f2f16d39b6b65561",
+  "checkpoint_sha256": "a982b9a59787962bbf8e8bce719b44f038a795973df857accff44f7865608ee5",
+  "entrada": {
+    "largura": 768,
+    "altura": 576
+  },
+  "normalizacao": {
+    "media": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "desvio": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "classes": [
+    "fundo",
+    "placa_limpa",
+    "placa_coberta"
+  ],
+  "data": "2026-11-03"
+}
