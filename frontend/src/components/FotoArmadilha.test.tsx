@@ -61,4 +61,19 @@ describe('FotoArmadilha', () => {
 
     expect(screen.getByRole('img', { name: 'Sem foto da armadilha ARM-009' })).toBeVisible()
   })
+
+  it('declara largura e altura nas imagens para não deslocar o layout', () => {
+    render(
+      <FotoArmadilha
+        fotoTipo="padrao"
+        fotoUrl={null}
+        identificador="ARM-001"
+        modelo="StickFly K-45"
+      />,
+    )
+
+    const imagem = screen.getByRole('img', { name: /Foto padrão do modelo/ })
+    expect(imagem).toHaveAttribute('width')
+    expect(imagem).toHaveAttribute('height')
+  })
 })

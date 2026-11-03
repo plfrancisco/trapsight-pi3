@@ -32,6 +32,8 @@ export default function FotoArmadilha({
       <img
         alt={`Foto da armadilha ${identificador}`}
         className={className}
+        height={480}
+        width={640}
         decoding="async"
         loading="lazy"
         onError={() => setFotoRealFalhou(true)}
@@ -44,6 +46,8 @@ export default function FotoArmadilha({
       <img
         alt={`Foto padrão do modelo ${modelo ?? 'de armadilha'}`}
         className={className}
+        height={480}
+        width={640}
         decoding="async"
         loading="lazy"
         src={imagemModelo}

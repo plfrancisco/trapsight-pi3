@@ -39,4 +39,12 @@ describe('CampoFormulario', () => {
     expect(screen.getByLabelText('Data de instalação')).toHaveValue('2026-10-14')
     expect(screen.getByLabelText('Data de instalação')).toHaveAttribute('readonly')
   })
+
+  it('desliga a correção ortográfica e a capitalização no campo de e-mail', () => {
+    render(<CampoFormulario id="email" nome="email" rotulo="E-mail" tipo="email" />)
+
+    const campo = screen.getByLabelText('E-mail')
+    expect(campo).toHaveAttribute('spellcheck', 'false')
+    expect(campo).toHaveAttribute('autocapitalize', 'none')
+  })
 })

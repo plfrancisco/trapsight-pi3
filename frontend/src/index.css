@@ -2728,3 +2728,20 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Remove o atraso de toque e o zoom por toque duplo em controles e links. */
+a,
+button,
+input,
+select,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Quebra títulos em linhas equilibradas, sem última linha com uma palavra só. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}

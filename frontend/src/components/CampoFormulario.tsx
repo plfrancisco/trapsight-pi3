@@ -48,6 +48,8 @@ export default function CampoFormulario({
         aria-describedby={descricoes || undefined}
         aria-invalid={erro ? true : undefined}
         autoComplete={autoComplete}
+        autoCapitalize={tipo === 'email' ? 'none' : undefined}
+        spellCheck={tipo === 'email' ? false : undefined}
         className="min-h-12 w-full rounded-[14px] border border-app-border bg-app-surface px-3.5 py-3 text-base text-app-foreground shadow-[var(--app-shadow-control)] placeholder:text-app-muted focus-visible:border-app-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-primary read-only:bg-app-soft"
         defaultValue={somenteLeitura ? undefined : valorPadrao}
         id={id}

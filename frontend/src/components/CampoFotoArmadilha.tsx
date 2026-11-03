@@ -108,6 +108,8 @@ export default function CampoFotoArmadilha({
             <div className="photo-field__preview">
               <img
                 alt={previa ? 'Pré-visualização da nova foto' : 'Foto atual da armadilha'}
+                height={160}
+                width={160}
                 src={imagemExibida}
               />
             </div>
