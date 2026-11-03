@@ -61,7 +61,7 @@ def test_criar_usuario_recusa_senha_fraca_e_email_repetido(
 ) -> None:
     _criar(session, senhas)
 
-    with pytest.raises(cli.ErroDeComando, match="15 caracteres"):
+    with pytest.raises(cli.ErroDeComando, match="8 caracteres"):
         cli.criar_usuario(
             session, senhas, email="b@exemplo.com", nome="B Souza", senha="curta"
         )

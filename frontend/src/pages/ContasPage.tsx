@@ -93,7 +93,7 @@ export default function ContasPage() {
             {erroCriacao ? <MensagemErro erro={erroCriacao} /> : null}
             <CampoFormulario id="conta-nome" nome="nome" rotulo="Nome" autoComplete="name" obrigatorio />
             <CampoFormulario id="conta-email" nome="email" rotulo="E-mail" tipo="email" autoComplete="off" obrigatorio />
-            <CampoFormulario id="conta-senha" nome="senha" rotulo="Senha inicial" tipo="password" autoComplete="new-password" descricao="Use ao menos 15 caracteres e evite palavras ligadas à conta." obrigatorio />
+            <CampoFormulario id="conta-senha" nome="senha" rotulo="Senha inicial" tipo="password" autoComplete="new-password" descricao="Use ao menos 8 caracteres, com letras e números, e evite palavras ligadas à conta." obrigatorio />
             <Botao disabled={enviando} type="submit" variante="primario">{enviando ? 'Criando…' : 'Criar operador'}</Botao>
           </form>
         </section>

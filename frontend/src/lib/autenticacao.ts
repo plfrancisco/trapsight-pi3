@@ -1,7 +1,7 @@
 import { ApiError } from '../services/erros'
 
-/** Tamanho mínimo da senha (login.md, 5.2): a senha é o único fator. */
-export const SENHA_TAMANHO_MINIMO = 15
+/** Tamanho mínimo da senha; o servidor também exige ao menos uma letra e um número. */
+export const SENHA_TAMANHO_MINIMO = 8
 /** Tamanho máximo aceito pelo servidor. */
 export const SENHA_TAMANHO_MAXIMO = 128
 
@@ -55,7 +55,7 @@ export function mensagemDeTrocaSenha(falha: unknown): string {
       if (motivoDe(falha) === 'igual_atual') {
         return 'A nova senha precisa ser diferente da senha atual.'
       }
-      return `A nova senha não atende à política: use ao menos ${SENHA_TAMANHO_MINIMO} caracteres e evite senhas comuns ou ligadas ao seu e-mail.`
+      return `A nova senha não atende à política: use ao menos ${SENHA_TAMANHO_MINIMO} caracteres, com letras e números, e evite senhas comuns ou ligadas ao seu e-mail.`
     case 'FALHA_DE_REDE':
     case 'TEMPO_ESGOTADO':
       return MENSAGEM_REDE
@@ -66,7 +66,7 @@ export function mensagemDeTrocaSenha(falha: unknown): string {
 
 /**
  * Valida a nova senha no cliente antes do envio. O servidor continua sendo a
- * autoridade: aqui só se evitam erros óbvios, sem regra de composição.
+ * autoridade: aqui só se evitam erros óbvios (tamanho e presença de letra e número).
  *
  * @param nova Nova senha digitada.
  * @param confirmacao Confirmação digitada.
@@ -76,6 +76,9 @@ export function validateNovaSenha(nova: string, confirmacao: string): string | n
   const tamanho = [...nova].length // cada ponto de código conta como um caractere
   if (tamanho < SENHA_TAMANHO_MINIMO) {
     return `A nova senha precisa ter pelo menos ${SENHA_TAMANHO_MINIMO} caracteres.`
+  }
+  if (!/\p{L}/u.test(nova) || !/\p{Nd}/u.test(nova)) {
+    return 'A nova senha precisa ter letras e números.'
   }
   if (tamanho > SENHA_TAMANHO_MAXIMO) {
     return `A nova senha pode ter no máximo ${SENHA_TAMANHO_MAXIMO} caracteres.`

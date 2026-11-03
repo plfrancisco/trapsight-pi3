@@ -12,20 +12,33 @@ from src.services.senhas import (
 _EMAIL = "operador@exemplo.com"
 
 
-def test_frase_longa_sem_composicao_e_aceita() -> None:
+def test_frase_longa_com_numero_e_aceita() -> None:
     validar_politica("uma frase longa e bem diferente 2026", email=_EMAIL)
+
+
+@pytest.mark.parametrize("senha", ["cavalo9az", "9azulvela", "Boa8noite", "ação2026ok"])
+def test_oito_caracteres_com_letra_e_numero_sao_aceitos(senha: str) -> None:
+    validar_politica(senha, email=_EMAIL, nome="Maria Souza")
+
+
+def test_exatamente_128_caracteres_sao_aceitos() -> None:
+    senha = ("abcdefghij0123456789" * 7)[:128]
+    assert len(senha) == 128
+    validar_politica(senha, email=_EMAIL)
 
 
 @pytest.mark.parametrize(
     ("senha", "motivo"),
     [
-        ("a" * 14, "curta"),
-        ("x1" * 65, "longa"),
+        ("cavalo9", "curta"),
+        ("a1" * 65, "longa"),
+        ("cavaloazul", "composicao"),
+        ("12345678", "composicao"),
+        ("!!!!????", "composicao"),
         ("PASSWORD1234567", "comum"),
-        ("senhasenhasenha", "comum"),
-        ("kqkqkqkqkqkqkqkq", "trivial"),
-        ("abcabcabcabcabcabc", "trivial"),
-        ("srqponmlkjihgfed", "trivial"),
+        ("senhasenha123", "comum"),
+        ("kq1kq1kq1kq1", "trivial"),
+        ("ab1ab1ab1ab1", "trivial"),
         ("minha-trapsight-2026-ok", "contextual"),
         ("operador-de-2026-zzz", "contextual"),
     ],

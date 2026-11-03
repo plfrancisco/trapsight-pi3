@@ -22,7 +22,7 @@ export function mensagemDeContas(falha: unknown): string {
       case 'EMAIL_JA_CADASTRADO':
         return 'Já existe uma conta com este e-mail.'
       case 'SENHA_FRACA':
-        return 'A senha inicial não atende à política. Use ao menos 15 caracteres e evite senhas comuns ou ligadas à conta.'
+        return 'A senha inicial não atende à política. Use ao menos 8 caracteres, com letras e números, e evite senhas comuns ou ligadas à conta.'
       case 'ACESSO_NEGADO':
         return 'Acesso restrito ao gerente.'
       case 'VALIDACAO_FALHOU':

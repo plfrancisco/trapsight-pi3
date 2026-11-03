@@ -518,10 +518,11 @@ def test_troca_reutilizada_audita_motivo_sem_dados_sensiveis(
 @pytest.mark.parametrize(
     ("senha_nova", "motivo"),
     [
-        ("curta demais", "curta"),
+        ("curta1", "curta"),
         ("a" * 129, "longa"),
+        ("somenteletras", "composicao"),
         ("password1234567", "comum"),
-        ("defghijklmnopqrs", "trivial"),
+        ("kq1kq1kq1kq1", "trivial"),
         ("operador-12345-xyz", "contextual"),
     ],
 )

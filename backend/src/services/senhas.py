@@ -12,7 +12,7 @@ from pwdlib import PasswordHash
 from pwdlib.exceptions import UnknownHashError
 from pwdlib.hashers.argon2 import Argon2Hasher
 
-TAMANHO_MINIMO_SENHA = 15
+TAMANHO_MINIMO_SENHA = 8
 TAMANHO_MAXIMO_SENHA = 128
 NOME_DO_PRODUTO = "trapsight"
 
@@ -52,7 +52,8 @@ class SenhaFraca(ValueError):
         """Guarda o motivo estável da recusa.
 
         Args:
-            motivo: um de `curta`, `longa`, `comum`, `trivial` ou `contextual`.
+            motivo: um de `curta`, `longa`, `composicao`, `comum`, `trivial` ou
+                `contextual`.
         """
         super().__init__(motivo)
         self.motivo = motivo
@@ -96,10 +97,12 @@ def _sequencia_simples(texto: str) -> bool:
 
 
 def validar_politica(senha: str, *, email: str, nome: str = "") -> None:
-    """Confere a senha contra a política de login.md (NIST SP 800-63B-4).
+    """Confere a senha contra a política de senhas do produto.
 
-    Não há regra de composição (maiúscula, número, símbolo): comprimento e uma
-    lista de bloqueio protegem mais do que complexidade.
+    Exige de 8 a 128 caracteres, com ao menos uma letra e um número (decisão do
+    produto em 2026-11-03; a versão anterior pedia 15 caracteres sem composição).
+    Maiúscula e símbolo continuam opcionais. A lista de bloqueio e as recusas de
+    senhas triviais ou ligadas à conta seguem valendo.
 
     Args:
         senha: senha como digitada (a normalização NFC é aplicada aqui).
@@ -115,6 +118,8 @@ def validar_politica(senha: str, *, email: str, nome: str = "") -> None:
         raise SenhaFraca("curta")
     if tamanho > TAMANHO_MAXIMO_SENHA:
         raise SenhaFraca("longa")
+    if not any(c.isalpha() for c in texto) or not any(c.isdecimal() for c in texto):
+        raise SenhaFraca("composicao")
 
     baixa = texto.casefold()
     if baixa in _senhas_bloqueadas():

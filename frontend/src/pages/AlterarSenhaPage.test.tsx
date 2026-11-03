@@ -17,7 +17,7 @@ import { limparCsrf, obterCsrf } from '../services/sessao'
 import AlterarSenhaPage from './AlterarSenhaPage'
 
 const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
-const nova = 'uma frase bem longa e unica'
+const nova = 'uma frase bem longa e unica 2026'
 
 const montar = () =>
   render(
@@ -63,12 +63,12 @@ describe('AlterarSenhaPage', () => {
     expect(screen.getByLabelText(/Confirmar nova senha/)).toHaveAttribute('autocomplete', 'new-password')
   })
 
-  it('explica o mínimo de caracteres sem impor regra de composição', async () => {
+  it('explica o mínimo de caracteres e a exigência de letras e números', async () => {
     montar()
     await screen.findByRole('heading', { name: 'Alterar senha' })
 
-    expect(screen.getByText(/ao menos 15 caracteres/)).toBeVisible()
-    expect(screen.queryByText(/maiúscula|símbolo|número/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/ao menos 8 caracteres, com letras e números/)).toBeVisible()
+    expect(screen.queryByText(/maiúscula|símbolo/i)).not.toBeInTheDocument()
   })
 
   it('troca a senha, renova o token CSRF e confirma', async () => {
@@ -96,10 +96,31 @@ describe('AlterarSenhaPage', () => {
 
   it('recusa senha curta antes de chamar a API', async () => {
     montar()
-    await preencher({ novaSenha: 'curta demais', confirmacao: 'curta demais' })
+    await preencher({ novaSenha: 'curta1', confirmacao: 'curta1' })
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('pelo menos 15 caracteres')
+    expect(await screen.findByRole('alert')).toHaveTextContent('pelo menos 8 caracteres')
     expect(api.changeSenha).not.toHaveBeenCalled()
+  })
+
+  it.each(['somente letras aqui', '123456789012'])(
+    'recusa senha sem letras ou sem números antes de chamar a API (%s)',
+    async (senha) => {
+      montar()
+      await preencher({ novaSenha: senha, confirmacao: senha })
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('letras e números')
+      expect(api.changeSenha).not.toHaveBeenCalled()
+    },
+  )
+
+  it('aceita exatamente 8 caracteres com letras e números', async () => {
+    vi.mocked(api.changeSenha).mockResolvedValue({ csrf_token: 'csrf-novo' })
+
+    montar()
+    await preencher({ novaSenha: 'cavalo9a', confirmacao: 'cavalo9a' })
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Senha alterada')
+    expect(api.changeSenha).toHaveBeenCalledWith('senha atual qualquer', 'cavalo9a')
   })
 
   it('recusa confirmação diferente antes de chamar a API', async () => {

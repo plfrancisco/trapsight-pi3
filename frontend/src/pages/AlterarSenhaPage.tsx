@@ -107,7 +107,7 @@ export default function AlterarSenhaPage() {
         />
         <CampoFormulario
           autoComplete="new-password"
-          descricao={`Use ao menos ${SENHA_TAMANHO_MINIMO} caracteres. Uma frase longa funciona bem.`}
+          descricao={`Use ao menos ${SENHA_TAMANHO_MINIMO} caracteres, com letras e números.`}
           id="senha-nova"
           nome="senha_nova"
           obrigatorio

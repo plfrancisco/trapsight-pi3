@@ -31,8 +31,9 @@ from src.services.senhas import SenhaFraca, ServicoDeSenhas, validar_politica
 from src.services.sessoes import ServicoDeSessoes
 
 _MOTIVOS = {
-    "curta": "a senha precisa ter ao menos 15 caracteres",
+    "curta": "a senha precisa ter ao menos 8 caracteres",
     "longa": "a senha pode ter no máximo 128 caracteres",
+    "composicao": "a senha precisa ter letras e números",
     "comum": "a senha é comum demais",
     "trivial": "a senha é uma sequência ou repetição simples",
     "contextual": "a senha não pode derivar do e-mail, do nome ou do produto",

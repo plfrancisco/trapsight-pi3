@@ -66,21 +66,33 @@ describe('mensagemDeTrocaSenha', () => {
 })
 
 describe('validateNovaSenha', () => {
-  const longa = 'a'.repeat(SENHA_TAMANHO_MINIMO)
+  const longa = 'a1'.repeat(SENHA_TAMANHO_MINIMO / 2)
 
-  it('aceita o tamanho mínimo e o máximo, sem exigir composição', () => {
+  it('aceita o tamanho mínimo e o máximo com letras e números, sem exigir maiúscula ou símbolo', () => {
+    expect(longa).toHaveLength(SENHA_TAMANHO_MINIMO)
     expect(validateNovaSenha(longa, longa)).toBeNull()
-    const maxima = 'b'.repeat(SENHA_TAMANHO_MAXIMO)
+    const maxima = 'b2'.repeat(SENHA_TAMANHO_MAXIMO / 2)
     expect(validateNovaSenha(maxima, maxima)).toBeNull()
   })
 
   it('recusa senha abaixo do mínimo', () => {
-    const curta = 'a'.repeat(SENHA_TAMANHO_MINIMO - 1)
+    const curta = 'a1'.repeat(SENHA_TAMANHO_MINIMO / 2).slice(1)
     expect(validateNovaSenha(curta, curta)).toMatch(/pelo menos/)
   })
 
+  it.each(['somenteletras', '123456789'])(
+    'recusa senha sem letras ou sem números (%s)',
+    (senha) => {
+      expect(validateNovaSenha(senha, senha)).toMatch(/letras e números/)
+    },
+  )
+
+  it('aceita letras acentuadas e dígitos de qualquer escrita', () => {
+    expect(validateNovaSenha('ação2026ok', 'ação2026ok')).toBeNull()
+  })
+
   it('recusa senha acima do máximo', () => {
-    const grande = 'a'.repeat(SENHA_TAMANHO_MAXIMO + 1)
+    const grande = 'a1'.repeat(SENHA_TAMANHO_MAXIMO / 2 + 1)
     expect(validateNovaSenha(grande, grande)).toMatch(/no máximo/)
   })
 
@@ -89,10 +101,10 @@ describe('validateNovaSenha', () => {
   })
 
   it('conta pontos de código, não unidades UTF-16 (emoji vale um caractere)', () => {
-    const emojis = '🪰'.repeat(SENHA_TAMANHO_MINIMO)
+    const emojis = '🪰'.repeat(SENHA_TAMANHO_MINIMO - 2) + 'a1'
     expect(emojis.length).toBeGreaterThan(SENHA_TAMANHO_MINIMO)
     expect(validateNovaSenha(emojis, emojis)).toBeNull()
-    const quatorze = '🪰'.repeat(SENHA_TAMANHO_MINIMO - 1)
-    expect(validateNovaSenha(quatorze, quatorze)).toMatch(/pelo menos/)
+    const curta = '🪰'.repeat(SENHA_TAMANHO_MINIMO - 3) + 'a1'
+    expect(validateNovaSenha(curta, curta)).toMatch(/pelo menos/)
   })
 })
