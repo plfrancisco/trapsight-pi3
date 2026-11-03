@@ -16,6 +16,8 @@ O TrapSight analisa a foto de uma armadilha adesiva de mosquito, calcula **quant
 
 > Projeto Integrador de Sistemas Inteligentes III, Fatec "Shunji Nishimura", Pompeia. **Protótipo funcional em validação.**
 
+**Versão atual:** [v0.1.0](CHANGELOG.md) (03/11/2026). O histórico de mudanças está no [`CHANGELOG.md`](CHANGELOG.md).
+
 **Demonstração online:** <https://trapsight-pi3.vercel.app>. O acesso exige login e não há cadastro aberto. As contas de teste, com dados fictícios, são fornecidas pela equipe. O banco usa um plano gratuito que pode estar pausado por inatividade.
 
 ## Sumário

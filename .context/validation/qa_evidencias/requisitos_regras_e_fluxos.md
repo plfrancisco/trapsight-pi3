@@ -165,7 +165,8 @@ erDiagram
 
 | Item | Estado |
 |---|---|
-| Código | Branches `dev` e `main` no commit `ca8bb51` (índice de saturação e inferência ONNX). |
+| Versão | `v0.1.0` (tag Git de 03/11/2026, registrada no `CHANGELOG.md`). |
+| Código | Branches `dev` e `main` no commit `ca8bb51` (índice de saturação e inferência ONNX) na data deste registro; a `v0.1.0` inclui também a máscara, a barra de progresso e a nova regra de senha. |
 | Produção | `trapsight-pi3.vercel.app`, deploy da `main`. `INFERENCE_MODE=onnx`, `MODEL_VERSION=v0.1.0-e1`, `MODEL_WEIGHTS_PATH` vazio (usa o ONNX empacotado). |
 | Preview | Deploy da `dev` com as mesmas variáveis, protegido pela autenticação da Vercel. Usa o banco de homologação. |
 | Pacote Python | 280,9 MB (limite de 500 MB). As dependências são instaladas na primeira chamada de uma instância fria (cerca de 2 s). |
