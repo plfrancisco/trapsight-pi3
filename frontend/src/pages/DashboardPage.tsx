@@ -22,30 +22,8 @@ interface IndicadorProps {
 function Indicador({ label, valor, detalhe, tipo }: IndicadorProps) {
   return (
     <div className={`metric-card metric-card--${tipo}`}>
-      <div className="metric-card__topline">
-        <span className="metric-card__label">{label}</span>
-        <span aria-hidden="true" className="metric-card__icon">
-          {tipo === 'total' ? (
-            <svg className="size-5" fill="none" viewBox="0 0 24 24">
-              <rect height="7" rx="2" stroke="currentColor" strokeWidth="1.7" width="7" x="3.5" y="3.5" />
-              <rect height="7" rx="2" stroke="currentColor" strokeWidth="1.7" width="7" x="13.5" y="3.5" />
-              <rect height="7" rx="2" stroke="currentColor" strokeWidth="1.7" width="7" x="3.5" y="13.5" />
-              <rect height="7" rx="2" stroke="currentColor" strokeWidth="1.7" width="7" x="13.5" y="13.5" />
-            </svg>
-          ) : tipo === 'atencao' ? (
-            <svg className="size-5" fill="none" viewBox="0 0 24 24">
-              <path d="M12 3 2.8 19h18.4L12 3Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" />
-              <path d="M12 9v4m0 3h.01" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-            </svg>
-          ) : (
-            <svg className="size-5" fill="none" viewBox="0 0 24 24">
-              <path d="M4 12h16m-6-6 6 6-6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-              <path d="M4 6v12" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-            </svg>
-          )}
-        </span>
-      </div>
-      <p className="metric-card__value">{valor}</p>
+      <dt className="metric-card__label">{label}</dt>
+      <dd className="metric-card__value">{valor}</dd>
       <p className="metric-card__detail">{detalhe}</p>
     </div>
   )
@@ -75,15 +53,13 @@ export default function DashboardPage() {
     <div className="dashboard-page page-stack">
       <header className="dashboard-hero">
         <div className="dashboard-hero__copy">
-          <p className="dashboard-kicker">
-            <span aria-hidden="true" className="dashboard-kicker__dot" />
-            Centro de monitoramento
-          </p>
+          <div className="dashboard-hero__intro">
+          <p className="page-kicker">Monitoramento de armadilhas</p>
           <h1 className="dashboard-hero__title">Dashboard</h1>
-          <p className="dashboard-hero__statement">Cada armadilha, sob controle.</p>
           <p className="dashboard-hero__description">
             Veja as leituras recentes, identifique o que pede atenção e planeje as trocas.
           </p>
+          </div>
           <div className="dashboard-hero__actions">
             <LinkBotao to="/analises/nova" variante="primario">
               Iniciar análise
@@ -97,26 +73,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div aria-hidden="true" className="dashboard-hero__art">
-          <div className="hero-orbit hero-orbit--outer" />
-          <div className="hero-orbit hero-orbit--inner" />
-          <div className="hero-trap-illustration">
-            <div className="hero-trap-illustration__frame">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <i className="hero-trap-illustration__spark hero-trap-illustration__spark--one" />
-            <i className="hero-trap-illustration__spark hero-trap-illustration__spark--two" />
-          </div>
-          <span className="hero-art-caption">Uma visão, decisões mais claras</span>
-        </div>
       </header>
 
       <dl aria-label="Resumo das armadilhas" className="metric-grid">
@@ -150,13 +106,11 @@ export default function DashboardPage() {
       <section aria-labelledby="titulo-armadilhas" className="dashboard-section">
         <div className="section-heading">
           <div>
-            <p className="section-kicker">Visão por armadilha</p>
+
             <h2 className="section-title" id="titulo-armadilhas">
               Armadilhas monitoradas
             </h2>
-            <p className="section-description">
-              A foto e a última leitura de cada ponto, reunidas em um só lugar.
-            </p>
+
           </div>
           {dados !== null && !erro && !carregando ? (
             <span className="section-count">

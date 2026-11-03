@@ -83,7 +83,7 @@ describe('CartaoArmadilha', () => {
     renderCartao(armadilhaBase)
 
     expect(screen.getByRole('img', { name: /Foto padrão do modelo StickFly K-45/ })).toBeVisible()
-    expect(screen.getByText('Foto padrão do modelo')).toBeVisible()
+    expect(screen.getByTitle('Foto padrão do modelo')).toBeVisible()
   })
 
   it('mostra a foto real pela foto_url sem consultar as análises', () => {
@@ -97,7 +97,7 @@ describe('CartaoArmadilha', () => {
       'src',
       'http://localhost:8000/api/armadilhas/arm-1/foto?v=9',
     )
-    expect(screen.getByText('Foto da armadilha', { selector: 'span' })).toBeVisible()
+    expect(screen.getByTitle('Foto da armadilha')).toBeVisible()
   })
 
   it.each([

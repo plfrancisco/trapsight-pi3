@@ -63,7 +63,7 @@ export default function ContasPage() {
             </div>
           ) : dados?.length ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="accounts-table w-full text-left text-sm">
                 <caption className="sr-only">Contas cadastradas</caption>
                 <thead className="border-b border-app-border text-app-muted">
                   <tr>
@@ -74,10 +74,10 @@ export default function ContasPage() {
                   {dados.map((conta) => (
                     <tr key={conta.id}>
                       <td className="px-3 py-4"><p className="font-semibold">{conta.nome}</p><p className="break-all text-app-muted">{conta.email}</p></td>
-                      <td className="px-3 py-4">{conta.papel === 'gerente' ? 'Gerente' : 'Operador'}</td>
-                      <td className="px-3 py-4">{conta.ativo ? 'Ativa' : 'Desativada'}</td>
-                      <td className="whitespace-nowrap px-3 py-4">{exibirData(conta.ultimo_login_em)}</td>
-                      <td className="whitespace-nowrap px-3 py-4">{exibirData(conta.criado_em)}</td>
+                      <td data-label="Papel" className="px-3 py-4">{conta.papel === 'gerente' ? 'Gerente' : 'Operador'}</td>
+                      <td data-label="Situação" className="px-3 py-4">{conta.ativo ? 'Ativa' : 'Desativada'}</td>
+                      <td data-label="Último login" className="whitespace-nowrap px-3 py-4">{exibirData(conta.ultimo_login_em)}</td>
+                      <td data-label="Criada em" className="whitespace-nowrap px-3 py-4">{exibirData(conta.criado_em)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -91,8 +91,8 @@ export default function ContasPage() {
           {sucesso ? <p className="success-message mt-4" role="status">Conta criada. Compartilhe a senha inicial por um canal seguro.</p> : null}
           <form aria-label="Criar operador" className="mt-6 space-y-5" noValidate onSubmit={(evento) => void criar(evento)} ref={formularioRef}>
             {erroCriacao ? <MensagemErro erro={erroCriacao} /> : null}
-            <CampoFormulario id="conta-nome" nome="nome" rotulo="Nome" autoComplete="name" obrigatorio />
-            <CampoFormulario id="conta-email" nome="email" rotulo="E-mail" tipo="email" autoComplete="off" obrigatorio />
+            <CampoFormulario id="conta-nome" nome="nome" placeholder="Ex.: Ana Silva…" rotulo="Nome" autoComplete="name" obrigatorio />
+            <CampoFormulario id="conta-email" nome="email" placeholder="Ex.: ana@empresa.com…" rotulo="E-mail" tipo="email" autoComplete="off" obrigatorio />
             <CampoFormulario id="conta-senha" nome="senha" rotulo="Senha inicial" tipo="password" autoComplete="new-password" descricao="Use ao menos 8 caracteres, com letras e números, e evite palavras ligadas à conta." obrigatorio />
             <Botao disabled={enviando} type="submit" variante="primario">{enviando ? 'Criando…' : 'Criar operador'}</Botao>
           </form>

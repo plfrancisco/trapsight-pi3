@@ -30,7 +30,7 @@ export function useTema() {
     document.documentElement.style.colorScheme =
       tema === 'escuro' ? 'dark' : 'light'
     const corDaBarra = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (corDaBarra) corDaBarra.content = tema === 'escuro' ? '#101611' : '#f8faf8'
+    if (corDaBarra) corDaBarra.content = tema === 'escuro' ? '#111416' : '#f6f7f5'
 
     try {
       window.localStorage.setItem(CHAVE_TEMA, tema)

@@ -101,6 +101,8 @@ function ModeloThumb({ modelo }: { modelo: ModeloArmadilha }) {
       className="model-picker__thumb"
       decoding="async"
       loading="lazy"
+      width={48}
+      height={48}
       src={imagem}
     />
   ) : (

@@ -31,31 +31,14 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
       aria-labelledby={`titulo-${armadilha.id}`}
       className="trap-card"
     >
-      <div className="trap-card__photo">
-        <FotoArmadilha
-          className="trap-card__image"
-          fotoTipo={armadilha.foto_tipo}
-          fotoUrl={armadilha.foto_url}
-          identificador={armadilha.identificador}
-          key={armadilha.foto_url ?? 'padrao'}
-          modelo={armadilha.modelo}
-        />
-        <div aria-hidden="true" className="trap-card__photo-scrim" />
-        <span className="trap-card__photo-label">
-          <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 20 20">
-            <rect height="12" rx="2" stroke="currentColor" strokeWidth="1.4" width="14" x="3" y="4" />
-            <circle cx="7.5" cy="8" r="1.2" stroke="currentColor" strokeWidth="1.2" />
-            <path d="m5 14 3.5-3 2.5 2 2-1.5 2 2.5" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.2" />
-          </svg>
-          {armadilha.foto_tipo === 'real' ? 'Foto da armadilha' : 'Foto padrão do modelo'}
-        </span>
-        <span className="trap-card__photo-index">
-          {armadilha.identificador}
-        </span>
-      </div>
-
       <div className="trap-card__body">
         <div className="trap-card__heading">
+            <div className="trap-card__photo" title={armadilha.foto_tipo === 'real' ? 'Foto da armadilha' : 'Foto padrão do modelo'}>
+              <FotoArmadilha className="trap-card__image" fotoTipo={armadilha.foto_tipo}
+                fotoUrl={armadilha.foto_url} identificador={armadilha.identificador}
+                key={armadilha.foto_url ?? 'padrao'} modelo={armadilha.modelo} />
+            </div>
+
           <div className="min-w-0">
             <h3 className="trap-card__title" id={`titulo-${armadilha.id}`}>
               {armadilha.identificador}
@@ -108,7 +91,7 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
                 style={{
                   backgroundColor: armadilha.status
                     ? PALETA_STATUS[armadilha.status].linha
-                    : '#4C9A68',
+                    : 'var(--app-primary)',
                   width: `${indice}%`,
                 }}
               />

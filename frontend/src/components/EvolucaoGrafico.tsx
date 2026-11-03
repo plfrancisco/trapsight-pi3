@@ -282,6 +282,7 @@ function EvolucaoGrafico({
               <ReferenceLine stroke={PALETA_STATUS.ok.linha} x={marcador} />
             )}
             <Line
+              isAnimationActive={false}
               activeDot={{
                 r: 7,
                 fill: 'var(--app-surface)',

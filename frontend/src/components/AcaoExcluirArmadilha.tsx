@@ -76,7 +76,7 @@ export default function AcaoExcluirArmadilha({
         className={classesBotao(
           'discreto',
           'padrao',
-          'text-app-danger hover:bg-app-danger-soft focus-visible:outline-app-danger',
+          'action-danger hover:bg-app-danger-soft focus-visible:outline-app-danger',
         )}
         onClick={abrir}
         ref={(element) => { acionadorRef.current = element }}

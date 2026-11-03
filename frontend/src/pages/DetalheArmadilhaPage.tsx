@@ -68,7 +68,7 @@ export default function DetalheArmadilhaPage() {
   const { armadilha, analises } = dados
 
   return (
-    <div className="space-y-8">
+    <div className="detail-page page-stack">
       <ResumoArmadilha armadilha={armadilha} />
       {erro ? (
         <div className="space-y-3">
@@ -78,7 +78,7 @@ export default function DetalheArmadilhaPage() {
           </Botao>
         </div>
       ) : null}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={`detail-cycle-grid${armadilha.refis_anteriores.length ? " detail-cycle-grid--history" : ""}`}>
         <ResumoRefil
           diasAteSaturar={armadilha.dias_ate_saturar}
           limiarTrocar={armadilha.limiar_trocar}

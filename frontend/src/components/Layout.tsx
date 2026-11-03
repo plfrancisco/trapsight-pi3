@@ -133,7 +133,7 @@ export default function Layout() {
         </div>
 
         <nav aria-label="Navegação principal" className="sidebar-navigation" id="navegacao-principal">
-          <p className="sidebar-group-label">Workspace</p>
+          <p className="sidebar-group-label">Monitoramento</p>
           <NavLink aria-label="Dashboard" className={classeLink} end title={sidebarRecolhida ? 'Dashboard' : undefined} to="/">
             <IconeNavegacao tipo="painel" />
             <span className="sidebar-link-label">Dashboard</span>
