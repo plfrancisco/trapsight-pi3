@@ -5,15 +5,15 @@ export type Tema = 'claro' | 'escuro'
 const CHAVE_TEMA = 'trapsight:tema'
 
 /** Lê a preferência visual sem impedir a interface quando o armazenamento falha.
- * @returns O tema salvo ou o tema claro usado como padrão.
+ * @returns O tema salvo ou o tema escuro usado como padrão.
  */
 function lerPreferenciaDeTema(): Tema {
-  if (typeof window === 'undefined') return 'claro'
+  if (typeof window === 'undefined') return 'escuro'
 
   try {
-    return window.localStorage.getItem(CHAVE_TEMA) === 'escuro'
-      ? 'escuro'
-      : 'claro'
+    return window.localStorage.getItem(CHAVE_TEMA) === 'claro'
+      ? 'claro'
+      : 'escuro'
   } catch {
     return 'claro'
   }
@@ -30,7 +30,7 @@ export function useTema() {
     document.documentElement.style.colorScheme =
       tema === 'escuro' ? 'dark' : 'light'
     const corDaBarra = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (corDaBarra) corDaBarra.content = tema === 'escuro' ? '#111416' : '#f6f7f5'
+    if (corDaBarra) corDaBarra.content = tema === 'escuro' ? '#0a1316' : '#f5f7f6'
 
     try {
       window.localStorage.setItem(CHAVE_TEMA, tema)

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Sora:wght@500;600&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -23,66 +24,93 @@
 }
 
 :root {
-  color-scheme: light;
-  font-family: "Segoe UI", Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+  font-family: "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
-  --app-bg: #f6f7f5;
-  --app-surface: #ffffff;
-  --app-surface-soft: #f2f7f2;
-  --app-surface-hover: #eaf3ec;
-  --app-text: #17231a;
-  --app-ink: #14251a;
-  --app-muted: #66756b;
-  --app-line: #e2eae3;
-  --app-primary: #285f46;
-  --app-primary-strong: #235b3a;
-  --app-primary-hover: #2d6642;
-  --app-primary-soft: #e9f0e6;
-  --app-primary-soft-text: #275b3b;
-  --app-on-primary: #ffffff;
-  --app-attention: #875510;
-  --app-attention-soft: #fff4df;
-  --app-danger: #b42332;
-  --app-danger-soft: #fbefec;
-  --app-photo-surface: #e8f0e8;
-  --app-sidebar-top: #f0f7f0;
-  --app-glow: rgba(72, 132, 83, 0.1);
+  --app-bg: #0a1316;
+  --app-surface: #111c20;
+  --app-surface-soft: #18262b;
+  --app-surface-hover: #203238;
+  --app-text: #e8f1f2;
+  --app-ink: #e8f1f2;
+  --app-muted: #97aeb2;
+  --app-line: #25363b;
+  --app-primary: #2fd6a1;
+  --app-primary-strong: #2fd6a1;
+  --app-primary-hover: #4be0b2;
+  --app-primary-soft: #16302a;
+  --app-primary-soft-text: #7fe0bf;
+  --app-on-primary: #0a1316;
+  --app-accent: #2fd6a1;
+  --app-chart: #2fd6a1;
+  --app-status-ok: #1fae86;
+  --app-status-ok-ink: #7fe0bf;
+  --app-status-ok-soft: #16302a;
+  --app-attention: #e0a112;
+  --app-attention-ink: #f2c46b;
+  --app-attention-soft: #33290f;
+  --app-danger: #ee5b66;
+  --app-danger-ink: #ff9aa3;
+  --app-danger-soft: #3a1a20;
+  --app-swap-panel: #2a1519;
+  --app-swap-border: #6b2a33;
+  --app-sidebar-bg: #070d0f;
+  --app-sidebar-text: #e8f1f2;
+  --app-photo-surface: #18262b;
+  --app-sidebar-top: #070d0f;
+  --app-glow: transparent;
   --app-shadow: none;
   --app-shadow-hover: none;
   --app-shadow-control: none;
-  --app-focus: #34794d;
+  --app-focus: #2fd6a1;
 }
 
-:root[data-theme="escuro"] {
-  color-scheme: dark;
+:root[data-theme="claro"] {
+  color-scheme: light;
 
-  --app-bg: #111416;
-  --app-surface: #1a1f21;
-  --app-surface-soft: #22282a;
-  --app-surface-hover: #2a3133;
-  --app-text: #eef2ef;
-  --app-ink: #e6ebe8;
-  --app-muted: #a5aeaa;
-  --app-line: #30383a;
-  --app-primary: #c5e891;
-  --app-primary-strong: #c5e891;
-  --app-primary-hover: #d5f1b0;
-  --app-primary-soft: #252e23;
-  --app-primary-soft-text: #d5ead8;
-  --app-on-primary: #142019;
-  --app-attention: #e5b56b;
-  --app-attention-soft: #30291f;
-  --app-danger: #ed9c8e;
-  --app-danger-soft: #302322;
-  --app-photo-surface: #242a2c;
-  --app-sidebar-top: #202729;
-  --app-glow: rgba(145, 201, 154, 0.065);
-  --app-shadow: none;
-  --app-shadow-hover: none;
-  --app-shadow-control: none;
-  --app-focus: #a9d6af;
+  --app-bg: #f5f7f6;
+  --app-surface: #ffffff;
+  --app-surface-soft: #eaf1f0;
+  --app-surface-hover: #eaf1f0;
+  --app-text: #0b1f24;
+  --app-ink: #0b1f24;
+  --app-muted: #52666b;
+  --app-line: #d9e4e3;
+  --app-primary: #0a5c66;
+  --app-primary-strong: #0a5c66;
+  --app-primary-hover: #084b54;
+  --app-primary-soft: #e3f5ee;
+  --app-primary-soft-text: #0b6b52;
+  --app-on-primary: #ffffff;
+  --app-accent: #2fd6a1;
+  --app-chart: #2fd6a1;
+  --app-status-ok: #0b8a6b;
+  --app-status-ok-ink: #0b6b52;
+  --app-status-ok-soft: #e3f5ee;
+  --app-attention: #f0a000;
+  --app-attention-ink: #7a4b00;
+  --app-attention-soft: #fff1d6;
+  --app-danger: #d7263d;
+  --app-danger-ink: #a81e32;
+  --app-danger-soft: #fde8ea;
+  --app-swap-panel: #fde8ea;
+  --app-swap-border: #d7263d;
+  --app-sidebar-bg: #0b1f24;
+  --app-sidebar-text: #e8f1f2;
+  --app-photo-surface: #eaf1f0;
+  --app-sidebar-top: #0b1f24;
+  --app-glow: transparent;
+  --app-focus: #0a5c66;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Sora", "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  text-wrap: balance;
 }
 
 * {
