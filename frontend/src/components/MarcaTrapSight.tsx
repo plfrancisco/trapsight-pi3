@@ -6,9 +6,10 @@ export default function MarcaTrapSight() {
     <>
       <span aria-hidden="true" className="brand-mark">
         <svg className="size-6" fill="none" viewBox="0 0 28 28">
-          <rect height="20" rx="5" stroke="currentColor" strokeWidth="1.7" width="20" x="4" y="4" />
-          <path d="M9 8v12M14 8v12M19 8v12M7 11h14M7 16h14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.25" />
-          <circle cx="14" cy="13.5" fill="currentColor" r="1.5" />
+          <path d="M9 4.5H6.5a2 2 0 0 0-2 2V9M19 4.5h2.5a2 2 0 0 1 2 2V9M23.5 19v2.5a2 2 0 0 1-2 2H19M9 23.5H6.5a2 2 0 0 1-2-2V19" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+          <path d="M14 7v2.4m0 9.2V21m-7-7h2.4m9.2 0H21" stroke="currentColor" strokeLinecap="round" strokeWidth="1.25" />
+          <circle cx="14" cy="14" r="4.5" stroke="currentColor" strokeWidth="1.35" />
+          <circle cx="14" cy="14" r="1.55" fill="currentColor" />
         </svg>
       </span>
       <span className="brand-wordmark">TrapSight</span>

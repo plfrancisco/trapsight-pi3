@@ -31,7 +31,7 @@ const montar = () =>
 
 async function preencher(email: string, senha: string) {
   const pessoa = userEvent.setup()
-  await screen.findByRole('heading', { name: 'Entrar' })
+  await screen.findByRole('heading', { name: 'Entre no TrapSight' })
   if (email) await pessoa.type(screen.getByLabelText(/E-mail/), email)
   if (senha) await pessoa.type(screen.getByLabelText(/Senha/), senha)
   await pessoa.click(screen.getByRole('button', { name: 'Entrar' }))
@@ -46,7 +46,7 @@ beforeEach(() => {
 describe('LoginPage', () => {
   it('apresenta os campos com rótulo e os atributos de preenchimento corretos', async () => {
     montar()
-    await screen.findByRole('heading', { name: 'Entrar' })
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
 
     const email = screen.getByLabelText(/E-mail/)
     const senha = screen.getByLabelText(/Senha/)
@@ -59,7 +59,7 @@ describe('LoginPage', () => {
   it('permite colar a senha (gerenciadores de senha)', async () => {
     const pessoa = userEvent.setup()
     montar()
-    await screen.findByRole('heading', { name: 'Entrar' })
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
 
     await pessoa.click(screen.getByLabelText(/Senha/))
     await pessoa.paste('senha-colada-do-gerenciador')
@@ -137,7 +137,7 @@ describe('LoginPage', () => {
 
   it('informa que a senha é redefinida pelo administrador (não há recuperação por e-mail)', async () => {
     montar()
-    await screen.findByRole('heading', { name: 'Entrar' })
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
 
     expect(screen.getByText(/Peça ao administrador/)).toBeVisible()
   })

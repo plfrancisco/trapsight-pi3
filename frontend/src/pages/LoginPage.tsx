@@ -4,9 +4,9 @@ import { useAuth } from '../auth/useAuth'
 import Botao from '../components/Botao'
 import CampoFormulario from '../components/CampoFormulario'
 import EstadoCarregando from '../components/EstadoCarregando'
-import MarcaTrapSight from '../components/MarcaTrapSight'
 import MensagemErro from '../components/MensagemErro'
 import ControleTema from '../components/ControleTema'
+import MarcaTrapSight from '../components/MarcaTrapSight'
 import { mensagemDeLogin } from '../lib/autenticacao'
 import { destinoDoEstado } from '../lib/destino'
 import { useTema } from '../hooks/useTema'
@@ -59,16 +59,33 @@ export default function LoginPage() {
           <MarcaTrapSight />
         </div>
         <div className="login-art__copy">
-          <p className="login-art__eyebrow">Monitoramento de precisão</p>
+          <p className="login-art__eyebrow">MONITORAMENTO · CONTROLE · AÇÃO</p>
           <h2 className="login-art__title">
-            Cada ponto,
-            <span> acompanhado.</span>
+            Acompanhe cada ponto.
+            <span> Planeje a próxima troca.</span>
           </h2>
           <p className="login-art__description">
-            Reúna imagens, leituras e trocas de refil em um painel feito para orientar a próxima ação.
+            Monitore suas armadilhas e reúna leituras e trocas de refil para orientar a rotina da sua operação.
           </p>
         </div>
-        <p className="login-art__footnote">TrapSight · inteligência visual para armadilhas adesivas</p>
+        <div aria-hidden="true" className="login-signal">
+          <svg className="login-signal__drawing" fill="none" viewBox="0 0 560 190">
+            <path className="login-signal__grid" d="M1 38.5h558M1 94.5h558M1 150.5h558M56.5 1v188M168.5 1v188M280.5 1v188M392.5 1v188M504.5 1v188" />
+            <path className="login-signal__line" d="M8 147c54-5 66-59 119-52 46 6 48 45 93 38 45-8 50-81 103-78 48 3 55 48 102 34 40-12 50-47 127-54" />
+            <circle className="login-signal__node" cx="127" cy="95" r="6" />
+            <circle className="login-signal__node" cx="220" cy="133" r="6" />
+            <circle className="login-signal__node" cx="323" cy="55" r="6" />
+            <circle className="login-signal__node" cx="425" cy="89" r="6" />
+            <circle className="login-signal__node login-signal__node--current" cx="552" cy="35" r="8" />
+            <circle className="login-signal__halo" cx="552" cy="35" r="16" />
+          </svg>
+          <div className="login-signal__steps">
+            <span>Capturar</span>
+            <span>Acompanhar</span>
+            <span>Planejar</span>
+          </div>
+        </div>
+        <p className="login-art__footnote">TrapSight <span aria-hidden="true">·</span> Controle visual da sua operação</p>
       </section>
 
       <section className="login-form-side">
@@ -76,10 +93,10 @@ export default function LoginPage() {
           <ControleTema onAlternar={alternarTema} tema={tema} />
         </div>
         <main className="login-form-content" id="conteudo-principal">
-          <p className="login-form-content__eyebrow">Acesso à plataforma</p>
-          <h1>Entrar</h1>
+          <p className="login-form-content__eyebrow">ÁREA DO CLIENTE</p>
+          <h1>Entre no TrapSight</h1>
           <p className="login-form-content__intro">
-            Acesse o monitoramento das armadilhas com a sua conta.
+            Acesse seus registros de monitoramento.
           </p>
 
           {motivoSaida === 'expirou' ? (
@@ -113,9 +130,7 @@ export default function LoginPage() {
               <Botao className="w-full" disabled={enviando} type="submit" variante="primario">
                 {enviando ? 'Entrando…' : 'Entrar'}
               </Botao>
-              <p>
-                Esqueceu a senha? Peça ao administrador para redefini-la.
-              </p>
+              <p className="login-form-content__help">Esqueceu a senha? Peça ao administrador para redefini-la.</p>
             </form>
           )}
         </main>
