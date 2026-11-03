@@ -1911,10 +1911,21 @@ select {
   grid-template-columns: minmax(0, 1.12fr) minmax(440px, 0.88fr);
   padding: 20px;
   color: var(--app-text);
-  background: var(--app-bg);
+  background: #f4f1e8;
 }
 
 .login-art {
+  --login-panel: #e8e9df;
+  --login-border: #d4d9cd;
+  --login-ink: #27342b;
+  --login-muted: #56645a;
+  --login-accent: #496b50;
+  --login-point: #a47745;
+  --login-grid: rgb(48 67 50 / 10%);
+  --login-surface: rgb(255 255 255 / 48%);
+  --login-node: #435f49;
+  --login-mark-bg: #355b43;
+  --login-mark-color: #f4f1e8;
   position: relative;
   display: flex;
   min-height: calc(100dvh - 40px);
@@ -1922,10 +1933,36 @@ select {
   justify-content: space-between;
   padding: clamp(34px, 5vw, 68px);
   overflow: hidden;
-  border: 1px solid #315c43;
+  border: 1px solid var(--login-border);
   border-radius: 30px;
-  color: #f2f6f1;
-  background: #173c2d;
+  color: var(--login-ink);
+  background: var(--login-panel);
+}
+
+:root[data-theme="escuro"] .login-page {
+  background: #131916;
+}
+
+:root[data-theme="escuro"] .login-art {
+  --login-panel: #1d2b23;
+  --login-border: #34443a;
+  --login-ink: #f0efe7;
+  --login-muted: #c1c8bd;
+  --login-accent: #b8c6a7;
+  --login-point: #c7a46c;
+  --login-grid: rgb(225 232 217 / 12%);
+  --login-surface: rgb(8 17 12 / 22%);
+  --login-node: #d3dccb;
+  --login-mark-bg: #b6c5a3;
+  --login-mark-color: #1d2b23;
+}
+
+:root[data-theme="escuro"] .brand-mark {
+  --brand-point: #c7a46c;
+}
+
+:root .brand-mark {
+  --brand-point: #a47745;
 }
 
 .login-art__brand,
@@ -1948,13 +1985,13 @@ select {
   flex-basis: 50px;
   border: 0;
   border-radius: 15px;
-  color: #173c2d;
-  background: #c5e891;
+  color: var(--login-mark-color);
+  background: var(--login-mark-bg);
   box-shadow: none;
 }
 
 .login-art__brand .brand-wordmark {
-  color: #f2f6f1;
+  color: var(--login-ink);
   font-size: 1.32rem;
   font-weight: 680;
   letter-spacing: -0.045em;
@@ -1968,7 +2005,7 @@ select {
 
 .login-art__eyebrow {
   margin: 0;
-  color: #c5e891;
+  color: var(--login-accent);
   font-size: 0.7rem;
   font-weight: 720;
   letter-spacing: 0.14em;
@@ -1977,7 +2014,7 @@ select {
 .login-art__title {
   max-width: 15ch;
   margin: 20px 0 0;
-  color: #f2f6f1;
+  color: var(--login-ink);
   font-size: clamp(2.45rem, 4.1vw, 4.1rem);
   font-weight: 680;
   letter-spacing: -0.06em;
@@ -1985,13 +2022,13 @@ select {
 }
 
 .login-art__title span {
-  color: #c5e891;
+  color: var(--login-accent);
 }
 
 .login-art__description {
   max-width: 44ch;
   margin: 19px 0 0;
-  color: #d2dfd3;
+  color: var(--login-muted);
   font-size: 1.02rem;
   line-height: 1.65;
 }
@@ -1999,9 +2036,9 @@ select {
 .login-signal {
   width: min(100%, 570px);
   padding: 16px 18px 13px;
-  border: 1px solid rgba(226, 239, 223, 0.15);
+  border: 1px solid var(--login-border);
   border-radius: 18px;
-  background: rgba(8, 26, 19, 0.19);
+  background: var(--login-surface);
 }
 
 .login-signal__drawing {
@@ -2013,29 +2050,29 @@ select {
 }
 
 .login-signal__grid {
-  stroke: rgba(225, 239, 225, 0.13);
+  stroke: var(--login-grid);
   stroke-width: 1;
 }
 
 .login-signal__line {
-  stroke: #c5e891;
+  stroke: var(--login-accent);
   stroke-linecap: round;
   stroke-width: 2.5;
 }
 
 .login-signal__node {
-  fill: #173c2d;
-  stroke: #d9eac5;
+  fill: var(--login-panel);
+  stroke: var(--login-node);
   stroke-width: 2;
 }
 
 .login-signal__node--current {
-  fill: #c5e891;
-  stroke: #c5e891;
+  fill: var(--login-point);
+  stroke: var(--login-point);
 }
 
 .login-signal__halo {
-  stroke: rgba(197, 232, 145, 0.42);
+  stroke: color-mix(in srgb, var(--login-point) 46%, transparent);
   stroke-width: 1;
 }
 
@@ -2043,14 +2080,14 @@ select {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: #d2dfd3;
+  color: var(--login-muted);
   font-size: 0.72rem;
   font-weight: 590;
 }
 
 .login-art__footnote {
   margin: 24px 0 0;
-  color: #c2d2c5;
+  color: var(--login-muted);
   font-size: 0.76rem;
 }
 
@@ -2114,6 +2151,24 @@ select {
   color: var(--app-muted);
   font-size: 0.82rem;
   line-height: 1.5;
+}
+
+.login-form-content .button.bg-app-primary {
+  color: #fff;
+  background: #315b42;
+}
+
+.login-form-content .button.bg-app-primary:hover {
+  background: #3d684e;
+}
+
+:root[data-theme="escuro"] .login-form-content .button.bg-app-primary {
+  color: #1d2b23;
+  background: #b6c5a3;
+}
+
+:root[data-theme="escuro"] .login-form-content .button.bg-app-primary:hover {
+  background: #c7d3b7;
 }
 
 .login-form-content input:not([type="checkbox"]) {
