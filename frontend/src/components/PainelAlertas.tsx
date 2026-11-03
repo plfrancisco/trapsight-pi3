@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
-import type { ArmadilhaLista } from '../services/tipos'
 import { calculateDiasEmAlerta } from '../lib/alertas'
+import { formatDiasAteSaturar } from '../lib/formatacao'
+import type { ArmadilhaLista } from '../services/tipos'
 
 interface PainelAlertasProps {
   armadilhas: ArmadilhaLista[] | null
@@ -9,10 +10,20 @@ interface PainelAlertasProps {
   instanteReferencia: Date
 }
 
-/** Mantém a situação dos alertas visível e lista as armadilhas que exigem ação.
- * @param props Dados carregados, estado da consulta e instante de referência.
- * @returns O painel com contagem, estados de consulta e alertas ativos.
- */
+function tempoAteAcao(armadilha: ArmadilhaLista, instanteReferencia: Date): string {
+  if (armadilha.status === 'trocar') {
+    if (!armadilha.em_alerta_desde) return 'Troca indicada; data indisponível'
+    const dias = calculateDiasEmAlerta(armadilha.em_alerta_desde, instanteReferencia)
+    if (dias === 0) return 'Saturada hoje'
+    return `Saturada há ${dias} ${dias === 1 ? 'dia' : 'dias'}`
+  }
+
+  if (armadilha.dias_ate_saturar === null) return 'Previsão indisponível'
+  if (armadilha.dias_ate_saturar <= 0) return 'Satura hoje'
+  return `Satura em ${formatDiasAteSaturar(armadilha.dias_ate_saturar)}`
+}
+
+/** Mantém as armadilhas que precisam de uma ação na ordem de urgência da API. */
 export default function PainelAlertas({
   armadilhas,
   carregando,
@@ -20,95 +31,57 @@ export default function PainelAlertas({
   instanteReferencia,
 }: PainelAlertasProps) {
   const consultaConcluida = !carregando && !erro
-  const alertas = consultaConcluida
-    ? (armadilhas ?? []).filter((armadilha) => armadilha.status === 'trocar')
+  const prioridades = consultaConcluida
+    ? (armadilhas ?? []).filter(
+        (armadilha) => armadilha.status === 'trocar' || armadilha.status === 'atencao',
+      )
     : []
-  const existemAlertas = alertas.length > 0
+
+  const temTrocaUrgente = prioridades.some((armadilha) => armadilha.status === 'trocar')
 
   return (
     <section
       aria-labelledby="titulo-painel-alertas"
-      className={`alert-panel${existemAlertas ? ' alert-panel--attention' : ' alert-panel--clear'}`}
+      className={`alert-panel${temTrocaUrgente ? ' alert-panel--attention' : ''}`}
     >
       <div className="alert-panel__header">
         <div className="alert-panel__title-group">
-          <span aria-hidden="true" className="alert-panel__icon">
-            <svg className="size-5" fill="none" viewBox="0 0 24 24">
-              {existemAlertas ? (
-                <path
-                  d="M12 3 2.8 19h18.4L12 3Z"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="1.7"
-                />
-              ) : (
-                <path
-                  d="m5 12 4.2 4.2L19 6.5"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-              )}
-              {existemAlertas ? (
-                <path
-                  d="M12 8v4.5m0 2.5v.1"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-              ) : null}
-            </svg>
-          </span>
           <div>
-            <p className="alert-panel__eyebrow">
-              {existemAlertas ? 'Prioridade operacional' : 'Tudo em ordem'}
-            </p>
-            <h2 className="alert-panel__title" id="titulo-painel-alertas">
-              Alertas de troca
-            </h2>
+            <p className="alert-panel__eyebrow">A próxima ação da operação</p>
+            <h2 className="alert-panel__title" id="titulo-painel-alertas">Fila de ação</h2>
           </div>
         </div>
         {consultaConcluida ? (
-          <p className="alert-panel__count">
-            {alertas.length === 1
-              ? '1 armadilha precisa de ação'
-              : `${alertas.length} armadilhas precisam de ação`}
+          <p aria-live="polite" className="alert-panel__count">
+            {prioridades.length === 1 ? '1 ação' : `${prioridades.length} ações`}
           </p>
         ) : null}
       </div>
 
       {carregando ? (
-        <p className="alert-panel__message" role="status">
-          Consultando alertas…
-        </p>
+        <p className="alert-panel__message" role="status">Atualizando prioridades…</p>
       ) : null}
       {erro ? (
-        <p className="alert-panel__message">
-          Não foi possível consultar os alertas agora.
+        <p className="alert-panel__message" role="status">
+          Não foi possível carregar as prioridades agora.
         </p>
       ) : null}
-      {consultaConcluida && !existemAlertas ? (
+      {consultaConcluida && prioridades.length === 0 ? (
         <p className="alert-panel__message alert-panel__message--clear">
-          Nenhuma ação é necessária neste momento.
+          Nenhuma ação necessária hoje.
         </p>
       ) : null}
-      {consultaConcluida && existemAlertas ? (
+      {consultaConcluida && prioridades.length > 0 ? (
         <ul className="alert-panel__list">
-          {alertas.map((armadilha) => {
-            const diasEmAlerta = armadilha.em_alerta_desde
-              ? calculateDiasEmAlerta(
-                  armadilha.em_alerta_desde,
-                  instanteReferencia,
-                )
-              : null
+          {prioridades.map((armadilha) => {
+            const acao = armadilha.status === 'trocar' ? 'Registrar troca' : 'Ver armadilha'
 
             return (
               <li
-                className="alert-panel__item"
+                className={`alert-panel__item alert-panel__item--${armadilha.status}`}
                 key={armadilha.id}
               >
-                <div>
+                <div className="alert-panel__identity">
                   <Link
                     aria-label={`Ver detalhes da armadilha ${armadilha.identificador}`}
                     className="alert-panel__link"
@@ -120,13 +93,24 @@ export default function PainelAlertas({
                     {armadilha.localizacao ?? 'Localização não informada'}
                   </p>
                 </div>
-                <p className="alert-panel__age">
-                  {diasEmAlerta === null
-                    ? 'Data do alerta indisponível'
-                    : diasEmAlerta === 0
-                      ? 'Em alerta desde hoje'
-                      : `Em alerta há ${diasEmAlerta} ${diasEmAlerta === 1 ? 'dia' : 'dias'}`}
-                </p>
+                <div className="alert-panel__status">
+                  <span className="alert-panel__status-label">
+                    {armadilha.status === 'trocar' ? 'Trocar agora' : 'Atenção'}
+                  </span>
+                  <p className={`alert-panel__age${armadilha.status === 'trocar' ? ' alert-panel__age--urgent' : ''}`}>
+                    {tempoAteAcao(armadilha, instanteReferencia)}
+                  </p>
+                </div>
+                <Link
+                  aria-label={`${acao}: ${armadilha.identificador}`}
+                  className="alert-panel__action"
+                  to={`/armadilhas/${armadilha.id}`}
+                >
+                  {acao}
+                  <svg aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                    <path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                  </svg>
+                </Link>
               </li>
             )
           })}

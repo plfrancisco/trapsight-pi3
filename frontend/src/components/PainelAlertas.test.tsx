@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import PainelAlertas from './PainelAlertas'
@@ -17,7 +17,7 @@ const buildArmadilha = (
   refil_ativo: { id: 'refil-1', data_instalacao: '2026-10-01', dias_em_uso: 13 },
   percentual_atual: 85,
   status: dados.status ?? 'trocar',
-  dias_ate_saturar: 0,
+  dias_ate_saturar: dados.dias_ate_saturar ?? 0,
   limiar_trocar: 20,
   foto_tipo: 'padrao',
   foto_url: null,
@@ -25,77 +25,73 @@ const buildArmadilha = (
   em_alerta_desde: dados.em_alerta_desde ?? null,
 })
 
-describe('PainelAlertas', () => {
-  it('mantém uma confirmação explícita quando não há armadilhas em alerta', () => {
-    render(
-      <MemoryRouter>
-        <PainelAlertas
-          armadilhas={[]}
-          carregando={false}
-          erro={false}
-          instanteReferencia={instanteReferencia}
-        />
-      </MemoryRouter>,
-    )
+function renderFila(armadilhas: ArmadilhaLista[]) {
+  return render(
+    <MemoryRouter>
+      <PainelAlertas
+        armadilhas={armadilhas}
+        carregando={false}
+        erro={false}
+        instanteReferencia={instanteReferencia}
+      />
+    </MemoryRouter>,
+  )
+}
 
-    expect(screen.getByText('0 armadilhas precisam de ação')).toBeVisible()
-    expect(screen.getByText('Nenhuma ação é necessária neste momento.')).toBeVisible()
+describe('Fila de ação', () => {
+  it('mostra zero e uma orientação clara quando não há prioridade', () => {
+    renderFila([])
+
+    expect(screen.getByText('0 ações')).toBeVisible()
+    expect(screen.getByText('Nenhuma ação necessária hoje.')).toBeVisible()
   })
 
-  it('lista só casos de troca, com localização, duração e link para o detalhe', () => {
-    render(
-      <MemoryRouter>
-        <PainelAlertas
-          armadilhas={[
-            buildArmadilha({
-              id: 'arm-1',
-              identificador: 'ARM-001',
-              localizacao: 'Depósito',
-              em_alerta_desde: '2026-10-12T10:00:00Z',
-            }),
-            buildArmadilha({
-              id: 'arm-2',
-              identificador: 'ARM-002',
-              localizacao: 'Recebimento',
-              status: 'atencao',
-              em_alerta_desde: null,
-            }),
-          ]}
-          carregando={false}
-          erro={false}
-          instanteReferencia={instanteReferencia}
-        />
-      </MemoryRouter>,
-    )
+  it('inclui atenção e troca na ordem recebida, com prazo e ação apropriados', () => {
+    renderFila([
+      buildArmadilha({
+        id: 'arm-1',
+        identificador: 'ARM-001',
+        localizacao: 'Depósito',
+        status: 'trocar',
+        em_alerta_desde: '2026-10-12T10:00:00Z',
+      }),
+      buildArmadilha({
+        id: 'arm-2',
+        identificador: 'ARM-002',
+        localizacao: 'Recebimento',
+        status: 'atencao',
+        dias_ate_saturar: 4,
+      }),
+      buildArmadilha({ id: 'arm-3', identificador: 'ARM-003', status: 'ok' }),
+    ])
 
-    expect(screen.getByText('1 armadilha precisa de ação')).toBeVisible()
-    expect(screen.getByText('Depósito')).toBeVisible()
-    expect(screen.getByText('Em alerta há 2 dias')).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Ver detalhes da armadilha ARM-001' })).toHaveAttribute(
+    const fila = screen.getByRole('list')
+    const identificadores = within(fila).getAllByRole('link', { name: /Ver detalhes da armadilha/ })
+    expect(identificadores.map((link) => link.textContent)).toEqual(['ARM-001', 'ARM-002'])
+    expect(screen.getByText('2 ações')).toBeVisible()
+    expect(screen.getByText('Saturada há 2 dias')).toBeVisible()
+    expect(screen.getByText('Satura em 4 dias')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Registrar troca: ARM-001' })).toHaveAttribute(
       'href',
       '/armadilhas/arm-1',
     )
-    expect(screen.queryByText('ARM-002')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver armadilha: ARM-002' })).toHaveAttribute(
+      'href',
+      '/armadilhas/arm-2',
+    )
+    expect(screen.queryByText('ARM-003')).not.toBeInTheDocument()
   })
 
-  it('escreve hoje quando a armadilha entrou em alerta há zero dias', () => {
-    render(
-      <MemoryRouter>
-        <PainelAlertas
-          armadilhas={[
-            buildArmadilha({
-              id: 'arm-1',
-              identificador: 'ARM-001',
-              em_alerta_desde: '2026-10-14T12:00:00Z',
-            }),
-          ]}
-          carregando={false}
-          erro={false}
-          instanteReferencia={instanteReferencia}
-        />
-      </MemoryRouter>,
-    )
+  it('marca como hoje uma troca que entrou em alerta hoje', () => {
+    renderFila([
+      buildArmadilha({
+        id: 'arm-1',
+        identificador: 'ARM-001',
+        status: 'trocar',
+        em_alerta_desde: '2026-10-14T12:00:00Z',
+      }),
+    ])
 
-    expect(screen.getByText('Em alerta desde hoje')).toBeVisible()
+    expect(screen.getByText('Saturada hoje')).toBeVisible()
   })
 })
