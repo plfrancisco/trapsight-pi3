@@ -4,6 +4,7 @@ import type {
 } from 'react'
 import { Link } from 'react-router'
 import type { ArmadilhaLista } from '../services/tipos'
+import BarraProgressoAnalise from './BarraProgressoAnalise'
 import Botao from './Botao'
 import MensagemErro from './MensagemErro'
 
@@ -15,6 +16,8 @@ interface EnvioAnaliseProps {
   erroArquivo: string | null
   erroAnalise: string | null
   enviando: boolean
+  /** A resposta chegou e a barra está indo a 100% antes de mostrar o resultado. */
+  concluindo?: boolean
   onChangeArmadilha: ChangeEventHandler<HTMLSelectElement>
   onChangeArquivo: ChangeEventHandler<HTMLInputElement>
   onCancel: () => void
@@ -34,6 +37,7 @@ export default function EnvioAnalise({
   erroArquivo,
   erroAnalise,
   enviando,
+  concluindo = false,
   onChangeArmadilha,
   onChangeArquivo,
   onCancel,
@@ -118,18 +122,18 @@ export default function EnvioAnalise({
       </div>
 
       {enviando ? (
-        <div
-          aria-live="polite"
-          className="flex flex-col gap-3 rounded-xl bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-          role="status"
-        >
-          <p className="text-sm font-medium leading-6 text-emerald-950">
-            Enviando e analisando a imagem. O processamento pode levar até{' '}
-            {timeoutUploadMs / 1000} segundos.
-          </p>
-          <Botao onClick={onCancel} variante="secundario">
-            Cancelar envio
-          </Botao>
+        <div className="space-y-3 rounded-xl bg-emerald-50 p-4">
+          <BarraProgressoAnalise concluido={concluindo} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-5 text-emerald-900">
+              O processamento pode levar até {timeoutUploadMs / 1000} segundos.
+            </p>
+            {concluindo ? null : (
+              <Botao onClick={onCancel} variante="secundario">
+                Cancelar envio
+              </Botao>
+            )}
+          </div>
         </div>
       ) : null}
 

@@ -23,6 +23,24 @@ import { listArmadilhas } from '../services/armadilhas'
 import { TIMEOUT_UPLOAD_MS } from '../services/http'
 import type { Analise } from '../services/tipos'
 
+/** Tempo que a barra fica em 100% antes de o resultado aparecer. */
+export const ATRASO_FINAL_MS = 700
+
+/** Espera `ms` ou até o sinal abortar, o que vier primeiro (sem timer pendente). */
+function esperar(ms: number, sinal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const temporizador = setTimeout(resolve, ms)
+    sinal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(temporizador)
+        resolve()
+      },
+      { once: true },
+    )
+  })
+}
+
 /** Seleciona uma armadilha, envia uma imagem e mostra o resultado da inferência.
  * @returns O fluxo de seleção, envio ou resultado da análise.
  */
@@ -42,6 +60,7 @@ export default function NovaAnalisePage() {
   const [erroArquivo, setErroArquivo] = useState<string | null>(null)
   const [erroAnalise, setErroAnalise] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [concluindo, setConcluindo] = useState(false)
   const [resultado, setResultado] = useState<Analise | null>(null)
   const controladorEnvio = useRef<AbortController | null>(null)
   const armadilhaSelecionada = findArmadilha(armadilhas, armadilhaId)
@@ -72,7 +91,12 @@ export default function NovaAnalisePage() {
         arquivo,
         controlador.signal,
       )
-      setResultado(analise)
+      if (!controlador.signal.aborted) {
+        // A barra vai a 100% e fica visível por um instante antes do resultado.
+        setConcluindo(true)
+        await esperar(ATRASO_FINAL_MS, controlador.signal)
+        if (!controlador.signal.aborted) setResultado(analise)
+      }
     } catch (falha: unknown) {
       if (!controlador.signal.aborted && !isAbortError(falha)) {
         setErroAnalise(buildFalhaMensagem(falha))
@@ -82,6 +106,7 @@ export default function NovaAnalisePage() {
         controladorEnvio.current = null
       }
       setEnviando(false)
+      setConcluindo(false)
     }
   }
 
@@ -124,6 +149,7 @@ export default function NovaAnalisePage() {
           erroArquivo={erroArquivo}
           erroAnalise={erroAnalise}
           enviando={enviando}
+          concluindo={concluindo}
           onCancel={() => controladorEnvio.current?.abort()}
           onChangeArmadilha={(evento) => {
             setArmadilhaId(evento.currentTarget.value)

@@ -114,7 +114,9 @@ describe('NovaAnalisePage', () => {
     await selectValidImage(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Enviar para análise' }))
 
-    expect(await screen.findByRole('heading', { name: 'Resultado da análise' })).toBeVisible()
+    expect(
+      await screen.findByRole('heading', { name: 'Resultado da análise' }, { timeout: 3000 }),
+    ).toBeVisible()
     expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('64,30% da placa coberta')).toBeVisible()
     expect(screen.getByText('v1.2.0+a3f9c2e1')).toBeVisible()
@@ -146,14 +148,13 @@ describe('NovaAnalisePage', () => {
     await selectValidImage(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Enviar para análise' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Enviando e analisando a imagem',
-    )
+    expect(await screen.findByRole('progressbar')).toBeVisible()
     await usuario.click(screen.getByRole('button', { name: 'Cancelar envio' }))
 
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Enviar para análise' })).toBeEnabled(),
     )
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Resultado da análise' })).not.toBeInTheDocument()
   })
@@ -172,5 +173,41 @@ describe('NovaAnalisePage', () => {
       await screen.findByRole('alert'),
     ).toHaveTextContent('A análise não pôde ser concluída. Tente novamente mais tarde.')
     expect(screen.queryByRole('heading', { name: 'Resultado da análise' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+
+  it('mostra a barra durante a análise, leva a 100% e só então exibe o resultado', async () => {
+    const usuario = userEvent.setup()
+    let concluir!: (valor: Analise) => void
+    vi.mocked(createAnalise).mockImplementation(
+      () =>
+        new Promise<Analise>((resolve) => {
+          concluir = resolve
+        }),
+    )
+    renderPage()
+    await selectArmadilha(usuario)
+    await selectValidImage(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Enviar para análise' }))
+
+    const barra = await screen.findByRole('progressbar')
+    const durante = Number(barra.getAttribute('aria-valuenow'))
+    expect(durante).toBeGreaterThanOrEqual(0)
+    expect(durante).toBeLessThanOrEqual(95)
+    expect(screen.queryByRole('heading', { name: 'Resultado da análise' })).not.toBeInTheDocument()
+
+    concluir(analise)
+
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100'),
+    )
+    expect(screen.getByRole('status')).toHaveTextContent('Análise concluída')
+    expect(screen.queryByRole('heading', { name: 'Resultado da análise' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancelar envio' })).not.toBeInTheDocument()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Resultado da análise' }, { timeout: 3000 }),
+    ).toBeVisible()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 })
