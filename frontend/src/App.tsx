@@ -3,6 +3,7 @@ import AuthProvider from './auth/AuthProvider'
 import RotaProtegida from './auth/RotaProtegida'
 import RotaGerente from './auth/RotaGerente'
 import Layout from './components/Layout'
+import TituloPagina from './components/TituloPagina'
 import AlterarSenhaPage from './pages/AlterarSenhaPage'
 import CadastroArmadilhaPage from './pages/CadastroArmadilhaPage'
 import DashboardPage from './pages/DashboardPage'
@@ -19,23 +20,26 @@ import ContasPage from './pages/ContasPage'
  */
 export function Rotas() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<RotaProtegida />}>
-        <Route element={<Layout />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/armadilhas/nova" element={<CadastroArmadilhaPage />} />
-          <Route path="/armadilhas/:id" element={<DetalheArmadilhaPage />} />
-          <Route path="/armadilhas/:id/editar" element={<CadastroArmadilhaPage />} />
-          <Route path="/analises/nova" element={<NovaAnalisePage />} />
-          <Route path="/conta/senha" element={<AlterarSenhaPage />} />
-          <Route element={<RotaGerente />}>
-            <Route path="/contas" element={<ContasPage />} />
+    <>
+      <TituloPagina />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<RotaProtegida />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/armadilhas/nova" element={<CadastroArmadilhaPage />} />
+            <Route path="/armadilhas/:id" element={<DetalheArmadilhaPage />} />
+            <Route path="/armadilhas/:id/editar" element={<CadastroArmadilhaPage />} />
+            <Route path="/analises/nova" element={<NovaAnalisePage />} />
+            <Route path="/conta/senha" element={<AlterarSenhaPage />} />
+            <Route element={<RotaGerente />}>
+              <Route path="/contas" element={<ContasPage />} />
+            </Route>
+            <Route path="*" element={<NaoEncontradaPage />} />
           </Route>
-          <Route path="*" element={<NaoEncontradaPage />} />
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }
 
