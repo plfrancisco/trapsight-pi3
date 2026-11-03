@@ -50,7 +50,6 @@ export default function ListaAnalises({
                 height={96}
                 imagemClassName="size-24 shrink-0 rounded-xl bg-slate-100 object-cover"
                 loading="lazy"
-                mostrarLegenda={false}
                 width={96}
               />
               <div className="min-w-0 space-y-2">

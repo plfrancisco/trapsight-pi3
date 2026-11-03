@@ -8,7 +8,7 @@ interface ResultadoAnaliseProps {
   analise: Analise
 }
 
-/** Apresenta os dados do processamento e a imagem com a identificação do modelo. */
+/** Apresenta os dados do processamento e a foto original enviada para análise. */
 export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
   return (
     <section
@@ -29,7 +29,7 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="sm:text-right">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-xs font-medium text-slate-600">
               Saturação do refil
             </p>
             <p className="text-3xl font-bold tabular-nums tracking-tight text-emerald-950">
@@ -44,7 +44,7 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
       </div>
 
       <dl className="rounded-xl bg-stone-50 px-4 py-3">
-        <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+        <dt className="text-xs font-medium text-slate-600">
           Versão do modelo
         </dt>
         <dd className="mt-1 break-all font-mono text-sm font-medium text-slate-900">
@@ -63,7 +63,6 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
             height={480}
             imagemClassName="size-full object-contain"
             moldura="aspect-[4/3] max-h-[36rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
-            permitirAlternar
             width={640}
           />
         </figure>

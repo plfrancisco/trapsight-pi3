@@ -51,7 +51,6 @@ function ImagemAnaliseUnica({
           height={480}
           imagemClassName="analysis-frame-card__image"
           moldura="analysis-frame-card__image-wrap"
-          permitirAlternar
           width={640}
         />
         <figcaption className="analysis-frame-card__caption">

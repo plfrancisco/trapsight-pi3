@@ -170,13 +170,13 @@ describe('DetalheArmadilhaPage', () => {
 
     expect(
       await screen.findByRole('img', {
-        name: /Identificação do modelo na imagem da armadilha registrada em/,
+        name: /Imagem original da armadilha registrada em/,
       }),
     ).toBeVisible()
     expect(screen.queryByRole('heading', { name: /^Quadro / })).not.toBeInTheDocument()
     expect(screen.getAllByText('Saturação: 100,00%')).not.toHaveLength(0)
     expect(
-      screen.getAllByRole('img', { name: /Identificação do modelo na imagem da análise/ }),
+      screen.getAllByRole('img', { name: /Imagem original da análise/ }),
     ).toHaveLength(1)
     expect(screen.queryByRole('img', { name: /Evolução da saturação/ })).not.toBeInTheDocument()
   })

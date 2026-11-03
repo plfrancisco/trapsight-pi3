@@ -24,9 +24,9 @@ describe('QuadroAnalise', () => {
     expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(
-      screen.getByRole('img', { name: /Identificação do modelo na imagem da análise/ }),
-    ).toHaveAttribute('src', 'http://localhost:8000/api/analises/analise-1/mascara')
-    expect(screen.getByRole('button', { name: 'Ver foto original' })).toBeVisible()
+      screen.getByRole('img', { name: /Imagem original da análise/ }),
+    ).toHaveAttribute('src', 'http://localhost:8000/api/analises/analise-1/imagem')
+    expect(screen.queryByRole('button', { name: 'Ver foto original' })).not.toBeInTheDocument()
     expect(screen.getByText(/Quadro 2 de 3/, { selector: 'p' })).toHaveAttribute(
       'aria-live',
       'polite',

@@ -15,7 +15,7 @@ const analise: Analise = {
 }
 
 describe('ResultadoAnalise', () => {
-  it('exibe o resultado da API e a imagem com a identificação do modelo', () => {
+  it('exibe o resultado da API e a imagem original sem máscara', () => {
     render(<ResultadoAnalise analise={analise} />)
 
     expect(screen.getByText('100,00%')).toBeVisible()
@@ -24,17 +24,17 @@ describe('ResultadoAnalise', () => {
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(screen.getByText('v1.2.0+a3f9c2e1')).toBeVisible()
     const imagem = screen.getByRole('img', {
-      name: 'Identificação do modelo na imagem enviada para análise da armadilha',
+      name: 'Imagem original enviada para análise da armadilha',
     })
     expect(imagem).toHaveAttribute('width', '640')
     expect(imagem).toHaveAttribute(
       'src',
-      'http://localhost:8000/api/analises/analise-1/mascara',
+      'http://localhost:8000/api/analises/analise-1/imagem',
     )
     expect(
-      screen.getByText('Área marcada: cobertura por insetos identificada pelo modelo'),
-    ).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Ver foto original' })).toBeVisible()
+      screen.queryByText('Área marcada: cobertura por insetos identificada pelo modelo'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver foto original' })).not.toBeInTheDocument()
   })
 
   it('converte a cobertura real em saturação sem esconder o valor medido', () => {
