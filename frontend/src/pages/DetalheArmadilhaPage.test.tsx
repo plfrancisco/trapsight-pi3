@@ -156,7 +156,7 @@ describe('DetalheArmadilhaPage', () => {
     renderDetalhe()
 
     expect(await screen.findByText('Nenhuma análise neste refil')).toBeVisible()
-    expect(screen.queryByRole('img', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /Evolução da saturação/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Escopo temporal' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Enviar a primeira imagem' })).toHaveAttribute(
       'href',
@@ -172,9 +172,9 @@ describe('DetalheArmadilhaPage', () => {
       await screen.findByRole('img', { name: /Imagem da armadilha registrada em/ }),
     ).toBeVisible()
     expect(screen.queryByRole('heading', { name: /^Quadro / })).not.toBeInTheDocument()
-    expect(screen.getAllByText('Cobertura: 42,50%')).not.toHaveLength(0)
+    expect(screen.getAllByText('Saturação: 100,00%')).not.toHaveLength(0)
     expect(screen.getAllByRole('img', { name: /Imagem original da análise/ })).toHaveLength(1)
-    expect(screen.queryByRole('img', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /Evolução da saturação/ })).not.toBeInTheDocument()
   })
 
   it('mostra a ação para iniciar um refil sem apresentar percentuais ausentes', async () => {
@@ -194,7 +194,7 @@ describe('DetalheArmadilhaPage', () => {
 
     expect(await screen.findByText(/Sem refil ativo/)).toBeVisible()
     expect(screen.getByRole('button', { name: 'Registrar refil' })).toBeVisible()
-    expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saturação atual')).not.toBeInTheDocument()
     expect(screen.queryByText(/\d+,\d{2}%/)).not.toBeInTheDocument()
   })
 
@@ -217,7 +217,7 @@ describe('DetalheArmadilhaPage', () => {
 
     await waitFor(() => expect(getArmadilha).toHaveBeenCalledTimes(2))
     expect(screen.getByRole('heading', { name: 'ARM-001', level: 1 })).toBeVisible()
-    expect(screen.getAllByText('Cobertura: 42,50%')).not.toHaveLength(0)
+    expect(screen.getAllByText('Saturação: 100,00%')).not.toHaveLength(0)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })

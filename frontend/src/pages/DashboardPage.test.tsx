@@ -112,7 +112,7 @@ describe('DashboardPage', () => {
 
     const artigo = await screen.findByRole('article')
     expect(within(artigo).getByText('Sem refil ativo')).toBeVisible()
-    expect(within(artigo).queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(within(artigo).queryByText('Saturação do refil')).not.toBeInTheDocument()
     expect(within(artigo).queryByText('Sem estimativa')).not.toBeInTheDocument()
   })
 
@@ -135,7 +135,7 @@ describe('DashboardPage', () => {
     const artigo = await screen.findByRole('article')
     expect(within(artigo).getByText('Sem análises neste refil')).toBeVisible()
     expect(within(artigo).queryByText('Estimativa: Sem estimativa')).not.toBeInTheDocument()
-    expect(within(artigo).queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(within(artigo).queryByText('Saturação do refil')).not.toBeInTheDocument()
   })
 
   it('formata estimativa ausente para uma armadilha com uma medição', async () => {
@@ -146,7 +146,7 @@ describe('DashboardPage', () => {
 
     const artigo = await screen.findByRole('article')
     expect(within(artigo).getByText('Sem estimativa')).toBeVisible()
-    expect(within(artigo).getByText('42,50%')).toBeVisible()
+    expect(within(artigo).getByText('100,00%')).toBeVisible()
   })
 
   it('permite repetir o carregamento depois de uma falha', async () => {

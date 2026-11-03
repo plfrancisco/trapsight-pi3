@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { buildResumoCobertura, buildSerieCobertura } from '../lib/cobertura'
-import { formatDataHora, formatPercentual } from '../lib/formatacao'
+import { formatDataHora } from '../lib/formatacao'
+import { formatIndiceSaturacao } from '../lib/saturacao'
 import { calcularMesPrevistoTroca } from '../lib/previsaoTroca'
 import { instanteDoQuadro, mapearArrastoParaIndice } from '../lib/marcadorGrafico'
 import { urlImagemAnalise } from '../services/midia'
@@ -23,9 +24,15 @@ function ordenarAnalises(analises: readonly Analise[]): Analise[] {
   )
 }
 
-function ImagemAnaliseUnica({ analise }: { analise: Analise }) {
+function ImagemAnaliseUnica({
+  analise,
+  limiarTrocar,
+}: {
+  analise: Analise
+  limiarTrocar?: number
+}) {
   const dataHora = formatDataHora(analise.analisado_em)
-  const percentual = formatPercentual(analise.percentual_coberto)
+  const percentual = formatIndiceSaturacao(analise.percentual_coberto, limiarTrocar)
 
   return (
     <section aria-label="Imagem da análise" className="analysis-frame-card">
@@ -40,7 +47,7 @@ function ImagemAnaliseUnica({ analise }: { analise: Analise }) {
       <figure className="analysis-frame-card__figure">
         <div className="analysis-frame-card__image-wrap">
           <img
-            alt={`Imagem da armadilha registrada em ${dataHora}, com ${percentual} de cobertura`}
+            alt={`Imagem da armadilha registrada em ${dataHora}, com ${percentual} de saturação`}
             className="analysis-frame-card__image"
             decoding="async"
             height={480}
@@ -50,7 +57,7 @@ function ImagemAnaliseUnica({ analise }: { analise: Analise }) {
         </div>
         <figcaption className="analysis-frame-card__caption">
           <span>Última análise</span>
-          <strong>Cobertura <b>{percentual}</b></strong>
+          <strong>Saturação <b>{percentual}</b></strong>
         </figcaption>
       </figure>
     </section>
@@ -73,8 +80,8 @@ export default function EvolucaoCobertura({
     () => analises.map((analise) => Date.parse(analise.analisado_em)),
     [analises],
   )
-  const serie = useMemo(() => buildSerieCobertura(analises), [analises])
-  const resumo = useMemo(() => buildResumoCobertura(analises), [analises])
+  const serie = useMemo(() => buildSerieCobertura(analises, limiarTrocar), [analises, limiarTrocar])
+  const resumo = useMemo(() => buildResumoCobertura(analises, limiarTrocar), [analises, limiarTrocar])
   const previsaoTroca = useMemo(
     () => calcularMesPrevistoTroca(diasAteSaturar),
     [diasAteSaturar],
@@ -101,7 +108,7 @@ export default function EvolucaoCobertura({
       <div>
         <p className="section-kicker">Refil ativo</p>
         <h2 className="section-title" id="titulo-evolucao">
-          Evolução da cobertura
+          Evolução da saturação
         </h2>
         {possuiGrafico ? (
           <p className="mt-2 max-w-2xl text-sm text-app-muted">
@@ -136,10 +143,11 @@ export default function EvolucaoCobertura({
             analise={analiseAtual}
             indice={indiceVisivel}
             quantidade={analises.length}
+            limiarTrocar={limiarTrocar}
           />
         </div>
       ) : analiseAtual ? (
-        <ImagemAnaliseUnica analise={analiseAtual} />
+        <ImagemAnaliseUnica analise={analiseAtual} limiarTrocar={limiarTrocar} />
       ) : null}
     </section>
   )

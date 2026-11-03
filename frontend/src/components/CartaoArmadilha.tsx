@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
-import { formatDataHora, formatDiasAteSaturar, formatPercentual } from '../lib/formatacao'
+import { formatDataHora, formatDiasAteSaturar } from '../lib/formatacao'
 import { PALETA_STATUS } from '../lib/paleta'
+import { formatIndiceSaturacao, indiceSaturacao } from '../lib/saturacao'
 import type { ArmadilhaLista } from '../services/tipos'
 import FotoArmadilha from './FotoArmadilha'
 import StatusBadge from './StatusBadge'
@@ -17,7 +18,8 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
   const semRefil = armadilha.refil_ativo === null
   const semAnalise = armadilha.ultima_analise_em === null
   const percentual = armadilha.percentual_atual
-  const percentualSeguro = Math.min(100, Math.max(0, percentual ?? 0))
+  const indice = percentual === null ? 0 : indiceSaturacao(percentual, armadilha.limiar_trocar)
+  const indiceFormatado = formatIndiceSaturacao(percentual, armadilha.limiar_trocar)
 
   return (
     <Link
@@ -83,8 +85,8 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
           <>
             <div className="trap-card__reading">
               <div>
-                <p className="trap-card__metric-label">Cobertura atual</p>
-                <p className="trap-card__metric-value">{formatPercentual(percentual)}</p>
+                <p className="trap-card__metric-label">Saturação do refil</p>
+                <p className="trap-card__metric-value">{indiceFormatado}</p>
               </div>
               <div className="trap-card__forecast">
                 <span className="trap-card__forecast-label">Até saturar</span>
@@ -93,11 +95,11 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
             </div>
 
             <div
-              aria-label={`Cobertura da armadilha ${armadilha.identificador}`}
+              aria-label={`Saturação da armadilha ${armadilha.identificador}`}
               aria-valuemax={100}
               aria-valuemin={0}
-              aria-valuenow={percentualSeguro}
-              aria-valuetext={formatPercentual(percentual)}
+              aria-valuenow={indice}
+              aria-valuetext={indiceFormatado}
               className="trap-card__progress"
               role="progressbar"
             >
@@ -107,7 +109,7 @@ export default function CartaoArmadilha({ armadilha }: CartaoArmadilhaProps) {
                   backgroundColor: armadilha.status
                     ? PALETA_STATUS[armadilha.status].linha
                     : '#4C9A68',
-                  width: `${percentualSeguro}%`,
+                  width: `${indice}%`,
                 }}
               />
             </div>

@@ -115,7 +115,8 @@ describe('NovaAnalisePage', () => {
     await usuario.click(screen.getByRole('button', { name: 'Enviar para análise' }))
 
     expect(await screen.findByRole('heading', { name: 'Resultado da análise' })).toBeVisible()
-    expect(screen.getByText('64,30%')).toBeVisible()
+    expect(screen.getByText('100,00%')).toBeVisible()
+    expect(screen.getByText('64,30% da placa coberta')).toBeVisible()
     expect(screen.getByText('v1.2.0+a3f9c2e1')).toBeVisible()
     const chamada = vi.mocked(createAnalise).mock.calls[0]
     expect(chamada?.[0]).toBe('arm-1')

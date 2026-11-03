@@ -21,7 +21,7 @@ describe('QuadroAnalise', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Análise 02' })).toBeVisible()
-    expect(screen.getByText('42,50%')).toBeVisible()
+    expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
       'src',

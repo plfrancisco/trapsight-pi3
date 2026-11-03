@@ -15,7 +15,7 @@ describe('ResumoRefil', () => {
 
     expect(screen.getByText('01/08/2026')).toBeVisible()
     expect(screen.getByText('20 dias')).toBeVisible()
-    expect(screen.getByText('64,30%')).toBeVisible()
+    expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('4 dias')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
   })
@@ -31,7 +31,7 @@ describe('ResumoRefil', () => {
     )
 
     expect(screen.getByText(/Sem refil ativo/)).toBeVisible()
-    expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saturação atual')).not.toBeInTheDocument()
     expect(screen.queryByText(/%/)).not.toBeInTheDocument()
   })
 

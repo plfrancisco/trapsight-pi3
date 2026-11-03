@@ -32,7 +32,7 @@ describe('CartaoArmadilha', () => {
   it('mostra a medição da API, o status, a estimativa e a data da análise', () => {
     renderCartao(armadilhaBase)
 
-    expect(screen.getByText('64,30%')).toBeVisible()
+    expect(screen.getByText('100,00%')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(screen.getByText('Atenção').closest('dl')).toBeNull()
     expect(screen.getByText('Sem estimativa')).toBeVisible()
@@ -57,7 +57,7 @@ describe('CartaoArmadilha', () => {
     })
 
     expect(screen.getByText('Sem refil ativo')).toBeVisible()
-    expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saturação do refil')).not.toBeInTheDocument()
     expect(screen.queryByText('Sem estimativa')).not.toBeInTheDocument()
     expect(screen.queryByText('Atenção')).not.toBeInTheDocument()
   })
@@ -76,7 +76,7 @@ describe('CartaoArmadilha', () => {
 
     expect(screen.getByText('Sem análises neste refil')).toBeVisible()
     expect(screen.queryByText('Estimativa: Sem estimativa')).not.toBeInTheDocument()
-    expect(screen.queryByText('Cobertura atual')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saturação do refil')).not.toBeInTheDocument()
   })
 
   it('mostra a foto padrão do modelo quando a armadilha não tem foto real', () => {
@@ -98,5 +98,18 @@ describe('CartaoArmadilha', () => {
       'http://localhost:8000/api/armadilhas/arm-1/foto?v=9',
     )
     expect(screen.getByText('Foto da armadilha', { selector: 'span' })).toBeVisible()
+  })
+
+  it.each([
+    [5, '20,00%'],
+    [10, '40,00%'],
+    [20, '80,00%'],
+    [25, '100,00%'],
+  ])('mostra a cobertura %s como saturação %s', (cobertura, esperado) => {
+    renderCartao({ ...armadilhaBase, percentual_atual: cobertura })
+
+    expect(screen.getByText('Saturação do refil')).toBeVisible()
+    expect(screen.getByText(esperado)).toBeVisible()
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', esperado)
   })
 })

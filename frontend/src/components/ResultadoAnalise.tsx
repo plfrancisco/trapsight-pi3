@@ -1,4 +1,5 @@
 import { formatPercentual } from '../lib/formatacao'
+import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
 import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
@@ -27,9 +28,17 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-3xl font-bold tabular-nums tracking-tight text-emerald-950">
-            {formatPercentual(analise.percentual_coberto)}
-          </p>
+          <div className="sm:text-right">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Saturação do refil
+            </p>
+            <p className="text-3xl font-bold tabular-nums tracking-tight text-emerald-950">
+              {formatIndiceSaturacao(analise.percentual_coberto)}
+            </p>
+            <p className="text-sm text-slate-700">
+              {formatPercentual(analise.percentual_coberto)} da placa coberta
+            </p>
+          </div>
           <StatusBadge status={analise.status} />
         </div>
       </div>

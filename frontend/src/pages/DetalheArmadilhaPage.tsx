@@ -81,6 +81,7 @@ export default function DetalheArmadilhaPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ResumoRefil
           diasAteSaturar={armadilha.dias_ate_saturar}
+          limiarTrocar={armadilha.limiar_trocar}
           percentualAtual={armadilha.percentual_atual}
           refil={armadilha.refil_ativo}
           status={armadilha.status}
@@ -104,7 +105,7 @@ export default function DetalheArmadilhaPage() {
               className="mt-1 text-2xl font-semibold tracking-tight text-slate-950"
               id="titulo-evolucao"
             >
-              Evolução da cobertura
+              Evolução da saturação
             </h2>
           </div>
           <EstadoVazio
@@ -115,7 +116,7 @@ export default function DetalheArmadilhaPage() {
             )}
             descricao={armadilha.removida_em
               ? 'Esta armadilha não possui análises registradas.'
-              : 'Envie uma imagem para iniciar o histórico de cobertura deste ciclo.'}
+              : 'Envie uma imagem para iniciar o histórico de saturação deste ciclo.'}
             titulo={armadilha.removida_em ? 'Nenhuma análise no histórico' : 'Nenhuma análise neste refil'}
           />
         </section>
@@ -130,6 +131,7 @@ export default function DetalheArmadilhaPage() {
       <ListaAnalises
         analises={analises}
         historicoCompleto={Boolean(armadilha.removida_em)}
+        limiarTrocar={armadilha.limiar_trocar}
       />
     </div>
   )

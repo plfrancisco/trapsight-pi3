@@ -1,4 +1,5 @@
-import { formatData, formatDiasAteSaturar, formatPercentual } from '../lib/formatacao'
+import { formatData, formatDiasAteSaturar } from '../lib/formatacao'
+import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { RefilAtivo, StatusAnalise } from '../services/tipos'
 import StatusBadge from './StatusBadge'
 
@@ -7,6 +8,7 @@ interface ResumoRefilProps {
   percentualAtual: number | null
   status: StatusAnalise | null
   diasAteSaturar: number | null
+  limiarTrocar?: number
 }
 
 /** Apresenta somente os valores atuais fornecidos pela API.
@@ -18,6 +20,7 @@ export default function ResumoRefil({
   percentualAtual,
   status,
   diasAteSaturar,
+  limiarTrocar,
 }: ResumoRefilProps) {
   return (
     <section
@@ -49,9 +52,9 @@ export default function ResumoRefil({
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-slate-700">Cobertura atual</dt>
+              <dt className="text-sm font-medium text-slate-700">Saturação atual</dt>
               <dd className="mt-1 break-words font-semibold text-slate-950">
-                {formatPercentual(percentualAtual)}
+                {formatIndiceSaturacao(percentualAtual, limiarTrocar)}
               </dd>
             </div>
             <div>
@@ -71,7 +74,7 @@ export default function ResumoRefil({
         </>
       ) : (
         <p className="mt-3 text-sm leading-6 text-slate-700">
-          Sem refil ativo. Registre um refil para iniciar o acompanhamento da cobertura.
+          Sem refil ativo. Registre um refil para iniciar o acompanhamento da saturação.
         </p>
       )}
     </section>

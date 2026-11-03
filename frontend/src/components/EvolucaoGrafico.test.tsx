@@ -6,14 +6,14 @@ describe('EvolucaoGrafico', () => {
   it('expõe a descrição acessível e aceita uma série externa', () => {
     render(
       <EvolucaoGrafico
-        resumo="Evolução da cobertura: 1 medição, de 42,00% a 42,00%"
+        resumo="Evolução da saturação: 1 medição, de 100,00% a 100,00%"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
     expect(
       screen.getByRole('group', {
-        name: 'Evolução da cobertura: 1 medição, de 42,00% a 42,00%',
+        name: 'Evolução da saturação: 1 medição, de 100,00% a 100,00%',
       }),
     ).toBeVisible()
   })
@@ -22,14 +22,14 @@ describe('EvolucaoGrafico', () => {
     render(
       <EvolucaoGrafico
         marcador={Date.parse('2026-10-16T08:00:00Z')}
-        resumo="Evolução da cobertura: 1 medição, de 42,00% a 42,00%"
+        resumo="Evolução da saturação: 1 medição, de 100,00% a 100,00%"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
     expect(screen.getByRole('group')).toHaveAttribute(
       'aria-label',
-      'Evolução da cobertura: 1 medição, de 42,00% a 42,00%',
+      'Evolução da saturação: 1 medição, de 100,00% a 100,00%',
     )
   })
 
@@ -38,12 +38,12 @@ describe('EvolucaoGrafico', () => {
       <EvolucaoGrafico
         marcador={Date.parse('2026-10-16T08:00:00Z')}
         onMarcadorChange={vi.fn()}
-        resumo="Evolução completa da cobertura"
+        resumo="Evolução completa da saturação"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
-    expect(screen.getByRole('group', { name: 'Evolução completa da cobertura' })).toBeVisible()
+    expect(screen.getByRole('group', { name: 'Evolução completa da saturação' })).toBeVisible()
   })
 
   it('descreve a previsão pelo limiar de troca recebido, sem percentual fixo', () => {
@@ -51,12 +51,12 @@ describe('EvolucaoGrafico', () => {
       <EvolucaoGrafico
         limiarTrocar={30}
         previsaoTroca={{ inicio: Date.parse('2026-11-01T00:00:00Z'), fim: Date.parse('2026-12-01T00:00:00Z'), rotulo: 'Novembro de 2026' }}
-        resumo="Evolução da cobertura: 1 medição, de 42,00% a 42,00%"
+        resumo="Evolução da saturação: 1 medição, de 100,00% a 100,00%"
         serie={[{ instante: Date.parse('2026-10-16T08:00:00Z'), percentual: 42 }]}
       />,
     )
 
-    expect(screen.getByText('Estimativa ao atingir 30% de cobertura')).toBeVisible()
+    expect(screen.getByText('Estimativa ao atingir 80% de saturação')).toBeVisible()
     expect(screen.queryByText(/70\s*%/)).not.toBeInTheDocument()
   })
 })

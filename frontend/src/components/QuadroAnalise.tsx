@@ -1,5 +1,6 @@
 import { memo } from 'react'
-import { formatDataHora, formatPercentual, rotuloStatus } from '../lib/formatacao'
+import { formatDataHora, rotuloStatus } from '../lib/formatacao'
+import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
 import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
@@ -8,6 +9,7 @@ interface QuadroAnaliseProps {
   analise: Analise
   indice: number
   quantidade: number
+  limiarTrocar?: number
 }
 
 /** Apresenta a foto original da análise selecionada no gráfico.
@@ -18,9 +20,10 @@ function QuadroAnalise({
   analise,
   indice,
   quantidade,
+  limiarTrocar,
 }: QuadroAnaliseProps) {
   const dataHora = formatDataHora(analise.analisado_em)
-  const percentual = formatPercentual(analise.percentual_coberto)
+  const percentual = formatIndiceSaturacao(analise.percentual_coberto, limiarTrocar)
   const numeroQuadro = indice + 1
 
   return (
@@ -38,7 +41,7 @@ function QuadroAnalise({
       </header>
 
       <p aria-atomic="true" aria-live="polite" className="sr-only">
-        Quadro {numeroQuadro} de {quantidade}. {dataHora}. Cobertura {percentual}.
+        Quadro {numeroQuadro} de {quantidade}. {dataHora}. Saturação {percentual}.
         {' '}Status {rotuloStatus(analise.status)}.
       </p>
 
@@ -46,7 +49,7 @@ function QuadroAnalise({
         <div className="analysis-frame-card__image-wrap">
           <img
             key={analise.id}
-            alt={`Imagem original da análise de ${dataHora}, cobertura ${percentual}`}
+            alt={`Imagem original da análise de ${dataHora}, saturação ${percentual}`}
             className="analysis-frame-card__image"
             decoding="async"
             height={480}
@@ -56,7 +59,7 @@ function QuadroAnalise({
         </div>
         <figcaption className="analysis-frame-card__caption">
           <span>Quadro {numeroQuadro} de {quantidade}</span>
-          <strong>Cobertura <b>{percentual}</b></strong>
+          <strong>Saturação <b>{percentual}</b></strong>
         </figcaption>
       </figure>
     </section>

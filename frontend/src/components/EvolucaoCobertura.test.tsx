@@ -37,8 +37,8 @@ describe('EvolucaoCobertura', () => {
   it('mantém o gráfico interativo e a foto do registro selecionado sem controles de vídeo', async () => {
     render(<EvolucaoCobertura analisesAtivas={analisesAtivas} diasAteSaturar={12} />)
 
-    expect(await screen.findByText('Cobertura medida')).toBeVisible()
-    expect(screen.getByRole('group', { name: /Evolução da cobertura/ })).toBeVisible()
+    expect(await screen.findByText('Saturação medida')).toBeVisible()
+    expect(screen.getByRole('group', { name: /Evolução da saturação/ })).toBeVisible()
     expect(screen.getByText('Passe o cursor, toque ou use as setas no gráfico para ver a foto daquela data.')).toBeVisible()
     expect(screen.getByRole('img', { name: /Imagem original da análise/ })).toHaveAttribute(
       'src',
@@ -53,7 +53,7 @@ describe('EvolucaoCobertura', () => {
     render(<EvolucaoCobertura analisesAtivas={[analisesAtivas[0]]} />)
 
     expect(screen.getByRole('img', { name: /Imagem da armadilha registrada/ })).toBeVisible()
-    expect(screen.queryByRole('group', { name: /Evolução da cobertura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /Evolução da saturação/ })).not.toBeInTheDocument()
   })
 
   it('não renderiza conteúdo quando não há análises', () => {

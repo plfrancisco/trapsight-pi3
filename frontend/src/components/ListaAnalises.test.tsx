@@ -31,15 +31,15 @@ describe('ListaAnalises', () => {
     render(<ListaAnalises analises={analises} />)
 
     const itens = screen.getAllByRole('listitem')
-    expect(within(itens[0]).getByText('Cobertura: 63,25%')).toBeVisible()
-    expect(within(itens[1]).getByText('Cobertura: 27,50%')).toBeVisible()
+    expect(within(itens[0]).getByText('Saturação: 100,00%')).toBeVisible()
+    expect(within(itens[1]).getByText('Saturação: 100,00%')).toBeVisible()
     expect(analises.map((analise) => analise.id)).toEqual(['a-1', 'a-2'])
 
     const miniatura = within(itens[0]).getByRole('img')
     expect(miniatura).toHaveAttribute('loading', 'lazy')
     expect(miniatura).toHaveAttribute('width', '96')
     expect(miniatura).toHaveAttribute('height', '96')
-    expect(miniatura).toHaveAccessibleName(/cobertura de 63,25%/)
+    expect(miniatura).toHaveAccessibleName(/saturação de 100,00%/)
     expect(within(itens[0]).getByText('Atenção')).toBeVisible()
   })
 

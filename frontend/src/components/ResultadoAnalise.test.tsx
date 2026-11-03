@@ -18,7 +18,9 @@ describe('ResultadoAnalise', () => {
   it('exibe o resultado da API e a imagem original', () => {
     render(<ResultadoAnalise analise={analise} />)
 
-    expect(screen.getByText('64,30%')).toBeVisible()
+    expect(screen.getByText('100,00%')).toBeVisible()
+    expect(screen.getByText('64,30% da placa coberta')).toBeVisible()
+    expect(screen.getByText('Saturação do refil')).toBeVisible()
     expect(screen.getByText('Atenção')).toBeVisible()
     expect(screen.getByText('v1.2.0+a3f9c2e1')).toBeVisible()
     expect(
@@ -29,5 +31,12 @@ describe('ResultadoAnalise', () => {
     expect(
       screen.queryByRole('img', { name: /máscara de segmentação/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('converte a cobertura real em saturação sem esconder o valor medido', () => {
+    render(<ResultadoAnalise analise={{ ...analise, percentual_coberto: 12.5 }} />)
+
+    expect(screen.getByText('50,00%')).toBeVisible()
+    expect(screen.getByText('12,50% da placa coberta')).toBeVisible()
   })
 })

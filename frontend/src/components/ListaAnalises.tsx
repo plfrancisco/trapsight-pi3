@@ -1,4 +1,5 @@
-import { formatDataHora, formatPercentual } from '../lib/formatacao'
+import { formatDataHora } from '../lib/formatacao'
+import { formatIndiceSaturacao } from '../lib/saturacao'
 import type { Analise } from '../services/tipos'
 import { urlImagemAnalise } from '../services/midia'
 import StatusBadge from './StatusBadge'
@@ -6,13 +7,18 @@ import StatusBadge from './StatusBadge'
 interface ListaAnalisesProps {
   analises: Analise[]
   historicoCompleto?: boolean
+  limiarTrocar?: number
 }
 
 /** Exibe medições recentes primeiro e mantém a lista como alternativa ao gráfico.
  * @param props Análises recebidas da API em ordem cronológica crescente.
  * @returns Lista semântica de análises com miniaturas e resultados.
  */
-export default function ListaAnalises({ analises, historicoCompleto = false }: ListaAnalisesProps) {
+export default function ListaAnalises({
+  analises,
+  historicoCompleto = false,
+  limiarTrocar,
+}: ListaAnalisesProps) {
   if (analises.length === 0) return null
 
   return (
@@ -31,7 +37,7 @@ export default function ListaAnalises({ analises, historicoCompleto = false }: L
       <ul className="grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
         {[...analises].reverse().map((analise) => {
           const instante = formatDataHora(analise.analisado_em)
-          const percentual = formatPercentual(analise.percentual_coberto)
+          const percentual = formatIndiceSaturacao(analise.percentual_coberto, limiarTrocar)
 
           return (
             <li
@@ -39,7 +45,7 @@ export default function ListaAnalises({ analises, historicoCompleto = false }: L
               key={analise.id}
             >
               <img
-                alt={`Imagem original da análise de ${instante}, cobertura de ${percentual}`}
+                alt={`Imagem original da análise de ${instante}, saturação de ${percentual}`}
                 className="size-24 shrink-0 rounded-xl bg-slate-100 object-cover"
                 height={96}
                 loading="lazy"
@@ -48,7 +54,7 @@ export default function ListaAnalises({ analises, historicoCompleto = false }: L
               />
               <div className="min-w-0 space-y-2">
                 <h3 className="font-semibold text-slate-950">{instante}</h3>
-                <p className="text-sm text-slate-700">Cobertura: {percentual}</p>
+                <p className="text-sm text-slate-700">Saturação: {percentual}</p>
                 <StatusBadge status={analise.status} />
               </div>
             </li>

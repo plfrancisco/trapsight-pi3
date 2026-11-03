@@ -14,6 +14,7 @@ import {
 import { LIMIAR_ATENCAO, LIMIAR_TROCAR } from '../lib/limiares'
 import { PALETA_STATUS } from '../lib/paleta'
 import type { PontoCobertura } from '../lib/cobertura'
+import { indiceSaturacao } from '../lib/saturacao'
 import { formatPercentual } from '../lib/formatacao'
 import type { MesPrevistoTroca } from '../lib/previsaoTroca'
 
@@ -46,7 +47,7 @@ function formatTooltipData(instante: number): string {
 
 /** Renderiza a série fornecida com limiares e um marcador temporal opcional.
  * @param props Série já transformada, rótulo acessível e marcador em milissegundos.
- * @returns Gráfico responsivo de cobertura no ciclo ativo.
+ * @returns Gráfico responsivo de saturação no ciclo ativo.
  */
 function EvolucaoGrafico({
   serie,
@@ -56,6 +57,8 @@ function EvolucaoGrafico({
   limiarTrocar = LIMIAR_TROCAR,
   onMarcadorChange,
 }: EvolucaoGraficoProps) {
+  // O limiar de troca em cobertura real vira o índice 80 na escala de saturação.
+  const indiceTroca = indiceSaturacao(limiarTrocar, limiarTrocar)
   const arrastando = useRef(false)
   const gradienteId = `cobertura-${useId().replaceAll(':', '')}`
   const primeiroInstante = serie[0]?.instante ?? 0
@@ -158,7 +161,7 @@ function EvolucaoGrafico({
       <div className="evolution-chart-card__header">
         <div className="evolution-chart-card__series">
           <span aria-hidden="true" className="evolution-chart-card__series-mark" />
-          <span>Cobertura medida</span>
+          <span>Saturação medida</span>
         </div>
         {previsaoTroca ? (
           <div className="evolution-chart-card__forecast">
@@ -166,7 +169,7 @@ function EvolucaoGrafico({
             <span className="evolution-chart-card__forecast-copy">
               <span>Previsão de troca</span>
               <strong>{previsaoTroca.rotulo}</strong>
-              <small>Estimativa ao atingir {limiarTrocar.toLocaleString('pt-BR')}% de cobertura</small>
+              <small>Estimativa ao atingir {indiceTroca.toLocaleString('pt-BR')}% de saturação</small>
             </span>
           </div>
         ) : null}
@@ -237,7 +240,7 @@ function EvolucaoGrafico({
                 boxShadow: 'var(--app-shadow-control)',
               }}
               cursor={{ stroke: 'var(--app-primary)', strokeDasharray: '4 4' }}
-              formatter={(valor) => [formatPercentual(Number(valor)), 'Cobertura']}
+              formatter={(valor) => [formatPercentual(Number(valor)), 'Saturação']}
               labelFormatter={(valor) => formatTooltipData(Number(valor))}
               labelStyle={{ color: 'var(--app-muted)' }}
               itemStyle={{ color: 'var(--app-primary-strong)' }}
@@ -260,7 +263,7 @@ function EvolucaoGrafico({
               stroke={PALETA_STATUS.atencao.linha}
               strokeDasharray="6 4"
               strokeOpacity={0.72}
-              y={LIMIAR_ATENCAO}
+              y={indiceSaturacao(LIMIAR_ATENCAO, limiarTrocar)}
             />
             <ReferenceLine
               label={{
@@ -273,7 +276,7 @@ function EvolucaoGrafico({
               stroke={PALETA_STATUS.trocar.linha}
               strokeDasharray="6 4"
               strokeOpacity={0.72}
-              y={limiarTrocar}
+              y={indiceTroca}
             />
             {marcador === undefined ? null : (
               <ReferenceLine stroke={PALETA_STATUS.ok.linha} x={marcador} />
@@ -292,7 +295,7 @@ function EvolucaoGrafico({
                 stroke: 'var(--app-primary-strong)',
                 strokeWidth: 2.5,
               }}
-              name="Cobertura"
+              name="Saturação"
               stroke="var(--app-primary-strong)"
               strokeWidth={3.25}
               type="linear"
