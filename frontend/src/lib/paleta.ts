@@ -2,7 +2,7 @@
  * As classes do StatusBadge permanecem literais para que o Tailwind as detecte.
  */
 export const PALETA_STATUS = {
-  ok: { linha: '#16A34A', texto: '#166534' },
-  atencao: { linha: '#F59E0B', texto: '#92400E' },
-  trocar: { linha: '#DC2626', texto: '#991B1B' },
+  ok: { linha: 'var(--app-primary)', texto: 'var(--app-primary-strong)' },
+  atencao: { linha: 'var(--app-attention)', texto: 'var(--app-attention)' },
+  trocar: { linha: 'var(--app-danger)', texto: 'var(--app-danger)' },
 }

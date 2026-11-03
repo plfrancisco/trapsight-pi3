@@ -76,7 +76,7 @@ export default function AcaoExcluirArmadilha({
         className={classesBotao(
           'discreto',
           'padrao',
-          'text-red-700 hover:bg-red-50 focus-visible:outline-red-600',
+          'text-app-danger hover:bg-app-danger-soft focus-visible:outline-app-danger',
         )}
         onClick={abrir}
         ref={(element) => { acionadorRef.current = element }}
@@ -93,7 +93,7 @@ export default function AcaoExcluirArmadilha({
       >
         <div className="space-y-4 p-5 sm:p-6">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-700">
+            <p className="text-xs font-bold text-app-danger">
               Remover equipamento
             </p>
             <h2 className="mt-2 text-xl font-semibold" id="titulo-exclusao-armadilha">

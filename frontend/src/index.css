@@ -18,6 +18,8 @@
   --color-app-primary-hover: var(--app-primary-hover);
   --color-app-primary-soft: var(--app-primary-soft);
   --color-app-on-primary: var(--app-on-primary);
+  --color-app-danger: var(--app-danger);
+  --color-app-danger-soft: var(--app-danger-soft);
 }
 
 :root {
@@ -40,7 +42,7 @@
   --app-primary-soft: #e8f3e9;
   --app-primary-soft-text: #275b3b;
   --app-on-primary: #ffffff;
-  --app-attention: #a56916;
+  --app-attention: #875510;
   --app-attention-soft: #fff4df;
   --app-danger: #a84f45;
   --app-danger-soft: #fbefec;
