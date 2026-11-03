@@ -28,6 +28,9 @@
   font-family: "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --app-font-body: "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --app-font-heading: "Sora", "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
 
   --app-bg: #0a1316;
   --app-surface: #111c20;
@@ -109,7 +112,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: "Sora", "Public Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--app-font-heading);
   text-wrap: balance;
 }
 
@@ -3041,5 +3044,509 @@ html { scroll-padding-block: 24px 112px; }
   .login-form-content form {
     gap: 18px;
     padding: 20px;
+  }
+}
+
+/* Data terminal: the shell stays quiet so the saturation readings carry the attention. */
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 0;
+  min-height: 100dvh;
+  padding: 0;
+  background: var(--app-bg);
+}
+
+.app-shell--compact {
+  grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.app-sidebar,
+.app-shell--compact .app-sidebar {
+  position: sticky;
+  top: 0;
+  width: auto;
+  height: 100dvh;
+  min-height: 0;
+  flex-basis: auto;
+  padding: 12px 8px;
+  border: 0;
+  border-right: 1px solid var(--app-line);
+  border-radius: 0;
+  background: var(--app-sidebar-bg);
+  box-shadow: none;
+}
+
+.app-shell--compact .app-sidebar {
+  width: 56px;
+  padding-inline: 6px;
+}
+
+.sidebar-brand-row,
+.app-shell--compact .sidebar-brand-row {
+  min-height: 40px;
+  justify-content: center;
+  gap: 8px;
+  padding: 0;
+}
+
+.sidebar-brand,
+.app-shell--compact .sidebar-brand {
+  width: 40px;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.app-shell--compact .sidebar-brand .brand-wordmark {
+  display: none;
+}
+
+.sidebar-collapse,
+.account-action,
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--app-sidebar-text);
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.sidebar-collapse:hover,
+.account-action:hover,
+.theme-toggle:hover {
+  transform: none;
+  border-color: transparent;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+}
+
+.app-shell--compact .sidebar-brand-row {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-shell--compact .sidebar-collapse {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+}
+
+.sidebar-navigation {
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.sidebar-group-label {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sidebar-group-label--spaced {
+  margin-top: 16px;
+}
+
+.app-shell--compact .sidebar-group-label {
+  width: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.sidebar-link,
+.app-shell--compact .sidebar-link {
+  width: 40px;
+  min-height: 44px;
+  justify-content: center;
+  gap: 0;
+  margin-inline: auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--app-sidebar-text);
+  background: transparent;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.sidebar-link:hover {
+  transform: none;
+  color: var(--app-sidebar-text);
+  background: color-mix(in srgb, var(--app-sidebar-text) 9%, transparent);
+}
+
+.sidebar-link--active,
+:root[data-theme="escuro"] .sidebar-link--active {
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  box-shadow: none;
+}
+
+.sidebar-link-label,
+.app-shell--compact .sidebar-link-label {
+  overflow: hidden;
+  transition: none;
+}
+
+.app-shell--compact .sidebar-link-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.sidebar-bottom {
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-color: color-mix(in srgb, var(--app-sidebar-text) 15%, transparent);
+}
+
+.sidebar-account {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.account-avatar {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 42%, transparent);
+  border-radius: 50%;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  font-family: var(--app-font-mono, "IBM Plex Mono", monospace);
+  font-weight: 500;
+}
+
+.sidebar-account-name {
+  color: var(--app-sidebar-text);
+}
+
+.sidebar-account-email {
+  color: var(--app-muted);
+}
+
+.app-shell--compact .sidebar-account-copy {
+  display: none;
+}
+
+.sidebar-utilities {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.sidebar-utilities .theme-toggle,
+.sidebar-utilities .account-action {
+  display: inline-grid;
+  min-width: 40px;
+  min-height: 40px;
+  place-items: center;
+}
+
+.sidebar-utilities .theme-toggle__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.app-workspace {
+  min-width: 0;
+  background: var(--app-bg);
+}
+
+.workspace-topbar {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 24px;
+  padding: 0 32px;
+  border: 0;
+  border-bottom: 1px solid var(--app-line);
+  border-radius: 0;
+  background: var(--app-bg);
+  box-shadow: none;
+}
+
+.topbar-context {
+  flex: 0 0 auto;
+  gap: 9px;
+  color: var(--app-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.topbar-context-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--app-accent);
+  box-shadow: none;
+}
+
+.topbar-separator {
+  color: var(--app-muted);
+}
+
+.topbar-current-page {
+  color: var(--app-text);
+}
+
+.topbar-search {
+  display: flex;
+  width: min(100%, 520px);
+  min-width: 180px;
+  height: 40px;
+  align-items: center;
+  gap: 10px;
+  margin-inline: auto;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  color: var(--app-muted);
+  background: var(--app-surface);
+}
+
+.topbar-search:focus-within {
+  border-color: var(--app-focus);
+}
+
+.topbar-search > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
+.topbar-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--app-text);
+  background: transparent;
+  font-size: 13px;
+}
+
+.topbar-search input::placeholder {
+  color: var(--app-muted);
+  opacity: 1;
+}
+
+.topbar-search kbd {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+  color: var(--app-muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.topbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-primary {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--app-on-primary);
+  background: var(--app-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.topbar-primary:hover {
+  transform: translateY(-1px);
+  background: var(--app-primary-hover);
+}
+
+.topbar-primary svg {
+  width: 17px;
+  height: 17px;
+}
+
+.topbar-mobile-utilities {
+  display: none;
+}
+
+.app-main {
+  width: 100%;
+  max-width: 1760px;
+  min-width: 0;
+  margin-inline: auto;
+  padding: 32px clamp(24px, 3vw, 44px) 48px;
+  background: transparent;
+}
+
+.app-main :is(h1, h2, h3, h4, [id]) {
+  scroll-margin-top: 76px;
+}
+
+@media (max-width: 1000px) {
+  .app-shell,
+  .app-shell--compact {
+    display: block;
+    min-height: 100dvh;
+    padding: 0;
+  }
+
+  .app-sidebar,
+  .app-shell--compact .app-sidebar {
+    display: none;
+  }
+
+  .workspace-topbar {
+    min-height: 60px;
+    gap: 16px;
+    padding-inline: 24px;
+  }
+
+  .topbar-mobile-utilities {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .topbar-mobile-utilities .theme-toggle,
+  .topbar-mobile-utilities .account-action {
+    color: var(--app-text);
+  }
+
+  .app-main {
+    padding: 28px 24px 104px;
+  }
+}
+
+@media (max-width: 720px) {
+  .workspace-topbar {
+    min-height: 56px;
+    gap: 10px;
+    padding-inline: 16px;
+  }
+
+  .topbar-context {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .topbar-search {
+    min-width: 0;
+    height: 38px;
+    gap: 7px;
+    margin: 0;
+    padding-inline: 9px;
+  }
+
+  .topbar-search input {
+    font-size: 12px;
+  }
+
+  .topbar-search kbd,
+  .topbar-primary {
+    display: none;
+  }
+
+  .app-main {
+    padding: 22px 16px 104px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar-context-mark,
+  .topbar-separator,
+  .topbar-current-page {
+    display: none;
+  }
+
+  .topbar-context {
+    font-size: 13px;
+  }
+
+  .topbar-search {
+    flex: 1 1 auto;
+  }
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  z-index: 30;
+  right: auto;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
+  width: min(calc(100% - 24px), 520px);
+  min-height: 64px;
+  max-width: 520px;
+  justify-content: space-around;
+  gap: 4px;
+  margin: 0;
+  padding: 7px;
+  transform: translateX(-50%);
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: none;
+}
+
+.mobile-nav-link {
+  min-width: 56px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.mobile-nav-link svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mobile-nav-link--active {
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--app-surface));
+}
+
+@media (min-width: 1001px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .mobile-bottom-nav {
+    display: flex;
   }
 }

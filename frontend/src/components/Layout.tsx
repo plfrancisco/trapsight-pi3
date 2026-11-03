@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 import { useTema } from '../hooks/useTema'
@@ -51,9 +51,9 @@ function IconeNavegacao({ tipo }: IconeNavegacaoProps) {
  */
 function lerSidebarRecolhida(): boolean {
   try {
-    return window.localStorage.getItem(CHAVE_SIDEBAR) === 'sim'
+    return window.localStorage.getItem(CHAVE_SIDEBAR) !== 'nao'
   } catch {
-    return false
+    return true
   }
 }
 
@@ -64,6 +64,29 @@ export default function Layout() {
   const { tema, alternarTema } = useTema()
   const [erroSaida, setErroSaida] = useState<string | null>(null)
   const [sidebarRecolhida, setSidebarRecolhida] = useState(lerSidebarRecolhida)
+  const [termoBusca, setTermoBusca] = useState('')
+  const campoBuscaRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    function tratarAtalho(evento: KeyboardEvent) {
+      if (
+        campoBuscaRef.current &&
+        (evento.ctrlKey || evento.metaKey) &&
+        evento.key.toLocaleLowerCase() === 'k'
+      ) {
+        evento.preventDefault()
+        campoBuscaRef.current?.focus()
+      }
+
+      if (evento.key === 'Escape' && document.activeElement === campoBuscaRef.current) {
+        setTermoBusca('')
+        campoBuscaRef.current?.blur()
+      }
+    }
+
+    window.addEventListener('keydown', tratarAtalho)
+    return () => window.removeEventListener('keydown', tratarAtalho)
+  }, [])
 
   useEffect(() => {
     try {
@@ -134,22 +157,22 @@ export default function Layout() {
 
         <nav aria-label="Navegação principal" className="sidebar-navigation" id="navegacao-principal">
           <p className="sidebar-group-label">Monitoramento</p>
-          <NavLink aria-label="Dashboard" className={classeLink} end title={sidebarRecolhida ? 'Dashboard' : undefined} to="/">
+          <NavLink aria-label="Dashboard" className={classeLink} end title="Dashboard" to="/">
             <IconeNavegacao tipo="painel" />
             <span className="sidebar-link-label">Dashboard</span>
           </NavLink>
 
           <p className="sidebar-group-label sidebar-group-label--spaced">Operação</p>
-          <NavLink aria-label="Nova análise" className={classeLink} end title={sidebarRecolhida ? 'Nova análise' : undefined} to="/analises/nova">
+          <NavLink aria-label="Nova análise" className={classeLink} end title="Nova análise" to="/analises/nova">
             <IconeNavegacao tipo="analise" />
             <span className="sidebar-link-label">Nova análise</span>
           </NavLink>
-          <NavLink aria-label="Nova armadilha" className={classeLink} end title={sidebarRecolhida ? 'Nova armadilha' : undefined} to="/armadilhas/nova">
+          <NavLink aria-label="Nova armadilha" className={classeLink} end title="Nova armadilha" to="/armadilhas/nova">
             <IconeNavegacao tipo="armadilha" />
             <span className="sidebar-link-label">Nova armadilha</span>
           </NavLink>
           {usuario?.papel === 'gerente' ? (
-            <NavLink aria-label="Contas" className={classeLink} title={sidebarRecolhida ? 'Contas' : undefined} to="/contas">
+            <NavLink aria-label="Contas" className={classeLink} title="Contas" to="/contas">
               <IconeNavegacao tipo="contas" />
               <span className="sidebar-link-label">Contas</span>
             </NavLink>
@@ -168,6 +191,23 @@ export default function Layout() {
               </span>
             </div>
           ) : null}
+          <div className="sidebar-utilities">
+            <ControleTema compacto onAlternar={alternarTema} tema={tema} />
+            {ativa && usuario ? (
+              <>
+                <Link aria-label="Alterar senha" className="account-action" title="Alterar senha" to="/conta/senha">
+                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
+                    <path d="M7 10V7a5 5 0 0 1 10 0v3m-12 0h14v10H5V10Zm7 4v2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+                  </svg>
+                </Link>
+                <button aria-label="Sair" className="account-action" onClick={() => void sair()} title="Sair" type="button">
+                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
+                    <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+                  </svg>
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
       </aside>
 
@@ -185,29 +225,58 @@ export default function Layout() {
             <span aria-hidden="true" className="topbar-separator">/</span>
             <span className="topbar-current-page">{tituloDaRota}</span>
           </div>
+          {pathname === '/' ? (
+            <label className="topbar-search">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                <circle cx="8.75" cy="8.75" r="5.75" stroke="currentColor" strokeWidth="1.5" />
+                <path d="m13 13 4 4" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+              </svg>
+              <span className="sr-only">Buscar armadilha</span>
+              <input
+                aria-keyshortcuts="Control+K Meta+K"
+                autoComplete="off"
+                name="busca_armadilha"
+                onChange={(evento) => setTermoBusca(evento.currentTarget.value)}
+                placeholder="Buscar armadilha"
+                ref={campoBuscaRef}
+                type="search"
+                value={termoBusca}
+              />
+              <kbd aria-hidden="true">Ctrl K</kbd>
+            </label>
+          ) : null}
           <div className="topbar-actions">
-            <ControleTema compacto onAlternar={alternarTema} tema={tema} />
-            {ativa && usuario ? (
-              <>
-                <span className="topbar-user" title={usuario.email}>{usuario.nome}</span>
-                <Link aria-label="Alterar senha" className="account-action" title="Alterar senha" to="/conta/senha">
-                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                    <path d="M7 10V7a5 5 0 0 1 10 0v3m-12 0h14v10H5V10Zm7 4v2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                  </svg>
-                </Link>
-                <button aria-label="Sair" className="account-action" onClick={() => void sair()} title="Sair" type="button">
-                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                    <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                  </svg>
-                </button>
-              </>
+            {pathname === '/' ? (
+              <Link aria-label="Nova análise" className="topbar-primary" to="/analises/nova">
+                <svg aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                  <path d="M10 3v14M3 10h14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+                </svg>
+                <span>Nova análise</span>
+              </Link>
             ) : null}
+            <div className="topbar-mobile-utilities">
+              <ControleTema compacto onAlternar={alternarTema} tema={tema} />
+              {ativa && usuario ? (
+                <>
+                  <Link aria-label="Alterar senha" className="account-action" title="Alterar senha" to="/conta/senha">
+                    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
+                      <path d="M7 10V7a5 5 0 0 1 10 0v3m-12 0h14v10H5V10Zm7 4v2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+                    </svg>
+                  </Link>
+                  <button aria-label="Sair" className="account-action" onClick={() => void sair()} title="Sair" type="button">
+                    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
+                      <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+                    </svg>
+                  </button>
+                </>
+              ) : null}
+            </div>
           </div>
         </header>
 
         <main className="app-main" id="conteudo-principal" tabIndex={-1}>
           {erroSaida ? <MensagemErro erro={erroSaida} /> : null}
-          <Outlet />
+          <Outlet context={{ termoBusca, setTermoBusca }} />
         </main>
       </div>
 

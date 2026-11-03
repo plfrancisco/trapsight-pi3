@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -58,8 +58,9 @@ describe('Layout e a conta do usuário', () => {
     montar(true)
 
     expect(await screen.findByText('ana@exemplo.com')).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Alterar senha' })).toHaveAttribute('href', '/conta/senha')
-    expect(screen.getByRole('button', { name: 'Sair' })).toBeVisible()
+    expect(screen.getAllByRole('link', { name: 'Alterar senha' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Alterar senha' })[0]).toHaveAttribute('href', '/conta/senha')
+    expect(screen.getAllByRole('button', { name: 'Sair' })).toHaveLength(2)
   })
 
   it('não mostra a área da conta com a autenticação desligada', () => {
@@ -76,9 +77,22 @@ describe('Layout e a conta do usuário', () => {
     const pessoa = userEvent.setup()
 
     montar(true)
-    await pessoa.click(await screen.findByRole('button', { name: 'Sair' }))
+    await pessoa.click((await screen.findAllByRole('button', { name: 'Sair' }))[0])
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível encerrar a sessão')
     await waitFor(() => expect(screen.getByText('ana@exemplo.com')).toBeVisible())
+  })
+
+  it('foca a busca do dashboard pelo atalho e limpa ao pressionar Escape', () => {
+    montar(false)
+    const busca = screen.getByRole('searchbox', { name: 'Buscar armadilha' })
+
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+    expect(busca).toHaveFocus()
+
+    fireEvent.change(busca, { target: { value: 'ARM-001' } })
+    fireEvent.keyDown(busca, { key: 'Escape' })
+    expect(busca).toHaveValue('')
+    expect(busca).not.toHaveFocus()
   })
 })
