@@ -1,10 +1,10 @@
-import { memo, useCallback, useId, useRef, type KeyboardEvent } from 'react'
+import { memo, useCallback, useRef, type KeyboardEvent } from 'react'
 import {
-  Area,
   CartesianGrid,
   ComposedChart,
   Line,
   ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -57,10 +57,11 @@ function EvolucaoGrafico({
   limiarTrocar = LIMIAR_TROCAR,
   onMarcadorChange,
 }: EvolucaoGraficoProps) {
-  // O limiar de troca em cobertura real vira o índice 80 na escala de saturação.
+  // A conversão existente mantém atenção em 40 e troca em 80 na escala do gráfico.
+  const indiceAtencao = indiceSaturacao(LIMIAR_ATENCAO, limiarTrocar)
   const indiceTroca = indiceSaturacao(limiarTrocar, limiarTrocar)
+  const niveisEixo = [...new Set([0, indiceAtencao, indiceTroca, 100])].sort((a, b) => a - b)
   const arrastando = useRef(false)
-  const gradienteId = `cobertura-${useId().replaceAll(':', '')}`
   const primeiroInstante = serie[0]?.instante ?? 0
   const ultimoInstante = serie.at(-1)?.instante ?? primeiroInstante
   const dominioInstante: [number, number] = [
@@ -158,12 +159,8 @@ function EvolucaoGrafico({
       role="group"
       tabIndex={0}
     >
-      <div className="evolution-chart-card__header">
-        <div className="evolution-chart-card__series">
-          <span aria-hidden="true" className="evolution-chart-card__series-mark" />
-          <span>Saturação medida</span>
-        </div>
-        {previsaoTroca ? (
+      {previsaoTroca ? (
+        <div className="evolution-chart-card__header">
           <div className="evolution-chart-card__forecast">
             <span aria-hidden="true" className="evolution-chart-card__forecast-mark" />
             <span className="evolution-chart-card__forecast-copy">
@@ -172,8 +169,8 @@ function EvolucaoGrafico({
               <small>Estimativa ao atingir {indiceTroca.toLocaleString('pt-BR')}% de saturação</small>
             </span>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className="evolution-chart-card__plot">
         <ResponsiveContainer height="100%" width="100%">
           <ComposedChart
@@ -188,18 +185,26 @@ function EvolucaoGrafico({
             onTouchMove={moverArrasto}
             onTouchStart={iniciarArrasto}
           >
-            <defs>
-              <linearGradient id={gradienteId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="var(--app-primary)" stopOpacity={0.25} />
-                <stop offset="72%" stopColor="var(--app-primary)" stopOpacity={0.08} />
-                <stop offset="100%" stopColor="var(--app-primary)" stopOpacity={0.01} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              horizontal
-              stroke="var(--app-line)"
-              strokeDasharray="3 7"
-              vertical={false}
+            <ReferenceArea
+              y1={0}
+              y2={indiceAtencao}
+              fill="var(--app-status-ok-soft)"
+              fillOpacity={0.58}
+              strokeOpacity={0}
+            />
+            <ReferenceArea
+              y1={indiceAtencao}
+              y2={indiceTroca}
+              fill="var(--app-attention-soft)"
+              fillOpacity={0.58}
+              strokeOpacity={0}
+            />
+            <ReferenceArea
+              y1={indiceTroca}
+              y2={100}
+              fill="var(--app-danger-soft)"
+              fillOpacity={0.58}
+              strokeOpacity={0}
             />
             {previsaoTroca ? (
               <ReferenceArea
@@ -207,11 +212,12 @@ function EvolucaoGrafico({
                 x2={previsaoTroca.fim}
                 y1={0}
                 y2={100}
-                fill="var(--app-attention-soft)"
-                fillOpacity={0.12}
+                fill="var(--app-chart)"
+                fillOpacity={0.06}
                 strokeOpacity={0}
               />
             ) : null}
+            <CartesianGrid horizontal stroke="var(--app-line)" vertical={false} />
             <XAxis
               dataKey="instante"
               domain={dominioInstante}
@@ -225,6 +231,7 @@ function EvolucaoGrafico({
             />
             <YAxis
               domain={[0, 100]}
+              ticks={niveisEixo}
               axisLine={false}
               tickLine={false}
               tick={{ fill: 'var(--app-muted)', fontSize: 11 }}
@@ -234,73 +241,69 @@ function EvolucaoGrafico({
             <Tooltip
               contentStyle={{
                 border: '1px solid var(--app-line)',
-                borderRadius: 14,
+                borderRadius: 8,
                 color: 'var(--app-text)',
                 background: 'var(--app-surface)',
-                boxShadow: 'var(--app-shadow-control)',
+                boxShadow: 'none',
               }}
               cursor={{ stroke: 'var(--app-primary)', strokeDasharray: '4 4' }}
               formatter={(valor) => [formatPercentual(Number(valor)), 'Saturação']}
               labelFormatter={(valor) => formatTooltipData(Number(valor))}
               labelStyle={{ color: 'var(--app-muted)' }}
-              itemStyle={{ color: 'var(--app-primary-strong)' }}
-            />
-            <Area
-              dataKey="percentual"
-              fill={`url(#${gradienteId})`}
-              isAnimationActive={false}
-              stroke="none"
-              type="linear"
+              itemStyle={{ color: 'var(--app-chart)' }}
             />
             <ReferenceLine
               label={{
-                value: 'Atenção',
+                value: `Atenção · ${indiceAtencao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}%`,
                 position: 'insideTopRight',
                 fill: PALETA_STATUS.atencao.texto,
                 fontSize: 12,
-                fontWeight: 700,
+                fontWeight: 500,
               }}
               stroke={PALETA_STATUS.atencao.linha}
-              strokeDasharray="6 4"
-              strokeOpacity={0.72}
-              y={indiceSaturacao(LIMIAR_ATENCAO, limiarTrocar)}
+              strokeDasharray="5 5"
+              y={indiceAtencao}
             />
             <ReferenceLine
               label={{
-                value: 'Trocar',
+                value: `Trocar · ${indiceTroca.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}%`,
                 position: 'insideTopRight',
                 fill: PALETA_STATUS.trocar.texto,
                 fontSize: 12,
-                fontWeight: 700,
+                fontWeight: 500,
               }}
               stroke={PALETA_STATUS.trocar.linha}
-              strokeDasharray="6 4"
-              strokeOpacity={0.72}
+              strokeDasharray="5 5"
               y={indiceTroca}
             />
             {marcador === undefined ? null : (
-              <ReferenceLine stroke={PALETA_STATUS.ok.linha} x={marcador} />
+              <ReferenceLine stroke="var(--app-chart)" x={marcador} />
             )}
             <Line
               isAnimationActive={false}
               activeDot={{
-                r: 7,
+                r: 6,
                 fill: 'var(--app-surface)',
-                stroke: 'var(--app-primary-strong)',
-                strokeWidth: 3,
-              }}
-              dataKey="percentual"
-              dot={{
-                fill: 'var(--app-surface)',
-                r: 4,
-                stroke: 'var(--app-primary-strong)',
+                stroke: 'var(--app-chart)',
                 strokeWidth: 2.5,
               }}
+              dataKey="percentual"
+              dot={false}
               name="Saturação"
-              stroke="var(--app-primary-strong)"
-              strokeWidth={3.25}
+              stroke="var(--app-chart)"
+              strokeWidth={2.5}
               type="linear"
             />
+            {serie.length > 0 ? (
+              <ReferenceDot
+                x={serie.at(-1)?.instante}
+                y={serie.at(-1)?.percentual}
+                fill="var(--app-chart)"
+                r={3.5}
+                stroke="var(--app-surface)"
+                strokeWidth={2}
+              />
+            ) : null}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

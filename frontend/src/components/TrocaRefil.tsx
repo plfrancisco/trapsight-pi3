@@ -88,20 +88,20 @@ export default function TrocaRefil({
       <dialog
         aria-describedby="descricao-confirmacao-troca"
         aria-labelledby="titulo-confirmacao-troca"
-        className="m-auto w-[calc(100%-2rem)] max-w-xl rounded-2xl border border-amber-300 bg-amber-50 p-0 text-slate-950 shadow-xl backdrop:bg-slate-950/50"
+        className="refill-confirmation-dialog m-auto w-[calc(100%-2rem)] max-w-xl rounded-xl border p-0 backdrop:bg-slate-950/50"
         onCancel={handleCancel}
         ref={referenciaDialogo}
       >
-        <div className="space-y-4 p-5">
+        <div className="refill-confirmation-dialog__content space-y-4 p-5">
           <div>
             <h2
-              className="text-lg font-semibold text-slate-950"
+              className="refill-confirmation-dialog__title text-lg font-semibold"
               id="titulo-confirmacao-troca"
             >
               Confirmar troca de refil
             </h2>
             <p
-              className="mt-2 text-sm leading-6 text-slate-800"
+              className="refill-confirmation-dialog__copy mt-2 text-sm leading-6"
               id="descricao-confirmacao-troca"
             >
               Encerrar o refil atual e iniciar um novo hoje? A série de medições

@@ -1,18 +1,32 @@
-/** Identidade visual do produto, com um símbolo que remete à malha da armadilha.
- * @returns O selo vetorial e o nome TrapSight.
+interface MarcaTrapSightProps {
+  variante?: 'automatica' | 'reversa'
+}
+
+/** Exibe o símbolo T com lente e o nome em duas cores da marca.
+ * @param props Variante automática para superfícies de conteúdo ou reversa para a navegação escura.
+ * @returns Assinatura visual vetorial do TrapSight.
  */
-export default function MarcaTrapSight() {
+export default function MarcaTrapSight({ variante = 'automatica' }: MarcaTrapSightProps) {
+  const classeVariante = variante === 'reversa' ? ' brand-lockup--reversed' : ''
+
   return (
-    <>
+    <span className={`brand-lockup${classeVariante}`}>
       <span aria-hidden="true" className="brand-mark">
-        <svg className="size-6" fill="none" viewBox="0 0 28 28">
-          <path d="M9 4.5H6.5a2 2 0 0 0-2 2V9M19 4.5h2.5a2 2 0 0 1 2 2V9M23.5 19v2.5a2 2 0 0 1-2 2H19M9 23.5H6.5a2 2 0 0 1-2-2V19" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-          <rect height="11" rx="1.25" stroke="currentColor" strokeWidth="1.15" width="11" x="8.5" y="8.5" />
-          <path d="M12.17 8.5v11m3.66-11v11M8.5 12.17h11m-11 3.66h11" stroke="currentColor" strokeOpacity=".76" strokeWidth=".75" />
-          <circle cx="15.83" cy="12.17" r="2.1" fill="var(--brand-point)" stroke="currentColor" strokeWidth=".85" />
+        <svg className="brand-mark__symbol" fill="none" viewBox="0 0 120 120">
+          <path
+            className="brand-mark__body"
+            d="M18 5h84a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H80v64a8 8 0 0 1-8 8H48a8 8 0 0 1-8-8V43H18a8 8 0 0 1-8-8V13a8 8 0 0 1 8-8Z"
+          />
+          {/* A lente cobre o encontro entre barra e haste para continuar legível no ícone de 32 px. */}
+          <circle className="brand-mark__lens-halo" cx="60" cy="41" r="23" />
+          <circle className="brand-mark__lens-ring" cx="60" cy="41" r="19" />
+          <circle className="brand-mark__lens-center" cx="60" cy="41" r="12" />
         </svg>
       </span>
-      <span className="brand-wordmark">TrapSight</span>
-    </>
+      <span aria-label="TrapSight" className="brand-wordmark" role="img">
+        <span className="brand-wordmark__trap">Trap</span>
+        <span className="brand-wordmark__sight">Sight</span>
+      </span>
+    </span>
   )
 }

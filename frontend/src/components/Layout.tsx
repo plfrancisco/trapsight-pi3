@@ -138,7 +138,7 @@ export default function Layout() {
       <aside aria-label="Menu principal" className="app-sidebar">
         <div className="sidebar-brand-row">
           <Link aria-label="TrapSight — início" className="sidebar-brand" to="/">
-            <MarcaTrapSight />
+            <MarcaTrapSight variante="reversa" />
           </Link>
           <button
             aria-controls="navegacao-principal"

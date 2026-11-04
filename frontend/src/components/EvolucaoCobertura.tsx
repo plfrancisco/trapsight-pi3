@@ -104,7 +104,6 @@ export default function EvolucaoCobertura({
       className="space-y-4"
     >
       <div>
-        <p className="section-kicker">Refil ativo</p>
         <h2 className="section-title" id="titulo-evolucao">
           Evolução da saturação
         </h2>
@@ -121,7 +120,7 @@ export default function EvolucaoCobertura({
             fallback={(
               <div
                 aria-live="polite"
-                className="surface-panel h-96 animate-pulse rounded-[26px]"
+                className="chart-loading surface-panel h-96 rounded-[26px]"
                 role="status"
               >
                 Carregando gráfico…

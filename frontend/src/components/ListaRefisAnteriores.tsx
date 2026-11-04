@@ -15,12 +15,12 @@ export default function ListaRefisAnteriores({ refis }: ListaRefisAnterioresProp
   return (
     <section
       aria-labelledby="titulo-refis-anteriores"
-      className="surface-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="refill-history surface-panel rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
     >
       <h2 className="section-title" id="titulo-refis-anteriores">
         Refis anteriores
       </h2>
-      <ul className="mt-4 divide-y divide-slate-200">
+      <ul className="refill-history__list mt-4 divide-y divide-slate-200">
         {refis.map((refil) => (
           <li className="py-3 first:pt-0 last:pb-0" key={refil.id}>
             <p className="font-semibold text-slate-950">
