@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -17,7 +17,7 @@ const montarRota = (caminho: string) =>
 
 describe('rotas e navegação', () => {
   it.each([
-    ['/', 'Dashboard'],
+    ['/', 'Visão geral'],
     ['/armadilhas/arm-1', 'Detalhe da armadilha'],
     ['/analises/nova', 'Nova análise'],
     ['/armadilhas/nova', 'Nova armadilha'],
@@ -48,18 +48,19 @@ describe('rotas e navegação', () => {
     const usuario = userEvent.setup()
     montarRota('/')
 
-    expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+    const navegacao = screen.getByRole('navigation', { name: 'Navegação principal' })
+    expect(navegacao).toBeVisible()
+    expect(within(navegacao).getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
       'aria-current',
       'page',
     )
-    expect(screen.getByRole('link', { name: 'Nova análise' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Nova armadilha' })).toBeVisible()
+    expect(within(navegacao).getByRole('link', { name: 'Nova análise' })).toBeVisible()
+    expect(within(navegacao).getByRole('link', { name: 'Nova armadilha' })).toBeVisible()
 
-    await usuario.click(screen.getByRole('link', { name: 'Nova análise' }))
+    await usuario.click(within(navegacao).getByRole('link', { name: 'Nova análise' }))
 
     expect(screen.getByRole('heading', { name: 'Nova análise' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Nova análise' })).toHaveAttribute(
+    expect(within(navegacao).getByRole('link', { name: 'Nova análise' })).toHaveAttribute(
       'aria-current',
       'page',
     )

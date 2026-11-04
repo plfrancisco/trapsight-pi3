@@ -69,7 +69,7 @@ describe('fluxo de acesso', () => {
   it('reage à exigência de troca recebida durante a navegação', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
     montar('/')
-    await screen.findByRole('heading', { name: 'Dashboard', level: 1 })
+    await screen.findByRole('heading', { name: 'Visão geral', level: 1 })
     act(() => notificarTrocaObrigatoria())
     expect(await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })).toBeVisible()
     expect(local()).toBe('/conta/senha')
@@ -102,7 +102,7 @@ describe('fluxo de acesso', () => {
     expect(await screen.findByText(/Senha alterada/)).toBeVisible()
     expect(screen.queryByText(/substitua a senha inicial/)).not.toBeInTheDocument()
     await pessoa.click(screen.getByRole('link', { name: 'Voltar ao painel' }))
-    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible()
     expect(api.getSessao).toHaveBeenCalledTimes(2)
   })
 
@@ -113,8 +113,8 @@ describe('fluxo de acesso', () => {
     vi.mocked(api.logout).mockResolvedValue(undefined)
     montar('/')
     await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })
-    await userEvent.click(screen.getByRole('button', { name: 'Sair' }))
-    expect(await screen.findByRole('heading', { name: 'Entrar', level: 1 })).toBeVisible()
+    await userEvent.click(screen.getAllByRole('button', { name: 'Sair' })[0])
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight', level: 1 })).toBeVisible()
   })
 
   it('recusa URL de Contas ao operador sem carregar contas', async () => {
@@ -139,7 +139,7 @@ describe('fluxo de acesso', () => {
 
     montar('/armadilhas/arm-1?aba=grafico')
 
-    expect(await screen.findByRole('heading', { name: 'Entrar', level: 1 })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight', level: 1 })).toBeVisible()
     expect(local()).toBe('/login')
     expect(screen.queryByRole('heading', { name: 'Detalhe da armadilha' })).not.toBeInTheDocument()
     expect(listArmadilhas).not.toHaveBeenCalled()
@@ -152,11 +152,11 @@ describe('fluxo de acesso', () => {
     montar('/')
 
     expect(screen.getByRole('status')).toHaveTextContent('Carregando')
-    expect(screen.queryByRole('heading', { name: 'Dashboard' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Visão geral' })).not.toBeInTheDocument()
     expect(local()).toBe('/')
 
     await act(async () => resolver({ usuario, csrf_token: 'c' }))
-    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible()
   })
 
   it('depois de entrar volta ao destino original, incluindo a consulta', async () => {
@@ -165,7 +165,7 @@ describe('fluxo de acesso', () => {
     const pessoa = userEvent.setup()
 
     montar('/analises/nova?armadilha=arm-1')
-    await screen.findByRole('heading', { name: 'Entrar' })
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
     await pessoa.type(screen.getByLabelText(/E-mail/), 'ana@exemplo.com')
     await pessoa.type(screen.getByLabelText(/Senha/), 'uma senha bem longa')
     await pessoa.click(screen.getByRole('button', { name: 'Entrar' }))
@@ -179,7 +179,7 @@ describe('fluxo de acesso', () => {
 
     montar('/login')
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible()
     expect(local()).toBe('/')
   })
 
@@ -188,7 +188,7 @@ describe('fluxo de acesso', () => {
 
     montar('/rota-que-nao-existe')
 
-    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight' })).toBeVisible()
     expect(screen.queryByText('Página não encontrada')).not.toBeInTheDocument()
   })
 
@@ -199,7 +199,7 @@ describe('fluxo de acesso', () => {
     await screen.findByRole('heading', { name: 'Nova análise', level: 1 })
     act(() => notificarSessaoExpirada())
 
-    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight' })).toBeVisible()
     expect(screen.getByRole('status')).toHaveTextContent('Sua sessão expirou. Entre novamente.')
     expect(local()).toBe('/login')
   })
@@ -210,10 +210,10 @@ describe('fluxo de acesso', () => {
     const pessoa = userEvent.setup()
 
     montar('/')
-    await screen.findByRole('heading', { name: 'Dashboard', level: 1 })
-    await pessoa.click(screen.getByRole('button', { name: 'Sair' }))
+    await screen.findByRole('heading', { name: 'Visão geral', level: 1 })
+    await pessoa.click(screen.getAllByRole('button', { name: 'Sair' })[0])
 
-    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight' })).toBeVisible()
     expect(screen.queryByText(/expirou/)).not.toBeInTheDocument()
   })
 
@@ -225,8 +225,8 @@ describe('fluxo de acesso', () => {
 
     montar('/analises/nova')
     await screen.findByRole('heading', { name: 'Nova análise', level: 1 })
-    await pessoa.click(screen.getByRole('button', { name: 'Sair' }))
-    await screen.findByRole('heading', { name: 'Entrar' })
+    await pessoa.click(screen.getAllByRole('button', { name: 'Sair' })[0])
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
     await pessoa.type(screen.getByLabelText(/E-mail/), 'ana@exemplo.com')
     await pessoa.type(screen.getByLabelText(/Senha/), 'uma senha bem longa')
     await pessoa.click(screen.getByRole('button', { name: 'Entrar' }))
@@ -243,7 +243,7 @@ describe('fluxo de acesso', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível verificar sua sessão')
     await pessoa.click(screen.getByRole('button', { name: 'Tentar novamente' }))
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible()
   })
 
   it('um destino malicioso no estado de navegação é ignorado (sem open redirect)', async () => {
