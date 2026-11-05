@@ -148,7 +148,7 @@ O frontend usa `VITE_API_URL=http://localhost:8000/api` e funciona com o backend
 
 ## 7. Rodar os testes
 
-**Frontend** (lint, tipos e testes, os mesmos passos do CI):
+**Frontend** (lint, tipos e testes):
 
 ```bash
 cd frontend
@@ -170,7 +170,13 @@ O script procura o banco no projeto Compose chamado `trapsight-dev`. Se você su
 
 Alguns testes são pulados quando faltam o PyTorch ou os dados de treino. Isso é esperado fora de uma máquina de treino.
 
-O **CI** (GitHub Actions, `.github/workflows/ci.yml`) roda a cada push e pull request: lint, formatação, migrações e testes do backend; tipos, lint e testes do frontend; e a verificação das migrações com o papel de produção.
+**Não há CI automático.** O GitHub Actions foi desligado em 05/11/2026, porque o projeto tem um só mantenedor. Antes de publicar, rode você mesmo:
+
+- backend: `scripts/testar-backend.sh "uv run ruff check src tests"`, `scripts/testar-backend.sh "uv run ruff format --check src tests"` e `scripts/testar-backend.sh` (testes);
+- frontend: `npm run lint`, `npm run build` e `npm test`;
+- migrações com o papel de produção: `bash scripts/verificar-migracoes-producao.sh`.
+
+O workflow antigo continua no histórico do Git (por exemplo, no commit da tag `v0.1.0`, em `.github/workflows/ci.yml`) e pode ser restaurado se um dia houver mais pessoas no projeto.
 
 ## 8. Dados de demonstração
 

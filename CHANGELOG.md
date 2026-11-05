@@ -4,6 +4,12 @@ Todas as mudanças relevantes do TrapSight ficam registradas aqui. O formato seg
 
 Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git checkout v0.1.0`.
 
+## [Não lançado]
+
+### Removido
+
+- **CI do GitHub Actions** (`.github/workflows/ci.yml`): o projeto tem um só mantenedor e os testes passam a rodar localmente. O arquivo continua no histórico do Git.
+
 ## [0.1.0] - 2026-11-03
 
 Primeiro protótipo funcional: análise de fotos com o modelo treinado, histórico por refil, previsão de saturação, login por papéis e publicação na Vercel com banco no Supabase.

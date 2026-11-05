@@ -2,7 +2,6 @@
 
 **Visão computacional para medir a saturação de armadilhas adesivas e prever a hora de trocar o refil.**
 
-[![CI](https://github.com/plfrancisco/trapsight-pi3/actions/workflows/ci.yml/badge.svg)](https://github.com/plfrancisco/trapsight-pi3/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)
 ![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-005CED?logo=onnx&logoColor=white)
@@ -124,7 +123,7 @@ Em **desenvolvimento**, o Docker Compose sobe o banco, a API e o frontend. Em **
 | Banco de dados | PostgreSQL (Supabase em produção) |
 | Frontend | React, TypeScript, Vite, Tailwind CSS, Recharts |
 | Infraestrutura | Docker, Docker Compose, Caddy (HTTPS no ambiente de testes de segurança), Vercel, Supabase |
-| Qualidade | Ruff, pytest, ESLint, Vitest, GitHub Actions |
+| Qualidade | Ruff, pytest, ESLint, Vitest |
 | Segurança | OWASP ZAP, Nuclei e uma suíte própria de testes de invasão |
 
 ## Início rápido
@@ -185,7 +184,7 @@ vercel.json     Cabeçalhos de segurança e configuração dos serviços na Verc
 
 ## Qualidade e segurança
 
-O CI do GitHub Actions roda a cada push e pull request: lint, formatação, migrações e testes do backend; tipos, lint e testes do frontend; e a verificação das migrações com o papel de produção.
+Não há CI automático: o projeto tem um só mantenedor, então os testes rodam localmente antes de cada publicação (lint, formatação, migrações e testes do backend; tipos, lint e testes do frontend; e `scripts/verificar-migracoes-producao.sh`). Os comandos estão em [`docs/EXECUCAO.md`](docs/EXECUCAO.md#7-rodar-os-testes).
 
 A segurança entrou no projeto desde o começo:
 

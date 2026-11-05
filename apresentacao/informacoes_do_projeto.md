@@ -98,7 +98,7 @@ O projeto usa tecnologias abertas e populares, organizadas em quatro frentes: in
 | Infraestrutura | Docker e Docker Compose | Sobem o sistema todo com um comando, igual em qualquer computador |
 | Infraestrutura | Caddy | Porta de entrada com HTTPS automático, no ambiente de testes de segurança |
 | Infraestrutura | Vercel e Supabase | Previstos para publicar o site e o banco na internet (ainda não publicados) |
-| Qualidade | pytest, Ruff, ESLint e GitHub Actions | Testes e verificações automáticas a cada alteração do código |
+| Qualidade | pytest, Ruff, ESLint e Vitest | Testes e verificações automáticas, executados localmente antes de cada publicação |
 | Segurança | OWASP ZAP, Nuclei e suíte própria de testes de invasão | Procuram falhas antes de publicar |
 
 ## Segurança e publicação
