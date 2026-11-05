@@ -12,7 +12,7 @@ interface QuadroAnaliseProps {
   limiarTrocar?: number
 }
 
-/** Apresenta a foto original da análise selecionada no gráfico.
+/** Apresenta a imagem com a máscara da análise selecionada no gráfico.
  * @param props Análise selecionada e sua posição na sequência cronológica.
  * @returns Imagem e dados acessíveis do quadro atual.
  */
@@ -53,6 +53,7 @@ function QuadroAnalise({
           imagemClassName="analysis-frame-card__image"
           key={analise.id}
           moldura="analysis-frame-card__image-wrap"
+          variante="mascara"
           width={640}
         />
         <figcaption className="analysis-frame-card__caption">

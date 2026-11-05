@@ -17,7 +17,7 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 - **Redesenho visual** com a identidade petróleo e menta: login, paleta e tipografia, navegação e menu da conta, painel com fila de ação e cartões de operação, favicon, títulos por tela, aviso de alterações não salvas no cadastro e contraste dos alertas nos dois temas.
 - **Página Configurações** (`/configuracoes`), com a escolha do tema claro ou escuro e o acesso à troca de senha; o menu da conta agora reúne Configurações e Sair.
-- **Imagens das análises:** as telas mostram só a foto original enviada. A imagem com a máscara e o botão de alternância, previstos na `v0.1.0`, foram retirados. A máscara continua sendo gerada e guardada pela API.
+- **Imagens das análises:** o resultado da análise e o quadro do registro selecionado voltam a mostrar a foto com a máscara do modelo (área coberta em magenta, com legenda), sem o botão de alternância; se a máscara não carregar, a tela cai para a foto original. Miniaturas e listas seguem com a foto original. O quadro do resultado ficou centralizado e ocupa a largura da coluna.
 - **Tasks arquivadas:** `current_task_modelo.md` e `current_task_autenticacao_hospedagem.md` foram para `.context/task/completed/`; os itens ainda abertos seguem no Trello.
 - **README reescrito** como porta de entrada (cerca de metade do tamanho): problema e solução, resultados e limites do modelo, demonstração com login de teste e pasta de fotos, execução local, testes e links para a documentação.
 

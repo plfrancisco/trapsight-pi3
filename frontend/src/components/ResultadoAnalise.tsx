@@ -8,7 +8,7 @@ interface ResultadoAnaliseProps {
   analise: Analise
 }
 
-/** Apresenta os dados do processamento e a foto original enviada para análise. */
+/** Apresenta os dados do processamento e a imagem com a máscara do modelo. */
 export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
   return (
     <section
@@ -53,7 +53,7 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
       </dl>
 
       <div className="grid gap-5">
-        <figure className="min-w-0">
+        <figure className="mx-auto w-full min-w-0 max-w-3xl">
           <figcaption className="mb-2 text-sm font-semibold text-slate-900">
             Imagem analisada
           </figcaption>
@@ -62,7 +62,9 @@ export default function ResultadoAnalise({ analise }: ResultadoAnaliseProps) {
             descricao="enviada para análise da armadilha"
             height={480}
             imagemClassName="size-full object-contain"
-            moldura="aspect-[4/3] max-h-[36rem] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+            legenda
+            moldura="aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+            variante="mascara"
             width={640}
           />
         </figure>
