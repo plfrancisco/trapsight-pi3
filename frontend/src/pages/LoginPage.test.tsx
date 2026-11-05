@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../services/auth', () => ({
   login: vi.fn(),
@@ -14,6 +14,11 @@ import AuthProvider from '../auth/AuthProvider'
 import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import LoginPage from './LoginPage'
+
+const CHAVE_DISPENSA = 'trapsight:convite-instalacao-dispensado'
+const descritorMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia')
+const descritorUserAgent = Object.getOwnPropertyDescriptor(navigator, 'userAgent')
+const descritorLocalStorage = Object.getOwnPropertyDescriptor(window, 'localStorage')
 
 const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana' }
 
@@ -37,10 +42,49 @@ async function preencher(email: string, senha: string) {
   await pessoa.click(screen.getByRole('button', { name: 'Entrar' }))
 }
 
+function prepararCelularAndroid() {
+  Object.defineProperty(navigator, 'userAgent', {
+    configurable: true,
+    value: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) Chrome/132.0 Mobile',
+  })
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn((media: string) => ({
+      matches: media === '(max-width: 767px)',
+      media,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }) as unknown as MediaQueryList),
+  })
+}
+
+function restaurarDescritor(alvo: object, nome: string, descritor: PropertyDescriptor | undefined) {
+  if (descritor) Object.defineProperty(alvo, nome, descritor)
+  else Reflect.deleteProperty(alvo, nome)
+}
+
 beforeEach(() => {
+  window.dispatchEvent(new Event('appinstalled'))
+  prepararCelularAndroid()
   vi.mocked(api.getSessao).mockReset()
   vi.mocked(api.getSessao).mockRejectedValue(new ApiError('NAO_AUTENTICADO', 'x', 401))
   vi.mocked(api.login).mockReset()
+})
+
+afterEach(() => {
+  window.dispatchEvent(new Event('appinstalled'))
+  restaurarDescritor(window, 'matchMedia', descritorMatchMedia)
+  restaurarDescritor(navigator, 'userAgent', descritorUserAgent)
+  restaurarDescritor(window, 'localStorage', descritorLocalStorage)
+  try {
+    window.localStorage.removeItem(CHAVE_DISPENSA)
+  } catch {
+    // A limpeza de uma preferência de teste não deve mascarar a indisponibilidade do armazenamento.
+  }
 })
 
 describe('LoginPage', () => {
@@ -155,5 +199,41 @@ describe('LoginPage', () => {
       .join(' ')
     expect(armazenado).not.toContain('ana@exemplo.com')
     expect(armazenado).not.toContain('senha-que-nao-pode-vazar')
+  })
+
+  it('mantém a página de login funcional quando localStorage não está disponível', async () => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('Armazenamento bloqueado', 'SecurityError')
+      },
+    })
+
+    montar()
+    expect(await screen.findByRole('heading', { name: 'Entre no TrapSight' })).toBeVisible()
+    expect(screen.getByLabelText(/E-mail/)).toBeVisible()
+  })
+
+  it('persiste a dispensa do convite de instalação e não o exibe novamente', async () => {
+    const pessoa = userEvent.setup()
+    const evento = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      platforms: ['web'],
+      prompt: vi.fn().mockResolvedValue(undefined),
+      userChoice: Promise.resolve({ outcome: 'dismissed' as const, platform: 'web' }),
+    })
+
+    const primeiraMontagem = montar()
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
+    act(() => window.dispatchEvent(evento))
+    expect(await screen.findByRole('complementary', { name: 'Instalar o TrapSight' })).toBeVisible()
+    await pessoa.click(screen.getByRole('button', { name: 'Dispensar convite de instalação' }))
+
+    expect(screen.queryByRole('complementary', { name: 'Instalar o TrapSight' })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(CHAVE_DISPENSA)).toBe('true')
+
+    primeiraMontagem.unmount()
+    montar()
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
+    expect(screen.queryByRole('complementary', { name: 'Instalar o TrapSight' })).not.toBeInTheDocument()
   })
 })

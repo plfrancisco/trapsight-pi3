@@ -10,6 +10,7 @@ import MarcaTrapSight from '../components/MarcaTrapSight'
 import { mensagemDeLogin } from '../lib/autenticacao'
 import { destinoDoEstado } from '../lib/destino'
 import { useTema } from '../hooks/useTema'
+import ConviteInstalacao from '../components/ConviteInstalacao'
 
 /** Autentica o usuário e o leva ao destino que ele tentava acessar.
  * @returns A tela de login, ou o redirecionamento quando já há sessão.
@@ -98,6 +99,8 @@ export default function LoginPage() {
           <p className="login-form-content__intro">
             Acesse seus registros de monitoramento.
           </p>
+
+          <ConviteInstalacao />
 
           {motivoSaida === 'expirou' ? (
             <p className="login-expired-message" role="status">

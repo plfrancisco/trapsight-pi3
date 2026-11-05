@@ -1,5 +1,7 @@
 import { Link, useOutletContext } from 'react-router'
 import type { Tema } from '../hooks/useTema'
+import { useInstalacao } from '../hooks/useInstalacao'
+import Botao from '../components/Botao'
 
 interface ContextoConfiguracoes {
   alternarTema: () => void
@@ -9,6 +11,7 @@ interface ContextoConfiguracoes {
 /** Reúne as preferências visuais e o acesso à segurança da própria conta. */
 export default function ConfiguracoesPage() {
   const { alternarTema, tema } = useOutletContext<ContextoConfiguracoes>()
+  const { podeInstalar, instalado, ehIos, instalar } = useInstalacao()
 
   function selecionarTema(novoTema: Tema) {
     if (novoTema !== tema) alternarTema()
@@ -71,6 +74,51 @@ export default function ConfiguracoesPage() {
           A preferência é salva automaticamente neste navegador.
         </p>
       </section>
+
+      {instalado ? (
+        <section aria-labelledby="settings-install-title" className="surface-panel settings-card">
+          <div className="settings-card__heading">
+            <span aria-hidden="true" className="settings-card__icon">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path d="m5 12 4 4L19 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="settings-card__title" id="settings-install-title">Aplicativo instalado</h2>
+              <p className="settings-card__description">
+                O TrapSight já está disponível na tela inicial deste dispositivo.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : podeInstalar || ehIos ? (
+        <section aria-labelledby="settings-install-title" className="surface-panel settings-card">
+          <div className="settings-card__heading">
+            <span aria-hidden="true" className="settings-card__icon">
+              <svg fill="none" viewBox="0 0 24 24">
+                <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="settings-card__title" id="settings-install-title">Instalar aplicativo</h2>
+              {ehIos ? (
+                <p className="settings-card__description">
+                  No Safari, toque em Compartilhar e depois em Adicionar à Tela de Início.
+                </p>
+              ) : (
+                <p className="settings-card__description">
+                  Adicione o TrapSight à tela inicial para abrir o monitoramento como aplicativo.
+                </p>
+              )}
+            </div>
+          </div>
+          {podeInstalar ? (
+            <Botao className="min-h-11 self-start" onClick={() => void instalar()} variante="primario">
+              Instalar aplicativo
+            </Botao>
+          ) : null}
+        </section>
+      ) : null}
 
       <section aria-labelledby="settings-security-title" className="surface-panel settings-card">
         <div className="settings-card__heading">

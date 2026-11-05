@@ -9,6 +9,12 @@
 > [!NOTE]
 > Protótipo funcional em validação, desenvolvido como Projeto Integrador de Sistemas Inteligentes III na Fatec "Shunji Nishimura", Pompeia. O modelo foi avaliado apenas em imagens sintéticas; a validação com fotos de campo ainda não foi feita.
 
+## Instalar no celular
+
+![QR code para abrir o TrapSight no celular](docs/img/qr-instalacao.png)
+
+Android: toque em **Instalar** no aplicativo. iPhone: no Safari, toque em **Compartilhar → Adicionar à Tela de Início**.
+
 ## O problema e a solução
 
 Empresas de controle de pragas mantêm armadilhas adesivas em mercados e açougues e decidem a troca do refil **olhando a placa**, sem critério objetivo. Trocar cedo gera deslocamento e refil desperdiçado; trocar tarde deixa a armadilha saturada e sem eficácia. O problema foi levantado com uma empresa real do setor, parceira do projeto.
