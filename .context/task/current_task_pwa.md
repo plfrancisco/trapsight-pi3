@@ -1,7 +1,7 @@
 # CURRENT TASK — PWA INSTALÁVEL — Projeto Integrador
 
 **Versão:** 1.1
-**Status:** PROPOSTA (aguarda a confirmação das decisões da seção 4 antes de implementar)
+**Status:** APROVADA em 05/11/2026 (decisões D1 e D2 confirmadas pelo mantenedor; a implementação pode começar por PWA01)
 **Versão alvo do produto:** `v0.2.0` (primeira versão após a `v0.1.0`)
 **Escopo:** tornar o TrapSight instalável como PWA, com convite de instalação dentro do aplicativo. O envio de fotos segue como hoje, pelo seletor de arquivos, com as fotos já homologadas (sem câmera dedicada).
 
@@ -32,7 +32,7 @@ Fatos do código em 05/11/2026 que moldam a task:
 
 ## PWA01 — Manifesto, ícones e metadados
 
-- [ ] `frontend/public/manifest.webmanifest` com `name`, `short_name`, `lang` pt-BR, `start_url` e `scope` em `/`, `display` standalone, `theme_color` `#0a5c66` e `background_color` `#f5f7f6`
+- [ ] Manifesto declarado na configuração do `vite-plugin-pwa` (gera o `manifest.webmanifest` no build) com `name`, `short_name`, `lang` pt-BR, `start_url` e `scope` em `/`, `display` standalone, `theme_color` `#0a5c66` e `background_color` `#f5f7f6`
 - [ ] Ícones PNG de 192 e 512 px, um 512 px *maskable* e o ícone da Apple de 180 px, gerados do logo de referência, em `frontend/public/icons/`
 - [ ] `index.html` com `link rel="manifest"`, `apple-touch-icon` e `theme-color` com `media` para o tema claro e o escuro
 - [ ] Teste automatizado: o manifesto é JSON válido, tem os campos obrigatórios e todos os ícones citados existem
@@ -43,14 +43,15 @@ Fatos do código em 05/11/2026 que moldam a task:
 
 ## PWA02 — Service worker do casco (nunca a API)
 
-- [ ] `frontend/public/sw.js` com cache `trapsight-casco-v1`
+- [ ] `vite-plugin-pwa` instalado como dependência de desenvolvimento (nova dependência, autorizada pelo mantenedor em 05/11/2026), em modo `generateSW`, com versão fixa e cache `trapsight-casco-v1`; o `sw.js` é gerado no build
 - [ ] Navegação: rede primeiro, com queda para o `index.html` em cache quando não houver conexão
 - [ ] `/assets/*` (nomes com hash, imutáveis): cache primeiro
 - [ ] **Qualquer `/api/*`, método diferente de GET e outra origem: direto pela rede, sem nunca gravar em cache** (as respostas trazem fotos e dados de contas)
 - [ ] `activate` apaga caches de versões antigas
 - [ ] Aviso discreto de "sem conexão" quando o casco abre offline: "A análise precisa de internet"
 - [ ] Registro em `main.tsx` somente em produção e quando houver suporte; a versão nova assume na próxima navegação
-- [ ] Testes: uma requisição `/api` nunca chama `cache.put`; um POST não é interceptado; o registro não ocorre em desenvolvimento
+- [ ] Configuração explícita do Workbox: `/api/*` com estratégia `NetworkOnly` e `navigateFallbackDenylist` para `/api`; nada além do casco no precache
+- [ ] Testes: um teste lê o `sw.js` gerado no build e falha se `/api` puder ser servida do cache ou se o precache listar algo fora de `index.html`, `/assets/*` e `/icons/*`; um POST não é interceptado; o registro não ocorre em desenvolvimento
 
 **Especificação:** `../rules/security_spec.md` (nenhum dado autenticado em cache do navegador).
 **Dependências:** PWA01.
@@ -96,17 +97,18 @@ Fatos do código em 05/11/2026 que moldam a task:
 
 | ID | Decisão | Recomendação |
 | --- | --- | --- |
-| D1 | Forma de implementar: manifesto e *service worker* escritos à mão, ou o plugin `vite-plugin-pwa` | **À mão**, sem dependência nova. O plugin é uma dependência nova e exige confirmação expressa. |
-| D2 | O que o aplicativo faz offline | Só abrir o casco com o aviso. Sem fila de envio offline. |
+| D1 | Forma de implementar: manifesto e *service worker* à mão, ou o plugin `vite-plugin-pwa` | **DECIDIDO: plugin `vite-plugin-pwa`** (opção B, confirmada em 05/11/2026). Nova dependência de desenvolvimento, com versão fixa e `/api` configurada como somente rede. |
+| D2 | O que o aplicativo faz offline | **DECIDIDO: opção A** (confirmada em 05/11/2026). Só abrir o casco com o aviso; sem fila de envio offline. |
 
 Decididas pelo mantenedor em 05/11/2026: **sem câmera dedicada** (as decisões de câmera e de redução de foto foram retiradas) e **instalação pelo próprio aplicativo**, sem site institucional por ora.
 
-Até que D1 e D2 sejam confirmadas, esta task **não autoriza implementação**.
+Com D1 e D2 confirmadas, a task **autoriza a implementação**, começando por PWA01.
 
 ---
 
 # 5. Riscos
 
+- **Dependência nova (`vite-plugin-pwa` e Workbox):** esconde a lógica do cache e pode mudar entre versões. Mitigado por versão fixa, configuração explícita de `/api` como somente rede e pelo teste que inspeciona o `sw.js` gerado a cada build.
 - **Cache de dados autenticados:** o maior risco de uma PWA neste sistema. Mitigado pela regra de PWA02: só o casco público é guardado, e `/api` passa sempre pela rede.
 - **Atualização presa:** um `sw.js` com cache longo prenderia usuários numa versão antiga. Mitigado por PWA03.
 - **iOS:** o Safari tem suporte mais restrito a PWA (sem aviso de instalação automático). O uso é instalar manualmente pelo menu Compartilhar.

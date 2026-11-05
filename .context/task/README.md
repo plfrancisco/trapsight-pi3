@@ -22,7 +22,7 @@ outra especialidade, mesmo quando há dependência entre elas — a dependência
 
 | Arquivo | Estado | Especialidade |
 |---|---|---|
-| `current_task_pwa.md` | PROPOSTA | PWA instalável, com convite de instalação dentro do aplicativo (versão alvo v0.2.0). Não autoriza implementação até o mantenedor confirmar as decisões D1 e D2 |
+| `current_task_pwa.md` | APROVADA | PWA instalável, com convite de instalação dentro do aplicativo (versão alvo v0.2.0). Decisões confirmadas: D1 plugin `vite-plugin-pwa`, D2 só o casco offline |
 
 As duas tasks anteriores (modelo e autenticação com hospedagem) foram arquivadas em `completed/` em 05/11/2026; os itens que ficaram em aberto estão como pendências no Trello. Uma nova frente de trabalho nasce como `current_task_<especialidade>.md` neste diretório, depois de aprovada.
 
