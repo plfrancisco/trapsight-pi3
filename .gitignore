@@ -80,6 +80,11 @@ mlruns/
 
 # Skills especializadas de terceiros (ver .context/rules/ai_development_rules.md, seção 3.1)
 .agents/skills/
+.context/skills_exportadas/
+
+# Instruções de ferramentas de IA que não fazem parte do produto
+.github/copilot-instructions.md
+.github/instructions/
 
 # Relatórios de segurança (podem conter detalhes da superfície)
 security/reports/
