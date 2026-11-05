@@ -131,4 +131,54 @@ Com D1 e D2 confirmadas, a task **autoriza a implementação**, começando por P
 
 ---
 
+# 6. Execução em blocos (multiagente)
+
+Cada bloco tem 3 frentes que **não dependem umas das outras e não tocam os mesmos arquivos**, então podem rodar em paralelo, cada agente em uma *worktree* própria. Um bloco só começa depois que o anterior foi integrado e passou em lint, testes e build.
+
+PWA05 foi dividida: **PWA05A** (documentação) e **PWA05B** (verificação), porque só a documentação pode andar em paralelo com outras frentes.
+
+## Bloco 1 — Fundação
+
+| Frente | Task | Arquivos que toca (exclusivos) |
+| --- | --- | --- |
+| A1 | PWA01: manifesto, ícones e metadados | `frontend/package.json` e `package-lock.json` (`vite-plugin-pwa`), `frontend/vite.config.ts` (só o plugin e o manifesto, sem Workbox), `frontend/public/icons/*`, `frontend/index.html` |
+| A2 | PWA04: convite de instalação | `frontend/src/hooks/` (hook de instalação), componente da faixa de login, `ConfiguracoesPage` e `LoginPage` (com testes), imagem do QR code em `docs/` e o link no `README.md` |
+| A3 | PWA03: Vercel e segurança (só configuração) | `vercel.json`, `deploy/vercel-supabase.md`, `.context/rules/security_spec.md` |
+
+- A1, A2 e A3 não compartilham arquivos; a ordem de integração tanto faz.
+- A3 não consegue conferir o resultado no Preview antes do bloco 2 (o `sw.js` ainda não existe); essa conferência fica na PWA05B.
+- O QR code é gerado uma vez e guardado como imagem, sem dependência nova no aplicativo.
+
+**Portão do bloco:** `npm run lint`, `npm test` e `npm run build` verdes na integração.
+
+## Bloco 2 — Comportamento e acabamento
+
+Começa depois do bloco 1 (PWA02 precisa do plugin da PWA01; PWA06 precisa do hook da PWA04).
+
+| Frente | Task | Arquivos que toca (exclusivos) |
+| --- | --- | --- |
+| B1 | PWA02: service worker do casco | `frontend/vite.config.ts` (Workbox), componente do aviso "A análise precisa de internet" montado em `App.tsx` ou `main.tsx` (**nunca** em `Layout.tsx`), teste que lê o `sw.js` gerado |
+| B2 | PWA06: visual do app instalado | `frontend/src/index.css` (ou estilos globais), `Layout.tsx`, componente da navegação inferior, testes |
+| B3 | PWA05A: documentação | `README.md` (seção "Instalar no celular"), `docs/EXECUCAO.md`, `docs/ARQUITETURA.md`, `CHANGELOG.md` |
+
+- B1 é a única frente que mexe em `vite.config.ts`; B2 é a única que mexe em `Layout.tsx`.
+- B3 escreve a documentação com os nomes finais já integrados pelo bloco 1.
+
+**Portão do bloco:** lint, testes e build verdes; o teste do `sw.js` gerado confirma que `/api` nunca vai para o cache.
+
+## Bloco 3 — Verificação (sequencial, uma frente)
+
+- **PWA05B:** DevTools (manifesto sem erro, *service worker* ativo, instalável) no Preview e na produção; Android e iOS em aparelhos reais (ação do mantenedor); teste offline; Cache Storage sem dado de usuário, nem depois do logout.
+- Fechamento da `v0.2.0`: "Não lançado" vira `[0.2.0]` no CHANGELOG e a tag `v0.2.0` é criada **somente com autorização expressa**, junto do push.
+
+## Estimativas (tempo de relógio com as frentes em paralelo)
+
+| Bloco | Mais longa | Total aproximado |
+| --- | --- | --- |
+| 1 | A2, de 1 a 2 horas | 1 a 2 horas |
+| 2 | B2, de 3 a 5 horas | 3 a 5 horas |
+| 3 | PWA05B, 1 hora | 1 hora, mais os testes nos celulares |
+
+---
+
 # FIM DA TASK
