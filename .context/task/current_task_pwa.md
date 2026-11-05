@@ -15,7 +15,7 @@ Permitir que o gerente ou o operador instale o TrapSight na tela inicial do celu
 
 # 2. Escopo
 
-Cobre o manifesto, os ícones, o *service worker* do "casco" do aplicativo, os ajustes de publicação na Vercel e o convite de instalação. **Não cobre** câmera dedicada (o envio segue pelo seletor de arquivos), funcionamento offline da análise (o modelo roda no servidor), fila de envio offline, notificações *push*, site institucional nem publicação em lojas de aplicativos.
+Cobre o manifesto, os ícones, o *service worker* do "casco" do aplicativo, os ajustes de publicação na Vercel e o convite de instalação e o visual próprio do app instalado (só aparência). **Não cobre** câmera dedicada (o envio segue pelo seletor de arquivos), funcionamento offline da análise (o modelo roda no servidor), fila de envio offline, notificações *push*, site institucional nem publicação em lojas de aplicativos.
 
 Fatos do código em 05/11/2026 que moldam a task:
 
@@ -80,6 +80,21 @@ Fatos do código em 05/11/2026 que moldam a task:
 **Dependências:** PWA01.
 **Estimativa:** 1 a 2 horas.
 
+## PWA06 — Visual do aplicativo instalado (só aparência)
+
+Decidido em 05/11/2026: mesmo código, mesmas telas e mesmos fluxos; muda **apenas a aparência** quando o app roda instalado (`display-mode: standalone`). Nenhum fluxo, rota, tela nova ou regra de negócio muda. O site no navegador fica como está.
+
+- [ ] Hook `useModoInstalado` (reaproveitado de PWA04) que marca o `<html>` com um atributo quando o app está instalado, ligando os estilos do modo instalado
+- [ ] Navegação inferior fixa no celular instalado, com os mesmos destinos do menu atual (sem destinos novos), respeitando a área segura (`env(safe-area-inset-*)`)
+- [ ] Cabeçalho compacto e espaçamentos pensados para o polegar (alvos de toque de ao menos 44 px), sem barra de rolagem horizontal
+- [ ] Splash e cores da barra do sistema alinhadas à identidade petróleo e menta, nos temas claro e escuro
+- [ ] Contraste e foco visível preservados nos dois temas
+- [ ] Testes: o modo instalado liga e desliga os estilos; os destinos da navegação inferior são os mesmos do menu; nenhuma rota nova
+
+**Especificação:** `../plan/frontend/telas_spec.md` (navegação) e a identidade visual do redesenho.
+**Dependências:** PWA01, PWA04.
+**Estimativa:** 3 a 5 horas.
+
 ## PWA05 — Verificação e documentação
 
 - [ ] DevTools → Application: manifesto sem erros, *service worker* ativo e o site reconhecido como instalável (Preview e produção)
@@ -88,7 +103,7 @@ Fatos do código em 05/11/2026 que moldam a task:
 - [ ] Offline: sem rede, o casco abre com o aviso; nenhuma chamada `/api` sai do cache; o Cache Storage não contém dado de usuário, nem depois do logout
 - [ ] README, `docs/EXECUCAO.md` e `docs/ARQUITETURA.md` com a seção "Instalar no celular"; `CHANGELOG.md` atualizado
 
-**Dependências:** PWA01 a PWA04.
+**Dependências:** PWA01 a PWA04 e PWA06.
 **Estimativa:** 1 hora.
 
 ---
