@@ -15,7 +15,7 @@ Abra uma [*issue*](https://github.com/plfrancisco/trapsight-pi3/issues) e inclua
 ## Enviar uma mudança
 
 1. Abra uma *issue* antes, descrevendo a mudança. Isso evita trabalho que não possa ser aceito.
-2. Faça um *fork*, crie uma branch e prepare o ambiente com o [guia de execução](docs/EXECUCAO.md).
+2. Faça um *fork*, crie uma branch e prepare o ambiente com o [guia de execução](.context/docs/EXECUCAO.md).
 3. Rode os testes antes de enviar. Não há CI automático, então a conferência é local:
    - backend: `scripts/testar-backend.sh` (e `uv run ruff check src tests`, `uv run ruff format --check src tests`);
    - frontend: `npm run lint`, `npm run build` e `npm test`.
