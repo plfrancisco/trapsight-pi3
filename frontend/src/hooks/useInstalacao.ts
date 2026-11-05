@@ -75,6 +75,14 @@ function detectarIos(): boolean {
     || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1)
 }
 
+/** Indica se o navegador é o de um celular, pelo agente do usuário.
+ * @returns `true` em iPhone, iPod, Android com `Mobile` e Windows Phone.
+ */
+export function detectarCelular(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(navigator.userAgent)
+}
+
 /** Informa se o site está aberto como aplicativo instalado e acompanha mudanças do navegador.
  * @returns `true` quando o modo standalone ou o indicador de instalação do Safari está ativo.
  */

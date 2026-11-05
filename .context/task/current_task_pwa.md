@@ -101,7 +101,7 @@ Decidido em 05/11/2026: mesmo código, mesmas telas e mesmos fluxos; muda **apen
 - [ ] Android (Chrome): instalar pelo botão, abrir em tela cheia e enviar uma foto homologada pela análise
 - [ ] iOS (Safari): "Adicionar à Tela de Início" e abrir como aplicativo
 - [ ] Offline: sem rede, o casco abre com o aviso; nenhuma chamada `/api` sai do cache; o Cache Storage não contém dado de usuário, nem depois do logout
-- [ ] README, `docs/EXECUCAO.md` e `docs/ARQUITETURA.md` com a seção "Instalar no celular"; `CHANGELOG.md` atualizado
+- [ ] README, `.context/docs/EXECUCAO.md` e `.context/docs/ARQUITETURA.md` com a seção "Instalar no celular"; `CHANGELOG.md` atualizado
 
 **Dependências:** PWA01 a PWA04 e PWA06.
 **Estimativa:** 1 hora.
@@ -142,7 +142,7 @@ PWA05 foi dividida: **PWA05A** (documentação) e **PWA05B** (verificação), po
 | Frente | Task | Arquivos que toca (exclusivos) |
 | --- | --- | --- |
 | A1 | PWA01: manifesto, ícones e metadados | `frontend/package.json` e `package-lock.json` (`vite-plugin-pwa`), `frontend/vite.config.ts` (só o plugin e o manifesto, sem Workbox), `frontend/public/icons/*`, `frontend/index.html` |
-| A2 | PWA04: convite de instalação | `frontend/src/hooks/` (hook de instalação), componente da faixa de login, `ConfiguracoesPage` e `LoginPage` (com testes), imagem do QR code em `docs/` e o link no `README.md` |
+| A2 | PWA04: convite de instalação | `frontend/src/hooks/` (hook de instalação), componente da faixa de login, `ConfiguracoesPage` e `LoginPage` (com testes), imagem do QR code em `.context/docs/img/` e o link no `README.md` |
 | A3 | PWA03: Vercel e segurança (só configuração) | `vercel.json`, `deploy/vercel-supabase.md`, `.context/rules/security_spec.md` |
 
 - A1, A2 e A3 não compartilham arquivos; a ordem de integração tanto faz.
@@ -159,7 +159,7 @@ Começa depois do bloco 1 (PWA02 precisa do plugin da PWA01; PWA06 precisa do ho
 | --- | --- | --- |
 | B1 | PWA02: service worker do casco | `frontend/vite.config.ts` (Workbox), componente do aviso "A análise precisa de internet" montado em `App.tsx` ou `main.tsx` (**nunca** em `Layout.tsx`), teste que lê o `sw.js` gerado |
 | B2 | PWA06: visual do app instalado | `frontend/src/index.css` (ou estilos globais), `Layout.tsx`, componente da navegação inferior, testes |
-| B3 | PWA05A: documentação | `README.md` (seção "Instalar no celular"), `docs/EXECUCAO.md`, `docs/ARQUITETURA.md`, `CHANGELOG.md` |
+| B3 | PWA05A: documentação | `README.md` (seção "Instalar no celular"), `.context/docs/EXECUCAO.md`, `.context/docs/ARQUITETURA.md`, `CHANGELOG.md` |
 
 - B1 é a única frente que mexe em `vite.config.ts`; B2 é a única que mexe em `Layout.tsx`.
 - B3 escreve a documentação com os nomes finais já integrados pelo bloco 1.

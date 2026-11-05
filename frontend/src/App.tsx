@@ -4,6 +4,7 @@ import RotaProtegida from './auth/RotaProtegida'
 import RotaGerente from './auth/RotaGerente'
 import AvisoSemConexao from './components/AvisoSemConexao'
 import Layout from './components/Layout'
+import TelaInstalacao from './components/TelaInstalacao'
 import TituloPagina from './components/TituloPagina'
 import AlterarSenhaPage from './pages/AlterarSenhaPage'
 import CadastroArmadilhaPage from './pages/CadastroArmadilhaPage'
@@ -51,6 +52,7 @@ function App() {
   return (
     <BrowserRouter>
       <AvisoSemConexao />
+      <TelaInstalacao />
       <AuthProvider>
         <Rotas />
       </AuthProvider>

@@ -10,6 +10,7 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 - **Manifesto e ícones da PWA**, com `vite-plugin-pwa` 2.0.0: instalação standalone, ícones de 192 e 512 px, *maskable*, ícone da Apple e cores por tema nos metadados da página.
 - **Convite de instalação** em Configurações e faixa dispensável no login, com instruções para iPhone e QR code no README.
+- **Tela cheia de instalação no celular:** quem abre o site em iPhone ou Android, sem o app instalado, vê "Instale o TrapSight" (botão no Android, passos no iPhone). "Continuar no navegador" ou Escape dispensam, e a tela volta depois de 7 dias. Nunca bloqueia o uso.
 - **Service worker do casco** com Workbox: somente estáticos públicos em cache, API sempre pela rede, registro só em produção e atualização na próxima navegação; aviso **"Sem conexão. A análise precisa de internet."** ao abrir offline. Integração e verificação final pendentes.
 - **Visual do aplicativo instalado**, com navegação inferior no celular, cabeçalho compacto e respeito à área segura, sem mudar telas ou fluxos. Integração e verificação final pendentes.
 - **Cabeçalhos da Vercel para a PWA:** revalidação de `/sw.js` e tipo `application/manifest+json` para `/manifest.webmanifest`.

@@ -1,12 +1,7 @@
 import { useState } from 'react'
-import { useInstalacao } from '../hooks/useInstalacao'
+import { detectarCelular, useInstalacao } from '../hooks/useInstalacao'
 
 const CHAVE_DISPENSA = 'trapsight:convite-instalacao-dispensado'
-
-function lerSeEhCelular(): boolean {
-  if (typeof navigator === 'undefined') return false
-  return /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(navigator.userAgent)
-}
 
 function lerDispensa(): boolean {
   if (typeof window === 'undefined') return false
@@ -23,7 +18,7 @@ function lerDispensa(): boolean {
  */
 export default function ConviteInstalacao() {
   const { podeInstalar, instalado, ehIos, instalar } = useInstalacao()
-  const ehCelular = lerSeEhCelular()
+  const ehCelular = detectarCelular()
   const [dispensada, setDispensada] = useState(lerDispensa)
 
   if (!ehCelular || instalado || dispensada || (!ehIos && !podeInstalar)) {
