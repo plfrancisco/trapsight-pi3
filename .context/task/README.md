@@ -20,7 +20,11 @@ ordem, checkbox e status para seu domínio. Um arquivo nunca detalha task de
 outra especialidade, mesmo quando há dependência entre elas — a dependência
 é referenciada, nunca duplicada.
 
-Não há task ativa no momento. As duas últimas (modelo e autenticação com hospedagem) foram arquivadas em `completed/` em 05/11/2026; os itens que ficaram em aberto estão como pendências no Trello. Uma nova frente de trabalho nasce como `current_task_<especialidade>.md` neste diretório, depois de aprovada.
+| Arquivo | Estado | Especialidade |
+|---|---|---|
+| `current_task_pwa.md` | PROPOSTA | PWA instalável e envio de foto pela câmera do celular. Não autoriza implementação até o mantenedor confirmar as decisões D1 a D4 |
+
+As duas tasks anteriores (modelo e autenticação com hospedagem) foram arquivadas em `completed/` em 05/11/2026; os itens que ficaram em aberto estão como pendências no Trello. Uma nova frente de trabalho nasce como `current_task_<especialidade>.md` neste diretório, depois de aprovada.
 
 ---
 
