@@ -214,6 +214,20 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/E-mail/)).toBeVisible()
   })
 
+  it('mostra as instruções de instalação na faixa do iPhone', async () => {
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile',
+    })
+
+    montar()
+    await screen.findByRole('heading', { name: 'Entre no TrapSight' })
+
+    expect(await screen.findByRole('complementary', { name: 'Instalar o TrapSight' })).toBeVisible()
+    expect(screen.getByText(/Compartilhar e depois em Adicionar à Tela de Início/)).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Instalar' })).not.toBeInTheDocument()
+  })
+
   it('persiste a dispensa do convite de instalação e não o exibe novamente', async () => {
     const pessoa = userEvent.setup()
     const evento = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {

@@ -1,17 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useInstalacao } from '../hooks/useInstalacao'
 
 const CHAVE_DISPENSA = 'trapsight:convite-instalacao-dispensado'
-const CONSULTA_CELULAR = '(max-width: 767px)'
 
 function lerSeEhCelular(): boolean {
-  if (typeof window === 'undefined') return false
-
-  try {
-    return window.matchMedia(CONSULTA_CELULAR).matches
-  } catch {
-    return false
-  }
+  if (typeof navigator === 'undefined') return false
+  return /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(navigator.userAgent)
 }
 
 function lerDispensa(): boolean {
@@ -29,23 +23,8 @@ function lerDispensa(): boolean {
  */
 export default function ConviteInstalacao() {
   const { podeInstalar, instalado, ehIos, instalar } = useInstalacao()
-  const [ehCelular, setEhCelular] = useState(lerSeEhCelular)
+  const ehCelular = lerSeEhCelular()
   const [dispensada, setDispensada] = useState(lerDispensa)
-
-  useEffect(() => {
-    const consulta = window.matchMedia?.(CONSULTA_CELULAR)
-    if (!consulta) return
-
-    const atualizarLargura = () => setEhCelular(consulta.matches)
-
-    if (consulta.addEventListener) {
-      consulta.addEventListener('change', atualizarLargura)
-      return () => consulta.removeEventListener('change', atualizarLargura)
-    }
-
-    consulta.addListener?.(atualizarLargura)
-    return () => consulta.removeListener?.(atualizarLargura)
-  }, [])
 
   if (!ehCelular || instalado || dispensada || (!ehIos && !podeInstalar)) {
     return null
