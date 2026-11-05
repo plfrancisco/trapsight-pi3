@@ -108,3 +108,6 @@ backend/.pytest-*
 *.tsbuildinfo
 *.bak
 *.bak-*
+
+# Arquivos locais com credenciais de teste (nunca versionar)
+.local/
