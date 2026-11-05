@@ -4,16 +4,22 @@ import { useTema } from './useTema'
 
 it('sincroniza a cor da barra com os fundos dos dois temas', () => {
   localStorage.setItem('trapsight:tema', 'claro')
-  const meta = document.createElement('meta')
-  meta.name = 'theme-color'
-  document.head.append(meta)
+  const metas = ['(prefers-color-scheme: light)', '(prefers-color-scheme: dark)'].map(
+    (media) => {
+      const meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      meta.media = media
+      document.head.append(meta)
+      return meta
+    },
+  )
   const { result, unmount } = renderHook(useTema)
-  expect(meta.content).toBe('#f5f7f6')
+  expect(metas.map((meta) => meta.content)).toEqual(['#f5f7f6', '#f5f7f6'])
   act(() => result.current.alternarTema())
-  expect(meta.content).toBe('#0a1316')
+  expect(metas.map((meta) => meta.content)).toEqual(['#0a1316', '#0a1316'])
   expect(document.documentElement.dataset.theme).toBe('escuro')
   unmount()
-  meta.remove()
+  metas.forEach((meta) => meta.remove())
   localStorage.clear()
   delete document.documentElement.dataset.theme
 })

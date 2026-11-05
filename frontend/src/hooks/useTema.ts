@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { atualizarCorDaBarra } from '../lib/corDaBarra'
 
 export type Tema = 'claro' | 'escuro'
 
@@ -29,8 +30,7 @@ export function useTema() {
     document.documentElement.dataset.theme = tema
     document.documentElement.style.colorScheme =
       tema === 'escuro' ? 'dark' : 'light'
-    const corDaBarra = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (corDaBarra) corDaBarra.content = tema === 'escuro' ? '#0a1316' : '#f5f7f6'
+    atualizarCorDaBarra(tema)
 
     try {
       window.localStorage.setItem(CHAVE_TEMA, tema)

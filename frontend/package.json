@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verificar:sw": "node scripts/verificar-sw.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

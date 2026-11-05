@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import AuthProvider from './auth/AuthProvider'
 import RotaProtegida from './auth/RotaProtegida'
 import RotaGerente from './auth/RotaGerente'
+import AvisoSemConexao from './components/AvisoSemConexao'
 import Layout from './components/Layout'
 import TituloPagina from './components/TituloPagina'
 import AlterarSenhaPage from './pages/AlterarSenhaPage'
@@ -49,6 +50,7 @@ export function Rotas() {
 function App() {
   return (
     <BrowserRouter>
+      <AvisoSemConexao />
       <AuthProvider>
         <Rotas />
       </AuthProvider>

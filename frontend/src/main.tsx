@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './config'
 import './index.css'
 import App from './App.tsx'
+import { atualizarCorDaBarra } from './lib/corDaBarra'
 import { configurarFavicon } from './lib/favicon'
+import { registrarServiceWorker } from './lib/registrarServiceWorker'
 
 const temaSalvo = (() => {
   try {
@@ -17,11 +19,10 @@ const temaSalvo = (() => {
 
 document.documentElement.dataset.theme = temaSalvo
 document.documentElement.style.colorScheme = temaSalvo === 'escuro' ? 'dark' : 'light'
-
-const corDaBarra = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-if (corDaBarra) corDaBarra.content = temaSalvo === 'escuro' ? '#0a1316' : '#f5f7f6'
+atualizarCorDaBarra(temaSalvo)
 
 configurarFavicon()
+registrarServiceWorker()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
