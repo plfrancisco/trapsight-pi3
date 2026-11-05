@@ -230,6 +230,39 @@ o seed recusa a reexecução e não os substitui. Reexecuções substituem somen
 seis cenários registrados no manifesto correspondente. Este fluxo continua
 **não testado contra Supabase real**.
 
+## PWA
+
+O `vercel.json` define `Cache-Control: public, max-age=0, must-revalidate`
+para `/sw.js`: permite guardar o arquivo, mas exige revalidação antes de
+reutilizá-lo, evitando que um cache longo retenha uma versão antiga do
+service worker. Para `/manifest.webmanifest`, define
+`Content-Type: application/manifest+json`. Os cabeçalhos de segurança
+existentes continuam aplicáveis a essas respostas.
+
+Na configuração atual, `/api/*` segue para o backend e o restante para o
+frontend. Dentro do serviço frontend, o rewrite `/(.*)` → `/index.html`
+é o fallback da SPA: arquivos estáticos reais têm precedência sobre
+[rewrites da Vercel](https://vercel.com/docs/project-configuration/vercel-json#rewrites).
+Assim, `/sw.js`, `/workbox-*.js`, `/manifest.webmanifest` e `/icons/*`
+serão servidos como arquivos quando estiverem presentes no build. Não foi
+necessário alterar os rewrites; arquivo ausente ainda pode cair no HTML da SPA.
+
+A CSP atual, tanto Report-Only quanto a imposta no hostname de Preview,
+permite os recursos previstos da própria origem. Na cadeia de fallback
+`worker-src` → `child-src` → `script-src` → `default-src`, as duas primeiras
+diretivas estão ausentes e o worker usa `script-src 'self'`; o manifesto usa
+`default-src 'self'` porque `manifest-src` está ausente. Portanto, o worker
+não chega ao `default-src`, mas ambos têm permissão efetiva `'self'`.
+A CSP foi preservada. Referência: [fallbacks da CSP](https://www.w3.org/TR/CSP3/#directive-fallback-list).
+
+A conferência no Preview e em produção fica para a verificação final
+**PWA05B**, após a frente **B1** gerar o `sw.js`. Conferir os cabeçalhos e o
+conteúdo real de todos esses caminhos (JavaScript, manifesto e ícones, sem
+HTML de fallback), o registro do worker e o console sob a CSP imposta no
+Preview. No teste offline e após logout, o Cache Storage deve conter apenas
+`index.html`, `/assets/*` e `/icons/*` públicos: nenhuma resposta `/api/*`,
+requisição diferente de GET, outra origem ou dado autenticado.
+
 ## Limites da demonstração
 
 O Vercel limita o corpo de uma requisição a 4,5 MiB; por isso a API aceita

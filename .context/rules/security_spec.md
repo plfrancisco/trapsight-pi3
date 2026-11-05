@@ -262,6 +262,18 @@ apenas ao log do servidor.
 
 ---
 
+## 11.1 Cache do service worker da PWA
+
+O service worker guarda somente arquivos estáticos públicos do aplicativo:
+`index.html`, `/assets/*` e `/icons/*`, da própria origem e obtidos por GET.
+O precache e qualquer cache em tempo de execução seguem essa mesma restrição.
+`/api/*`, métodos diferentes de GET e requisições a outras origens passam
+sempre pela rede, sem leitura nem gravação em cache pelo service worker.
+Nenhum dado autenticado, resposta da API, foto, informação de conta ou sessão
+pode entrar no Cache Storage, inclusive após o logout.
+
+---
+
 # 12. Pendências
 
 - [ ] Confirmar a biblioteca de detecção de tipo real de arquivo a usar
