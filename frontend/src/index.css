@@ -5302,3 +5302,20 @@ html { scroll-padding-block: 24px 112px; }
     min-width: 0;
   }
 }
+
+/* Celular: a logo da barra superior substitui o cabeçalho com a logo grande, que ficava duplicado. */
+@media (max-width: 720px) {
+  .mobile-header,
+  :root[data-modo-instalado="true"] .mobile-header {
+    display: none;
+  }
+
+  :root[data-modo-instalado="true"] .workspace-topbar {
+    min-height: calc(52px + env(safe-area-inset-top));
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  :root[data-modo-instalado="true"] .app-main {
+    min-height: calc(100dvh - 52px - env(safe-area-inset-top));
+  }
+}
