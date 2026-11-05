@@ -146,6 +146,27 @@ npm run dev
 
 O frontend usa `VITE_API_URL=http://localhost:8000/api` e funciona com o backend do Docker ou o local.
 
+### Instalar no celular e testar a PWA
+
+O service worker deve ser gerado e registrado somente no build de produção; `npm run dev` não o gera nem registra. Para testar o build localmente, a partir de `frontend/`, pare o servidor de desenvolvimento que estiver na porta 5173 e rode:
+
+```bash
+npm run build
+npm run preview -- --host localhost --port 5173 --strictPort
+```
+
+Abra `http://localhost:5173`. A mesma origem do desenvolvimento mantém o `CORS_ORIGENS` já configurado para a API; defina `VITE_API_URL` antes do build. O Preview local serve apenas o frontend: mantenha a API ativa para testar login e análise. `npm run preview` não substitui um servidor de produção.
+
+A instalação e o service worker exigem contexto seguro: HTTPS ou a exceção de desenvolvimento em `localhost`. No celular, `localhost` é o próprio aparelho; abrir o IP do computador por HTTP não oferece essa exceção. Para conferir em aparelhos reais, use o Preview HTTPS da Vercel. No Android, use **Instalar aplicativo** em Configurações, a faixa do login ou o menu do Chrome; no iPhone, abra no Safari e use **Compartilhar → Adicionar à Tela de Início**.
+
+No Chrome DevTools, abra **Application → Manifest** e **Service Workers**. Primeiro carregue o aplicativo conectado e espere a instalação do worker; depois simule **Offline** e navegue novamente. O comportamento previsto é abrir só o casco com **"Sem conexão. A análise precisa de internet."**: não há análise offline nem fila de envio. Em **Cache Storage**, só podem aparecer `index.html`, `/assets/*` e `/icons/*` públicos; nenhuma resposta da API ou dado de usuário, inclusive após logout.
+
+Para conferir uma atualização, gere outro build, mantenha o Preview ativo e use **Update** em **Application → Service Workers** para solicitar a busca. A versão nova deve assumir na próxima navegação; feche as abas e janelas instaladas dessa origem e reabra se a versão anterior ainda controlar a página. **Update on reload** ajuda no diagnóstico, mas deve ficar desmarcado ao conferir o fluxo normal de atualização.
+
+Para começar do zero, use **Unregister**, feche todas as abas e janelas do aplicativo dessa origem e exclua os caches em **Application → Cache Storage**. Reabra conectado para instalar novamente. **Clear site data** também pode apagar a sessão e as preferências locais. Limpe o worker antes de voltar ao `npm run dev` na mesma origem, para não confundir arquivos antigos com o código em desenvolvimento.
+
+O registro, o aviso offline e a atualização descritos aqui fazem parte da integração em andamento. A conferência no Preview, em produção e em aparelhos reais fica para a verificação final; estes passos não são um registro de testes já realizados.
+
 ## 7. Rodar os testes
 
 **Frontend** (lint, tipos e testes):
@@ -180,7 +201,7 @@ O workflow antigo continua no histórico do Git (por exemplo, no commit da tag `
 
 ## 8. Dados de demonstração
 
-O seed (`backend/src/seed_demo.py`) cria seis cenários prontos (armadilha para trocar, com projeção, com refil novo, com histórico, sem análises e sem refil ativo). Ele usa fotos geradas a partir do banco de sprites de insetos, que é licenciado e **não faz parte do repositório**. Sem esse catálogo, cadastre armadilhas e envie fotos pela interface, como na seção 4. O procedimento completo do seed está em [`backend/README.md`](../backend/README.md).
+O seed (`backend/src/seed_demo.py`) cria seis cenários prontos (armadilha para trocar, com projeção, com refil novo, com histórico, sem análises e sem refil ativo). Ele usa fotos geradas a partir do banco de sprites de insetos, que é licenciado e **não faz parte do repositório**. Sem esse catálogo, cadastre armadilhas e envie fotos pela interface, como na seção 4. O procedimento completo do seed está em [`backend/README.md`](../../backend/README.md).
 
 ## 9. Treinar e exportar o modelo
 
@@ -191,7 +212,7 @@ uv sync --group treino
 uv run python -m training.treino gpu          # confere a GPU e a memória de vídeo
 ```
 
-O treino precisa de duas coisas que ficam **fora do repositório**: o catálogo de sprites (`manifest.json` e PNGs, com autor, fonte e licença de cada um) e o dataset gerado a partir dele. A geração está descrita em [`backend/training/README.md`](../backend/training/README.md) e na especificação [`dataset_sintetico.md`](../.context/plan/data/dataset_sintetico.md).
+O treino precisa de duas coisas que ficam **fora do repositório**: o catálogo de sprites (`manifest.json` e PNGs, com autor, fonte e licença de cada um) e o dataset gerado a partir dele. A geração está descrita em [`backend/training/README.md`](../../backend/training/README.md) e na especificação [`dataset_sintetico.md`](../plan/data/dataset_sintetico.md).
 
 ```bash
 # treina e valida (não abre o conjunto de teste)
@@ -207,11 +228,11 @@ uv run python -m training.exportar_onnx <checkpoint.pt> <dataset> <pasta de dest
   --versao v0.1.0-e1
 ```
 
-Para publicar um modelo novo, copie o `.onnx` e o `.json` gerados para `backend/models/` e ajuste `MODEL_VERSION`. A configuração padrão do treino (função de perda, otimizador, augmentation) está em [`treino_spec.md`](../.context/plan/model/treino_spec.md), e os critérios de aprovação, em [`avaliacao_spec.md`](../.context/plan/model/avaliacao_spec.md).
+Para publicar um modelo novo, copie o `.onnx` e o `.json` gerados para `backend/models/` e ajuste `MODEL_VERSION`. A configuração padrão do treino (função de perda, otimizador, augmentation) está em [`treino_spec.md`](../plan/model/treino_spec.md), e os critérios de aprovação, em [`avaliacao_spec.md`](../plan/model/avaliacao_spec.md).
 
 ## 10. Publicar na internet
 
-A publicação usa um único projeto na Vercel (frontend Vite e API FastAPI) e um banco PostgreSQL no Supabase. O passo a passo, com as variáveis de cada ambiente, a homologação descartável (Preview) e as precauções de segurança, está em [`deploy/vercel-supabase.md`](../deploy/vercel-supabase.md). Em resumo:
+A publicação usa um único projeto na Vercel (frontend Vite e API FastAPI) e um banco PostgreSQL no Supabase. O passo a passo, com as variáveis de cada ambiente, a homologação descartável (Preview) e as precauções de segurança, está em [`deploy/vercel-supabase.md`](../../deploy/vercel-supabase.md). Em resumo:
 
 - a branch `main` publica em **produção**; qualquer outra branch, como a `dev`, gera um **Preview**;
 - as migrações rodam com o administrador do banco, e o app com a conta `trapsight_runtime`;
@@ -220,8 +241,8 @@ A publicação usa um único projeto na Vercel (frontend Vite e API FastAPI) e u
 ## 11. Produção local, segurança e backup
 
 - **Compose de produção:** `docker-compose.prod.yml` põe o Caddy na frente (HTTPS automático) e deixa só as portas 80 e 443 públicas. As variáveis ficam em `.env.prod` (modelo em `.env.prod.example`).
-- **Testes de segurança:** a suíte em [`security/`](../security/README.md) roda varreduras (OWASP ZAP e Nuclei) e um pentest próprio contra essa pilha local. Os relatórios não são versionados.
-- **Backup e restauração:** `scripts/backup-banco.sh`, `scripts/restaurar-banco.sh` e `scripts/testar-restauracao.sh`. O procedimento está em [`deploy/backup-restauracao.md`](../deploy/backup-restauracao.md).
+- **Testes de segurança:** a suíte em [`security/`](../../security/README.md) roda varreduras (OWASP ZAP e Nuclei) e um pentest próprio contra essa pilha local. Os relatórios não são versionados.
+- **Backup e restauração:** `scripts/backup-banco.sh`, `scripts/restaurar-banco.sh` e `scripts/testar-restauracao.sh`. O procedimento está em [`deploy/backup-restauracao.md`](../../deploy/backup-restauracao.md).
 
 ## 12. Problemas comuns
 

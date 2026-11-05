@@ -8,10 +8,16 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 ### Adicionado
 
+- **Manifesto e ícones da PWA**, com `vite-plugin-pwa` 2.0.0: instalação standalone, ícones de 192 e 512 px, *maskable*, ícone da Apple e cores por tema nos metadados da página.
+- **Convite de instalação** em Configurações e faixa dispensável no login, com instruções para iPhone e QR code no README.
+- **Service worker do casco** com Workbox: somente estáticos públicos em cache, API sempre pela rede, registro só em produção e atualização na próxima navegação; aviso **"Sem conexão. A análise precisa de internet."** ao abrir offline. Integração e verificação final pendentes.
+- **Visual do aplicativo instalado**, com navegação inferior no celular, cabeçalho compacto e respeito à área segura, sem mudar telas ou fluxos. Integração e verificação final pendentes.
+- **Cabeçalhos da Vercel para a PWA:** revalidação de `/sw.js` e tipo `application/manifest+json` para `/manifest.webmanifest`.
+
 - **Exclusão de operadores** na tela Contas, com confirmação (`DELETE /api/usuarios/{id}`): só o gerente pode excluir, a conta gerente não pode ser excluída, as sessões do operador são removidas junto com a conta e o evento `conta_excluida` é registrado.
 
 - **Licença MIT** (`LICENSE`), política de segurança (`SECURITY.md`, com relato privado de vulnerabilidades) e guia de contribuição (`CONTRIBUTING.md`).
-- **`docs/ARQUITETURA.md`**, com a arquitetura, as decisões técnicas, as tecnologias, a estrutura do repositório e a situação das etapas.
+- **`.context/docs/ARQUITETURA.md`**, com a arquitetura, as decisões técnicas, as tecnologias, a estrutura do repositório e a situação das etapas.
 
 ### Alterado
 
@@ -24,6 +30,13 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 ### Removido
 
 - **CI do GitHub Actions** (`.github/workflows/ci.yml`): o projeto tem um só mantenedor e os testes passam a rodar localmente. O arquivo continua no histórico do Git.
+
+### Limitações conhecidas
+
+- A instalação no Android/iPhone, o modo offline, a atualização e a ausência de dados autenticados no Cache Storage ainda aguardam a verificação final no Preview, na produção e em aparelhos reais.
+- Offline abre somente o casco após um acesso conectado; a análise precisa de internet. Não há fila de envio nem notificações push.
+- O manifesto não tem variante de splash para tema escuro; no iOS não há imagem de splash dedicada.
+- O envio continua pelo seletor de arquivos, sem câmera dedicada. Fotos acima de 4 MB são recusadas; use as fotos homologadas da demonstração.
 
 ## [0.1.0] - 2026-11-03
 
@@ -42,7 +55,7 @@ Primeiro protótipo funcional: análise de fotos com o modelo treinado, históri
 - **Índice de saturação do refil** nas telas: o limiar de troca (20% de cobertura) aparece como 80%.
 - **Login e papéis:** contas criadas por um gerente (um só), troca da senha inicial, sessão em cookie `HttpOnly`, proteção contra CSRF, bloqueio por tentativas, limites de uso e senhas com Argon2id. Administração por linha de comando.
 - **Publicação:** Vercel (frontend e API) e Supabase (PostgreSQL com RLS e papéis de permissão mínima).
-- **Qualidade e segurança:** CI no GitHub Actions, suíte de testes de segurança e documentação (README, guia de execução em `docs/EXECUCAO.md` e especificações em `.context/`).
+- **Qualidade e segurança:** CI no GitHub Actions, suíte de testes de segurança e documentação (README, guia de execução em `.context/docs/EXECUCAO.md` e especificações em `.context/`).
 
 ### Alterado
 

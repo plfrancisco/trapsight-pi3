@@ -11,9 +11,16 @@
 
 ## Instalar no celular
 
-![QR code para abrir o TrapSight no celular](docs/img/qr-instalacao.png)
+![QR code para abrir o TrapSight no celular](.context/docs/img/qr-instalacao.png)
 
-Android: toque em **Instalar** no aplicativo. iPhone: no Safari, toque em **Compartilhar → Adicionar à Tela de Início**.
+Abra o [TrapSight](https://trapsight-pi3.vercel.app) pelo link ou pelo QR code.
+
+- **Android (Chrome):** toque em **Instalar aplicativo** em Configurações ou em **Instalar** na faixa do login. Se o convite não aparecer, procure **Instalar aplicativo** ou **Adicionar à tela inicial** no menu do Chrome.
+- **iPhone (Safari):** toque em **Compartilhar → Adicionar à Tela de Início** e confirme. O iPhone não oferece o mesmo diálogo automático do Android.
+
+Abra pelo ícone na tela inicial para usar uma janela própria, sem barra de endereço. O visual instalado prevê navegação inferior no celular e cabeçalho compacto, com as mesmas telas e os mesmos fluxos.
+
+**A análise precisa de internet.** Offline, só o casco (a estrutura visual do aplicativo) pode abrir após um acesso conectado; não há análise, fila de envio nem notificações. As fotos continuam pelo seletor de arquivos: use as [fotos homologadas da demonstração](#demonstração), pois imagens acima de 4 MB são recusadas. O modo offline e o acabamento visual estão em integração; a instalação em Android e iPhone ainda aguarda a verificação final.
 
 ## O problema e a solução
 
@@ -95,7 +102,7 @@ docker compose exec backend python -m src.cli criar-usuario \
 
 Abra <http://localhost:5173> (a documentação interativa da API fica em <http://localhost:8000/docs>). Por padrão a API devolve um resultado simulado; para usar o **modelo real**, defina `INFERENCE_MODE=onnx`, `MODEL_VERSION=v0.1.0-e1` e `MODEL_WEIGHTS_PATH=` (vazio) no `backend/.env`.
 
-O [guia de execução](docs/EXECUCAO.md) cobre o resto: desenvolvimento sem Docker, dados de demonstração, treino do modelo, publicação e problemas comuns.
+O [guia de execução](.context/docs/EXECUCAO.md) cobre o resto: desenvolvimento sem Docker, dados de demonstração, treino do modelo, publicação e problemas comuns.
 
 ## Testes
 
@@ -110,8 +117,8 @@ cd frontend && npm test          # frontend: testes; também npm run lint e npm 
 
 | Documento | Conteúdo |
 | --- | --- |
-| [`docs/EXECUCAO.md`](docs/EXECUCAO.md) | Como executar, testar, treinar e publicar |
-| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Arquitetura, decisões técnicas, tecnologias e situação das etapas |
+| [`.context/docs/EXECUCAO.md`](.context/docs/EXECUCAO.md) | Como executar, testar, treinar e publicar |
+| [`.context/docs/ARQUITETURA.md`](.context/docs/ARQUITETURA.md) | Arquitetura, decisões técnicas, tecnologias e situação das etapas |
 | [`.context/plan/README.md`](.context/plan/README.md) | Especificações do projeto: modelo de dados, API, telas, modelo e avaliação |
 | [`deploy/vercel-supabase.md`](deploy/vercel-supabase.md) | Publicação na Vercel e no Supabase |
 | [`security/README.md`](security/README.md) | Testes de segurança |
