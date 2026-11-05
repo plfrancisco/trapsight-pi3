@@ -92,6 +92,7 @@ podem ser reescritas sem aviso, códigos não.
 | `SENHA_FRACA` | 422 | Senha fora da política (`login.md`, 5.2); o motivo vai em `detalhes` e a senha **nunca** é devolvida |
 | `ACESSO_NEGADO` | 403 | Papel atual do banco não autoriza a operação |
 | `EMAIL_JA_CADASTRADO` | 409 | E-mail normalizado duplicado; somente gerente |
+| `CONTA_NAO_ENCONTRADA` | 404 | Conta solicitada para exclusão não existe |
 | `TROCA_DE_SENHA_OBRIGATORIA` | 403 | Conta deve substituir a senha inicial |
 
 ## 2.4 Restrições de upload
@@ -216,6 +217,7 @@ autenticação é aplicada no roteador-raiz: rota nova nasce protegida
 | `POST` | `/api/auth/senha` | Alterar senha |
 | `GET` | `/api/usuarios` | Contas (somente gerente) |
 | `POST` | `/api/usuarios` | Criar operador (somente gerente) |
+| `DELETE` | `/api/usuarios/{id}` | Excluir operador e encerrar suas sessões (somente gerente) |
 | `GET` | `/healthz` | Verificação de saúde (sem dados sensíveis, fora de `/api`) |
 
 ## 3.1 Endpoints de autenticação
@@ -267,7 +269,14 @@ TROCA_DE_SENHA_OBRIGATORIA (403). Reutiliza SENHA_FRACA (422),
 VALIDACAO_FALHOU (422), NAO_AUTENTICADO (401) e CSRF_INVALIDO (403).
 Colisões de email por caixa ou Unicode também geram EMAIL_JA_CADASTRADO;
 é aceitável revelar existência ao gerente autorizado a listar contas.
-Nenhuma outra operação de gestão de conta é exposta pela API.
+DELETE /api/usuarios/{id} exige gerente, CSRF e origem válidos. Só permite
+remover uma conta de operador diferente da conta gerente; gerente não pode
+excluir a própria conta nem outra conta gerente. Retorna 404
+CONTA_NAO_ENCONTRADA se o UUID não existir e 403 ACESSO_NEGADO para alvo não
+permitido. Remove as sessões e a conta na mesma transação e responde 204;
+nenhuma sessão do operador removido continua válida. As operações de edição,
+ativação, desativação e redefinição de senha continuam indisponíveis na API.
+O evento conta_excluida é registrado com usuario_id e criado_por_id.
 
 Login e GET /api/auth/me acrescentam papel e troca_senha_pendente ao objeto
 usuario. A flag pendente restringe globalmente as rotas sob /api a

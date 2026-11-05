@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type FormEvent } from 'react'
 import Botao from '../components/Botao'
 import CampoFormulario from '../components/CampoFormulario'
+import AcaoExcluirConta from '../components/AcaoExcluirConta'
 import EstadoCarregando from '../components/EstadoCarregando'
 import MensagemErro from '../components/MensagemErro'
 import { useCarregamento } from '../hooks/useCarregamento'
@@ -12,7 +13,7 @@ function exibirData(valor: string | null): string {
     : 'Nunca'
 }
 
-/** Lista contas e permite ao gerente criar operadores com senha inicial. */
+/** Lista contas e permite ao gerente criar e excluir operadores. */
 export default function ContasPage() {
   const carregar = useCallback((signal: AbortSignal) => listUsuarios(signal), [])
   const { dados, erro, carregando, recarregar } = useCarregamento(carregar)
@@ -20,6 +21,7 @@ export default function ContasPage() {
   const [enviando, setEnviando] = useState(false)
   const [erroCriacao, setErroCriacao] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
+  const [sucessoExclusao, setSucessoExclusao] = useState(false)
 
   async function criar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
@@ -56,6 +58,7 @@ export default function ContasPage() {
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section aria-labelledby="contas-titulo" className="min-w-0 rounded-2xl border border-app-border bg-app-surface p-5">
           <h2 className="mb-4 text-lg font-semibold text-app-foreground" id="contas-titulo">Pessoas com acesso</h2>
+          {sucessoExclusao ? <p className="success-message mb-4" role="status">Conta excluída.</p> : null}
           {carregando ? <EstadoCarregando /> : erro ? (
             <div className="space-y-4">
               <MensagemErro erro={mensagemDeContas(erro)} />
@@ -68,6 +71,7 @@ export default function ContasPage() {
                 <thead className="border-b border-app-border text-app-muted">
                   <tr>
                     {['Pessoa', 'Papel', 'Situação', 'Último login', 'Criada em'].map((titulo) => <th className="px-3 py-3 font-medium" key={titulo} scope="col">{titulo}</th>)}
+                    <th className="px-3 py-3 font-medium" scope="col">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app-border text-app-foreground">
@@ -78,6 +82,19 @@ export default function ContasPage() {
                       <td data-label="Situação" className="px-3 py-4">{conta.ativo ? 'Ativa' : 'Desativada'}</td>
                       <td data-label="Último login" className="whitespace-nowrap px-3 py-4">{exibirData(conta.ultimo_login_em)}</td>
                       <td data-label="Criada em" className="whitespace-nowrap px-3 py-4">{exibirData(conta.criado_em)}</td>
+                      <td data-label="Ações" className="px-3 py-4">
+                        {conta.papel === 'operador' ? (
+                          <AcaoExcluirConta
+                            email={conta.email}
+                            nome={conta.nome}
+                            onExcluida={() => {
+                              setSucessoExclusao(true)
+                              recarregar()
+                            }}
+                            usuarioId={conta.id}
+                          />
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

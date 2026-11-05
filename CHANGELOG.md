@@ -6,6 +6,10 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 ## [Não lançado]
 
+### Adicionado
+
+- **Exclusão de operadores** na tela Contas, com confirmação (`DELETE /api/usuarios/{id}`): só o gerente pode excluir, a conta gerente não pode ser excluída, as sessões do operador são removidas junto com a conta e o evento `conta_excluida` é registrado.
+
 ### Removido
 
 - **CI do GitHub Actions** (`.github/workflows/ci.yml`): o projeto tem um só mantenedor e os testes passam a rodar localmente. O arquivo continua no histórico do Git.

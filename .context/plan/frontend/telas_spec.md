@@ -34,7 +34,7 @@ fica no relatório, não na interface — ver seção 6.
 |---|---|---|
 | Dashboard | `/` | Estado atual de todas as armadilhas, ordenado por urgência |
 | Detalhe da armadilha | `/armadilhas/:id` | Série temporal, histórico e troca de refil |
-| Contas | `/contas` | Listar contas e criar operadores; somente gerente |
+| Contas | `/contas` | Listar contas, criar e excluir operadores; somente gerente |
 | Nova análise | `/analises/nova` | Upload de imagem e resultado do modelo |
 | Cadastro de armadilha | `/armadilhas/nova`, `/armadilhas/:id/editar` | CRUD básico |
 | Login | `/login` | Autenticação (pública; as demais rotas exigem sessão) |
@@ -199,7 +199,11 @@ Nenhum token, senha ou `csrf_token` é guardado em `localStorage` ou
 Rota /contas com item Contas nos menus desktop/móvel só para gerente.
 Operador que abre a URL vê Acesso negado; a tela não monta nem consulta
 contas. O servidor continua aplicando autorização independentemente da UI.
-Lista: nome, email, papel, situação, último login e criação.
+Lista: nome, email, papel, situação, último login e criação. Ações de excluir
+aparecem só nas linhas de operador; o gerente não pode excluir a própria conta.
+Pedir confirmação em diálogo, informar que a exclusão é permanente e atualizar
+a lista após sucesso. A API confirma gerente/CSRF/origem e remove as sessões da
+conta junto com ela; esconder a ação na interface não substitui essa autorização.
 Formulário Criar operador: nome, email e senha inicial, sem seletor de papel,
 autocomplete=new-password e colagem permitida. Bloquear envio duplicado,
 limpar senha após sucesso, atualizar lista e mostrar confirmação sem senha.

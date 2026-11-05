@@ -81,6 +81,25 @@ class UsuarioRepository:
         """
         return self._session.get(Usuario, usuario_id, populate_existing=True)
 
+    def get_by_id_for_update(self, usuario_id: UUID) -> Usuario | None:
+        """Busca e bloqueia a conta até o fim da transação.
+
+        O bloqueio serializa a exclusão com a criação de novas sessões e com
+        mudanças administrativas concorrentes ao papel.
+        """
+        statement = (
+            select(Usuario)
+            .where(Usuario.id == usuario_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        return self._session.scalars(statement).one_or_none()
+
+    def delete(self, usuario: Usuario) -> None:
+        """Remove uma conta depois que suas sessões dependentes foram tratadas."""
+        self._session.delete(usuario)
+        self._session.flush()
+
     def definir_papel(self, usuario: Usuario, papel: PapelUsuario) -> None:
         """Atualiza o papel sem inutilizar a transação se já existir gerente."""
         try:

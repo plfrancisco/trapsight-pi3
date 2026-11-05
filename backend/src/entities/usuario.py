@@ -21,7 +21,7 @@ from src.entities.papel import PapelUsuario
 
 
 class Usuario(UUIDTimestampMixin, Base):
-    """Conta criada pelo administrador; usuários são desativados, nunca excluídos."""
+    """Conta cuja remoção pela API é restrita a operadores e ao gerente."""
 
     __tablename__ = "usuario"
     __table_args__ = (

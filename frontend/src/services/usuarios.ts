@@ -15,12 +15,21 @@ export function createUsuario(dados: UsuarioEntrada): Promise<Conta> {
   })
 }
 
+/** Exclui uma conta de operador; a API valida gerente, CSRF e alvo permitido. */
+export function deleteUsuario(usuarioId: string): Promise<void> {
+  return request<void>(`usuarios/${encodeURIComponent(usuarioId)}`, {
+    method: 'DELETE',
+  })
+}
+
 /** Traduz falhas de gestão por código estável sem exibir detalhes internos. */
 export function mensagemDeContas(falha: unknown): string {
   if (falha instanceof ApiError) {
     switch (falha.codigo) {
       case 'EMAIL_JA_CADASTRADO':
         return 'Já existe uma conta com este e-mail.'
+      case 'CONTA_NAO_ENCONTRADA':
+        return 'Esta conta já foi removida ou não existe.'
       case 'SENHA_FRACA':
         return 'A senha inicial não atende à política. Use ao menos 8 caracteres, com letras e números, e evite senhas comuns ou ligadas à conta.'
       case 'ACESSO_NEGADO':

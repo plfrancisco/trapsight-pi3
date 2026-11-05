@@ -1,8 +1,9 @@
-"""Listagem e criação de contas acessíveis somente ao gerente."""
+"""Gestão de contas de operador acessível somente ao gerente."""
 
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.orm import Session
 
 from src.api.dependencias import get_servico_de_senhas, get_session
@@ -12,8 +13,14 @@ from src.api.rotas.auth import get_sessao_autenticada
 from src.api.schemas.usuarios import ContaSaida, UsuarioEntrada
 from src.entities import Usuario
 from src.repositories import EmailDuplicado, UsuarioRepository
+from src.services.auditoria import registrar_evento
 from src.services.senhas import SenhaFraca, ServicoDeSenhas
-from src.services.usuarios import AcessoNegado, ServicoDeUsuarios, exigir_gerente
+from src.services.usuarios import (
+    AcessoNegado,
+    ContaNaoEncontrada,
+    ServicoDeUsuarios,
+    exigir_gerente,
+)
 
 router = APIRouter(
     prefix="/usuarios",
@@ -81,8 +88,12 @@ def criar_usuario(
             headers={"Retry-After": str(espera)},
         )
     try:
-        usuario = ServicoDeUsuarios(session, senhas).criar_operador(
-            gerente, email=corpo.email, nome=corpo.nome, senha=corpo.senha
+        usuario = ServicoDeUsuarios(session).criar_operador(
+            gerente,
+            senhas=senhas,
+            email=corpo.email,
+            nome=corpo.nome,
+            senha=corpo.senha,
         )
     except EmailDuplicado:
         session.rollback()
@@ -98,3 +109,35 @@ def criar_usuario(
         ) from None
     session.commit()
     return ContaSaida.model_validate(usuario)
+
+
+@router.delete(
+    "/{usuario_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=respostas_de_erro(
+        CodigoErro.CSRF_INVALIDO,
+        CodigoErro.CONTA_NAO_ENCONTRADA,
+        CodigoErro.ACESSO_NEGADO,
+    ),
+)
+def excluir_usuario(
+    usuario_id: UUID,
+    gerente: Annotated[Usuario, Depends(get_gerente)],
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
+    """Exclui operador e sessões vinculadas em uma única transação."""
+    try:
+        alvo_id = ServicoDeUsuarios(session).excluir_operador(gerente, usuario_id)
+    except ContaNaoEncontrada:
+        session.rollback()
+        raise ErroDeApi(
+            CodigoErro.CONTA_NAO_ENCONTRADA, "A conta solicitada não foi encontrada."
+        ) from None
+    except AcessoNegado:
+        session.rollback()
+        raise ErroDeApi(
+            CodigoErro.ACESSO_NEGADO,
+            "O gerente só pode excluir contas de operador diferentes da própria conta.",
+        ) from None
+    session.commit()
+    registrar_evento("conta_excluida", usuario_id=alvo_id, criado_por_id=gerente.id)

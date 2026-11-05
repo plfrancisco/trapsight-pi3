@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { ApiError } from '../services/erros'
-import { createUsuario, listUsuarios } from '../services/usuarios'
+import { createUsuario, deleteUsuario, listUsuarios } from '../services/usuarios'
 import type { Conta } from '../services/tipos'
 import ContasPage from './ContasPage'
 
@@ -10,6 +10,7 @@ vi.mock('../services/usuarios', async (original) => ({
   ...await original<typeof import('../services/usuarios')>(),
   createUsuario: vi.fn(),
   listUsuarios: vi.fn(),
+  deleteUsuario: vi.fn(),
 }))
 
 const conta: Conta = {
@@ -73,4 +74,35 @@ it('bloqueia outro envio enquanto aguarda a criação', async () => {
   await pessoa.click(screen.getByRole('button', { name: 'Criar operador' }))
   await waitFor(() => expect(screen.getByRole('button', { name: 'Criando…' })).toBeDisabled())
   expect(createUsuario).toHaveBeenCalledTimes(1)
+})
+
+const gerente: Conta = {
+  id: 'g1', email: 'gestor@exemplo.com', nome: 'Gestor Chefe',
+  papel: 'gerente', ativo: true, ultimo_login_em: null,
+  criado_em: '2026-10-20T12:00:00Z',
+}
+
+it('oferece exclusão só para operadores, nunca para o gerente', async () => {
+  vi.mocked(listUsuarios).mockResolvedValue([gerente, conta])
+  render(<ContasPage />)
+
+  expect(await screen.findByText(gerente.email)).toBeVisible()
+  expect(screen.getByRole('button', { name: `Excluir conta de ${conta.nome}` })).toBeVisible()
+  expect(screen.queryByRole('button', { name: `Excluir conta de ${gerente.nome}` })).not.toBeInTheDocument()
+})
+
+it('exclui o operador após confirmar, recarrega a lista e avisa', async () => {
+  vi.mocked(listUsuarios).mockResolvedValueOnce([gerente, conta]).mockResolvedValue([gerente])
+  vi.mocked(deleteUsuario).mockReset().mockResolvedValue(undefined)
+  render(<ContasPage />)
+  await screen.findByText(conta.email)
+  const pessoa = userEvent.setup()
+
+  await pessoa.click(screen.getByRole('button', { name: `Excluir conta de ${conta.nome}` }))
+  await pessoa.click(screen.getByRole('button', { name: 'Confirmar exclusão' }))
+
+  expect(await screen.findByText('Conta excluída.')).toBeVisible()
+  expect(deleteUsuario).toHaveBeenCalledWith(conta.id)
+  await waitFor(() => expect(screen.queryByText(conta.email)).not.toBeInTheDocument())
+  expect(screen.getByText(gerente.email)).toBeVisible()
 })

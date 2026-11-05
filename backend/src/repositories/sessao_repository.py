@@ -162,3 +162,10 @@ class SessaoRepository:
             delete(Sessao).where(Sessao.expira_em < agora)
         )
         return resultado.rowcount
+
+    def apagar_do_usuario(self, usuario_id: UUID) -> int:
+        """Apaga as sessões de uma conta que será removida na mesma transação."""
+        resultado = self._session.execute(
+            delete(Sessao).where(Sessao.usuario_id == usuario_id)
+        )
+        return resultado.rowcount

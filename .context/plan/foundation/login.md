@@ -116,7 +116,8 @@ então o cookie funciona; é preciso `credentials: 'include'` no frontend e
 
 Existem dois papéis: gerente e operador. O servidor consulta o papel no banco
 a cada requisição; não confia no corpo, no cookie nem no estado do frontend.
-Operadores usam o sistema operacional; só gerente lista e cria contas.
+Operadores usam o sistema operacional; só gerente lista contas, cria operadores
+e exclui operadores.
 O frontend apenas condiciona a navegação. Somente leitura fica para a Fase 2.
 O banco admite zero ou um gerente, inclusive entre contas desativadas,
 por CHECK de valores e índice único parcial WHERE papel = 'gerente'.
@@ -223,12 +224,16 @@ Cada gerente pode criar até 20 contas por hora; CONTAS_POR_HORA configura esse
 teto. O limite é contado por gerente, não por IP, e responde 429 LIMITE_CONTAS
 com Retry-After quando esgotado.
 
-Nos dois endpoints, anônimo recebe 401 NAO_AUTENTICADO, operador recebe
-403 ACESSO_NEGADO e gerente recebe sucesso. Em métodos não seguros, a
-verificação de CSRF/origem precede a autorização por papel.
-Não existem operações de edição, exclusão, ativação, desativação ou
-redefinição de senha na API. Auditoria: conta_criada com usuario_id e
-criado_por_id (null para CLI), acesso_negado com usuario_id; nunca registrar
+Nos endpoints de listagem e criação, anônimo recebe 401 NAO_AUTENTICADO,
+operador recebe 403 ACESSO_NEGADO e gerente recebe sucesso. DELETE
+/api/usuarios/{id} também exige gerente, CSRF e origem válidos; só remove
+operadores, nunca a própria conta do gerente, e apaga as sessões do operador
+na mesma transação. Conta inexistente recebe 404 CONTA_NAO_ENCONTRADA; alvo
+não permitido recebe 403 ACESSO_NEGADO; remoção concluída responde 204.
+Em métodos não seguros, a verificação de CSRF/origem precede a autorização
+por papel. Não existem operações de edição, ativação, desativação ou
+redefinição de senha na API. Auditoria: conta_criada e conta_excluida com
+usuario_id e criado_por_id, acesso_negado com usuario_id; nunca registrar
 senha, hash ou corpo da requisição.
 
 ### 5.4.2 Atribuição de papel

@@ -235,8 +235,8 @@ Resultado de uma inferência do modelo sobre uma imagem.
 
 ## 6.5 `usuario`
 
-Conta com acesso ao sistema. O gerente cria operadores pela interface e a CLI
-administra contas e papéis; não há cadastro aberto (`login.md`, 5.4).
+Conta com acesso ao sistema. O gerente cria e exclui operadores pela interface;
+a CLI administra contas e papéis; não há cadastro aberto (`login.md`, 5.4).
 
 | Campo | Tipo | Regra |
 |---|---|---|
@@ -252,7 +252,9 @@ administra contas e papéis; não há cadastro aberto (`login.md`, 5.4).
 | `ultimo_login_em` | `timestamptz` | Nulo até o primeiro login |
 | `criado_em` | `timestamptz` | Padrão `now()` |
 
-Usuários nunca são excluídos: são **desativados**, para preservar a auditoria.
+O gerente pode excluir contas de operador pela API; a conta gerente não pode ser
+excluída por essa operação. A exclusão apaga primeiro todas as sessões do
+operador na mesma transação, invalidando o acesso imediatamente.
 
 A conta tem papel varchar NOT NULL DEFAULT 'operador', CHECK
 papel IN ('gerente', 'operador') e índice único parcial sobre papel WHERE
@@ -392,7 +394,7 @@ a última barreira contra dado inconsistente.
 | `usuario` | `UNIQUE (email)` | Uma conta por e-mail normalizado |
 | `usuario` | CHECK papel IN ('gerente', 'operador') | Recusa outros papéis |
 | `usuario` | UNIQUE (papel) WHERE papel = 'gerente' | No máximo um gerente, inclusive desativado |
-| `sessao` | FK `usuario_id` → `usuario.id`, `ON DELETE RESTRICT` | Usuários são desativados, não excluídos |
+| `sessao` | FK `usuario_id` → `usuario.id`, `ON DELETE RESTRICT` | A API remove as sessões do operador na mesma transação antes de excluir a conta; o RESTRICT bloqueia exclusões que não limpem essa dependência |
 | `sessao` | `UNIQUE (token_hash)` e `CHECK (token_hash ~ '^[0-9a-f]{64}$')` | O banco só aceita o SHA-256 em hexadecimal, nunca o token em claro |
 | `sessao` | índice em `(usuario_id, revogada_em)` | Consulta das sessões ativas e do limite por usuário |
 | `tentativa_login` | índices em `(identificador_hash, ocorrida_em)` e `(ip, ocorrida_em)` | Contagem de falhas na janela, por conta e por IP |

@@ -7,7 +7,7 @@ Conferido diretamente no código do backend e do frontend em 03/11/2026. Onde a 
 | ID | Requisito |
 |---|---|
 | RF01 | Login e logout por e-mail e senha (`/api/auth/login`, `/api/auth/logout`). `GET /api/auth/me` devolve o usuário, o papel e o `csrf_token`. |
-| RF02 | O gerente cria operadores definindo a senha inicial (`POST /api/usuarios`) e lista as contas (`GET /api/usuarios`). Não há cadastro aberto. |
+| RF02 | O gerente cria operadores definindo a senha inicial (`POST /api/usuarios`), lista as contas (`GET /api/usuarios`) e exclui operadores com confirmação (`DELETE /api/usuarios/{id}`, 204). Não há cadastro aberto. |
 | RF03 | A conta criada nasce com troca de senha pendente. Enquanto pendente, só `me`, `senha` e `logout` funcionam (`POST /api/auth/senha`). |
 | RF04 | Cadastro, edição e remoção de armadilha, com modelo escolhido no catálogo (`/api/modelos-armadilha`). O refil inicial é opcional no cadastro (`criar_refil_inicial`). |
 | RF05 | Foto de identificação da armadilha (`PUT/GET/DELETE /api/armadilhas/{id}/foto`). |
@@ -59,10 +59,10 @@ A máscara é gerada e gravada pela inferência e agora aparece na interface (de
 - **RN07, previsão de saturação:** regressão linear por mínimos quadrados sobre todas as medições do refil ativo, com o dia zero na data de instalação. Exige pelo menos 2 medições e tendência crescente, senão devolve `null`. Se a última medição já passou do limiar de troca, devolve 0. Nos demais casos, devolve o piso dos dias restantes, nunca menor que 0.
 - **RN08, alerta:** `em_alerta_desde` é a primeira medição acima do limiar de troca, enquanto a última leitura continuar acima dele.
 - **RN09, remoção:** lógica (`removida_em`). O histórico permanece.
-- **RN10, papéis:** só o gerente cria e lista contas (`403` para operador). Existe no máximo um gerente, garantido por índice único parcial (`papel = 'gerente'`). Contas criadas pela API são sempre operador, e campos extras como papel são recusados.
+- **RN10, papéis:** só o gerente cria, lista e exclui contas (`403` para operador). A exclusão vale apenas para operadores: o gerente não pode excluir a própria conta (`403 ACESSO_NEGADO`), e uma conta inexistente devolve `404 CONTA_NAO_ENCONTRADA`. A exclusão apaga as sessões do operador e a conta na mesma transação, e o e-mail pode ser reutilizado depois. Existe no máximo um gerente, garantido por índice único parcial (`papel = 'gerente'`). Contas criadas pela API são sempre operador, e campos extras como papel são recusados.
 - **RN11, e-mail:** normalizado e único. Colisões por caixa ou por Unicode contam como duplicidade.
 - **RN12, troca de senha pendente:** bloqueia todas as rotas autenticadas, exceto `me`, `senha` e `logout`.
-- **RN13, auditoria:** eventos de autenticação (`login_ok`, `login_falhou`, `login_bloqueado`, `conta_criada` e outros) vão para o log (stdout) no formato `auth.<evento>`, sem dados sensíveis. As ações de administração por CLI são gravadas na tabela `auditoria_cli`. Não há endpoint para o gerente consultar a auditoria.
+- **RN13, auditoria:** eventos de autenticação (`login_ok`, `login_falhou`, `login_bloqueado`, `conta_criada`, `conta_excluida` e outros) vão para o log (stdout) no formato `auth.<evento>`, sem dados sensíveis. As ações de administração por CLI são gravadas na tabela `auditoria_cli`. Não há endpoint para o gerente consultar a auditoria.
 - **RN14, ordem do painel:** a ordenação é feita no backend. Primeiro vêm as armadilhas com status `trocar`; depois as que têm previsão de saturação, da mais próxima para a mais distante; por último as sem previsão (`null`). O desempate é pelo identificador. O status `atencao` não tem prioridade própria: entra pela previsão.
 - **RN15, índice de saturação (apresentação):** o frontend passa a mostrar `índice = cobertura ÷ limiar de troca × 80`, limitado a 0..100. Com o limiar padrão de 20%, a tabela oficial é: 5% → 20%, 10% → 40%, 20% → 80%, 25% ou mais → 100%. Vale só na tela: a API, o banco, o modelo, o status e a previsão continuam usando a cobertura real. A tela de resultado mantém a cobertura real visível ("X% da placa coberta"). Rótulo adotado: "Saturação do refil".
 - **RN16, origem dos limiares:** os limiares de 10% e 20% foram validados e adotados como definitivos em 03/11/2026, junto com a apresentação em índice de saturação (RN15); a pendência `EXT02` está encerrada. A troca é pensada por critério higiênico, não por a cola estar cheia. Uma primeira calibração previa 40% e 70% e foi descartada por irreal frente ao conjunto público usado (cobertura mediana de cerca de 5,6%, máximo de 27%). Subir o limiar de troca exige cuidado: o dataset de treino vai de 0% a 54% de cobertura e não tem imagem acima de 60%, então status acima disso não foi validado.
@@ -77,7 +77,7 @@ flowchart TD
     D --> E[/armadilhas/nova: modelo, refil inicial opcional, foto]
     D --> F[/analises/nova: armadilha, foto, % e status]
     D --> G[/armadilhas/:id: gráfico, histórico, previsão, trocar refil, editar, remover]
-    D --> H[/contas: só gerente, cria operador]
+    D --> H[/contas: só gerente, cria e exclui operador]
 ```
 
 ## 5. Fluxo da API
@@ -136,7 +136,7 @@ erDiagram
 
 | Código | HTTP |
 |---|---|
-| `ARMADILHA_NAO_ENCONTRADA`, `ANALISE_NAO_ENCONTRADA`, `ROTA_NAO_ENCONTRADA` | 404 |
+| `ARMADILHA_NAO_ENCONTRADA`, `ANALISE_NAO_ENCONTRADA`, `CONTA_NAO_ENCONTRADA`, `ROTA_NAO_ENCONTRADA` | 404 |
 | `REFIL_ATIVO_INEXISTENTE`, `IDENTIFICADOR_DUPLICADO`, `EMAIL_JA_CADASTRADO` | 409 |
 | `ARQUIVO_AUSENTE`, `FORMATO_NAO_SUPORTADO`, `RESOLUCAO_INSUFICIENTE`, `REQUISICAO_INVALIDA` | 400 |
 | `ARQUIVO_MUITO_GRANDE` | 413 |

@@ -3,6 +3,7 @@
 from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -351,3 +352,114 @@ def test_pendencia_permite_logout_mas_nao_dispensa_csrf(client, session):
     client.headers["X-CSRF-Token"] = token_csrf
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401
+
+
+def _criar_operador_alvo(client, session, email="alvo@exemplo.com"):
+    return criar_usuario(
+        session, client.app, email=email, nome="Alvo Souza", papel=PapelUsuario.OPERADOR
+    )
+
+
+@pytest.mark.parametrize("papel", [None, PapelUsuario.OPERADOR])
+def test_exclusao_exige_gerente(client, session, papel):
+    alvo = _criar_operador_alvo(client, session)
+    if papel is not None:
+        _autenticar(client, session, papel)
+
+    resposta = client.delete(f"/api/usuarios/{alvo.id}")
+
+    assert resposta.status_code == (401 if papel is None else 403)
+    assert resposta.json()["erro"]["codigo"] == (
+        "NAO_AUTENTICADO" if papel is None else "ACESSO_NEGADO"
+    )
+    assert session.get(Usuario, alvo.id) is not None
+
+
+def test_exclusao_exige_csrf(client, session):
+    _autenticar(client, session)
+    alvo = _criar_operador_alvo(client, session)
+    del client.headers["X-CSRF-Token"]
+
+    resposta = client.delete(f"/api/usuarios/{alvo.id}")
+
+    assert resposta.status_code == 403
+    assert resposta.json()["erro"]["codigo"] == "CSRF_INVALIDO"
+    assert session.get(Usuario, alvo.id) is not None
+
+
+def test_gerente_exclui_operador_e_suas_sessoes(client, session, caplog):
+    gerente = _autenticar(client, session)
+    alvo = _criar_operador_alvo(client, session)
+    outro = _criar_operador_alvo(client, session, email="outro@exemplo.com")
+    criar_sessao(session, client.app, alvo)
+    criar_sessao(session, client.app, outro)
+
+    with caplog.at_level("INFO", logger="trapsight.auditoria"):
+        resposta = client.delete(f"/api/usuarios/{alvo.id}")
+
+    assert resposta.status_code == 204
+    assert resposta.content == b""
+    session.expire_all()
+    assert session.get(Usuario, alvo.id) is None
+    assert (
+        session.scalar(
+            select(func.count()).select_from(Sessao).where(Sessao.usuario_id == alvo.id)
+        )
+        == 0
+    )
+    assert session.get(Usuario, outro.id) is not None
+    assert (
+        session.scalar(
+            select(func.count())
+            .select_from(Sessao)
+            .where(Sessao.usuario_id == outro.id)
+        )
+        == 1
+    )
+    assert session.get(Usuario, gerente.id) is not None
+    assert "auth.conta_excluida" in caplog.text
+    assert f"usuario_id={alvo.id}" in caplog.text
+    assert f"criado_por_id={gerente.id}" in caplog.text
+
+
+def test_conta_excluida_sai_da_lista_e_o_email_pode_ser_reutilizado(client, session):
+    _autenticar(client, session)
+    alvo = _criar_operador_alvo(client, session)
+
+    assert client.delete(f"/api/usuarios/{alvo.id}").status_code == 204
+
+    emails = [conta["email"] for conta in client.get("/api/usuarios").json()]
+    assert "alvo@exemplo.com" not in emails
+    recriada = client.post(
+        "/api/usuarios",
+        json={"email": "alvo@exemplo.com", "nome": "Alvo Souza", "senha": _SENHA},
+    )
+    assert recriada.status_code == 201
+
+
+def test_gerente_nao_exclui_a_propria_conta(client, session):
+    gerente = _autenticar(client, session)
+
+    resposta = client.delete(f"/api/usuarios/{gerente.id}")
+
+    assert resposta.status_code == 403
+    assert resposta.json()["erro"]["codigo"] == "ACESSO_NEGADO"
+    assert session.get(Usuario, gerente.id) is not None
+
+
+def test_exclusao_de_conta_inexistente_devolve_404(client, session):
+    _autenticar(client, session)
+
+    resposta = client.delete(f"/api/usuarios/{uuid4()}")
+
+    assert resposta.status_code == 404
+    assert resposta.json()["erro"]["codigo"] == "CONTA_NAO_ENCONTRADA"
+
+
+def test_exclusao_com_identificador_invalido_devolve_422(client, session):
+    _autenticar(client, session)
+
+    resposta = client.delete("/api/usuarios/nao-e-um-uuid")
+
+    assert resposta.status_code == 422
+    assert resposta.json()["erro"]["codigo"] == "VALIDACAO_FALHOU"
