@@ -1,20 +1,21 @@
-# CURRENT TASK — PWA E CÂMERA NO CELULAR — Projeto Integrador
+# CURRENT TASK — PWA INSTALÁVEL — Projeto Integrador
 
-**Versão:** 1.0
+**Versão:** 1.1
 **Status:** PROPOSTA (aguarda a confirmação das decisões da seção 4 antes de implementar)
-**Escopo:** tornar o TrapSight instalável como PWA e permitir enviar a foto direto da câmera do celular
+**Versão alvo do produto:** `v0.2.0` (primeira versão após a `v0.1.0`)
+**Escopo:** tornar o TrapSight instalável como PWA, com convite de instalação dentro do aplicativo. O envio de fotos segue como hoje, pelo seletor de arquivos, com as fotos já homologadas (sem câmera dedicada).
 
 ---
 
 # 1. Objetivo
 
-Permitir que o gerente ou o operador instale o TrapSight na tela inicial do celular (Android e iOS), abra o aplicativo em tela cheia e fotografe a armadilha direto da câmera, sem tocar nas regras de negócio, na API nem no modelo.
+Permitir que o gerente ou o operador instale o TrapSight na tela inicial do celular (Android e iOS) e abra o aplicativo em tela cheia, sem tocar nas regras de negócio, na API nem no modelo. A instalação é oferecida dentro do próprio aplicativo (botão em Configurações e faixa na tela de login) e explicada no README com link e QR code.
 
 ---
 
 # 2. Escopo
 
-Cobre o manifesto, os ícones, o *service worker* do "casco" do aplicativo, os ajustes de publicação na Vercel e o envio de foto pela câmera. **Não cobre** funcionamento offline da análise (o modelo roda no servidor), fila de envio offline, notificações *push* nem publicação em lojas de aplicativos.
+Cobre o manifesto, os ícones, o *service worker* do "casco" do aplicativo, os ajustes de publicação na Vercel e o convite de instalação. **Não cobre** câmera dedicada (o envio segue pelo seletor de arquivos), funcionamento offline da análise (o modelo roda no servidor), fila de envio offline, notificações *push*, site institucional nem publicação em lojas de aplicativos.
 
 Fatos do código em 05/11/2026 que moldam a task:
 
@@ -22,7 +23,7 @@ Fatos do código em 05/11/2026 que moldam a task:
 - Não existe `frontend/public/`; os ativos ficam em `frontend/src/assets/`. Manifesto, `sw.js` e ícones precisam de caminhos fixos na raiz, então ficam em `frontend/public/`.
 - Cores do tema: claro `#f5f7f6` (fundo) e `#0a5c66` (primária); escuro `#0a1316` (fundo) e `#2fd6a1` (primária).
 - O `vercel.json` reescreve `/(.*)` para `/index.html` no serviço do frontend. Arquivos reais têm precedência, mas é preciso conferir `sw.js` e o manifesto.
-- A API limita o upload a **4 MB** e **20 milhões de pixels**; fotos de câmera de celular costumam passar de 4 MB, e as de 48 MP passam do limite de pixels.
+- A API limita o upload a **4 MB** e **20 milhões de pixels**. As fotos homologadas cabem; uma foto tirada na hora pelo seletor do celular pode passar de 4 MB e será recusada com a mensagem de erro que já existe (comportamento conhecido, apenas documentado).
 - O logo de referência está em `.context/reference/marca/trapsight-logo-referencia.png` (pasta local, fora do Git).
 
 ---
@@ -66,21 +67,22 @@ Fatos do código em 05/11/2026 que moldam a task:
 **Dependências:** PWA01, PWA02.
 **Estimativa:** 30 minutos a 1 hora.
 
-## PWA04 — Foto direto da câmera
+## PWA04 — Convite de instalação dentro do aplicativo
 
-- [ ] Em Nova análise (e no cadastro da armadilha com foto de identificação): dois botões, "Tirar foto" (`capture="environment"`) e "Escolher da galeria"; um só campo com `capture` impediria escolher fotos já salvas
-- [ ] Reduzir a foto **no navegador** antes do envio (lado maior até 1600 px, JPEG com qualidade em torno de 0,85, respeitando a orientação EXIF), para caber nos 4 MB e nos 20 MP da API; o modelo redimensiona para 768 × 576 de qualquer forma
-- [ ] Manter as validações atuais de tipo e a mensagem de erro por código
-- [ ] Testes: foto grande é reduzida; foto pequena segue inalterada; falha ao ler a imagem mostra erro claro
+- [ ] Hook que captura o evento `beforeinstallprompt` (Android/Chrome) e detecta se o app já roda instalado (`display-mode: standalone`)
+- [ ] Botão "Instalar aplicativo" em Configurações: abre o diálogo de instalação no Android; no iPhone mostra o passo a passo (Compartilhar → Adicionar à Tela de Início); some depois de instalado
+- [ ] Faixa discreta na tela de login (página pública, sem dados), só em celular não instalado, que o usuário pode dispensar; a dispensa fica guardada no navegador
+- [ ] README com o link do site e um QR code para instalar pelo celular
+- [ ] Testes: o botão some quando já instalado; o fluxo do iPhone mostra as instruções; dispensar a faixa persiste
 
-**Especificação:** `../plan/api/api_spec.md` (restrições de upload, 2.4).
-**Dependências:** nenhuma (pode andar em paralelo com PWA01 a PWA03).
+**Especificação:** `../plan/frontend/telas_spec.md` (Configurações e login).
+**Dependências:** PWA01.
 **Estimativa:** 1 a 2 horas.
 
 ## PWA05 — Verificação e documentação
 
 - [ ] DevTools → Application: manifesto sem erros, *service worker* ativo e o site reconhecido como instalável (Preview e produção)
-- [ ] Android (Chrome): instalar, abrir em tela cheia e enviar uma foto pela câmera
+- [ ] Android (Chrome): instalar pelo botão, abrir em tela cheia e enviar uma foto homologada pela análise
 - [ ] iOS (Safari): "Adicionar à Tela de Início" e abrir como aplicativo
 - [ ] Offline: sem rede, o casco abre com o aviso; nenhuma chamada `/api` sai do cache; o Cache Storage não contém dado de usuário, nem depois do logout
 - [ ] README, `docs/EXECUCAO.md` e `docs/ARQUITETURA.md` com a seção "Instalar no celular"; `CHANGELOG.md` atualizado
@@ -96,10 +98,10 @@ Fatos do código em 05/11/2026 que moldam a task:
 | --- | --- | --- |
 | D1 | Forma de implementar: manifesto e *service worker* escritos à mão, ou o plugin `vite-plugin-pwa` | **À mão**, sem dependência nova. O plugin é uma dependência nova e exige confirmação expressa. |
 | D2 | O que o aplicativo faz offline | Só abrir o casco com o aviso. Sem fila de envio offline. |
-| D3 | Câmera: dois botões (tirar foto e galeria) ou um só | **Dois botões.** |
-| D4 | Reduzir a foto no navegador antes do envio | **Sim**, é necessário para fotos de câmera de celular. |
 
-Até que D1 a D4 sejam confirmadas, esta task **não autoriza implementação**.
+Decididas pelo mantenedor em 05/11/2026: **sem câmera dedicada** (as decisões de câmera e de redução de foto foram retiradas) e **instalação pelo próprio aplicativo**, sem site institucional por ora.
+
+Até que D1 e D2 sejam confirmadas, esta task **não autoriza implementação**.
 
 ---
 
@@ -108,7 +110,7 @@ Até que D1 a D4 sejam confirmadas, esta task **não autoriza implementação**.
 - **Cache de dados autenticados:** o maior risco de uma PWA neste sistema. Mitigado pela regra de PWA02: só o casco público é guardado, e `/api` passa sempre pela rede.
 - **Atualização presa:** um `sw.js` com cache longo prenderia usuários numa versão antiga. Mitigado por PWA03.
 - **iOS:** o Safari tem suporte mais restrito a PWA (sem aviso de instalação automático). O uso é instalar manualmente pelo menu Compartilhar.
-- **Redução da foto:** muda o arquivo enviado (EXIF é descartado, o que é bom para a privacidade). O modelo recebe a mesma imagem final de 768 × 576, mas vale conferir a cobertura medida em algumas fotos antes e depois da redução.
+- **Foto tirada na hora:** o seletor de arquivos do celular pode oferecer a câmera, e uma foto grande passa do limite de 4 MB. A API recusa com mensagem clara; fica documentado, sem tratamento extra.
 
 ---
 
