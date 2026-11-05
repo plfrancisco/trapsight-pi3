@@ -1,15 +1,10 @@
-/** Informa que o conteúdo solicitado ainda está sendo carregado. */
+/** Informa que o conteúdo solicitado ainda está sendo carregado.
+ * O indicador só aparece depois de um instante, para não piscar em respostas rápidas.
+ */
 export default function EstadoCarregando() {
   return (
-    <div
-      aria-live="polite"
-      className="flex min-h-12 items-center gap-3 text-sm font-medium text-slate-700"
-      role="status"
-    >
-      <span
-        aria-hidden="true"
-        className="size-5 animate-spin rounded-full border-2 border-emerald-800 border-r-transparent"
-      />
+    <div aria-live="polite" className="estado-carregando" role="status">
+      <span aria-hidden="true" className="estado-carregando__giro" />
       Carregando…
     </div>
   )

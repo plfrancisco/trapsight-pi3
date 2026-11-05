@@ -24,7 +24,7 @@ import { TIMEOUT_UPLOAD_MS } from '../services/http'
 import type { Analise } from '../services/tipos'
 
 /** Tempo que a barra fica em 100% antes de o resultado aparecer. */
-export const ATRASO_FINAL_MS = 700
+export const ATRASO_FINAL_MS = 400
 
 /** Espera `ms` ou até o sinal abortar, o que vier primeiro (sem timer pendente). */
 function esperar(ms: number, sinal: AbortSignal): Promise<void> {

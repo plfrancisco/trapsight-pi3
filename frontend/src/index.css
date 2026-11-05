@@ -5319,3 +5319,125 @@ html { scroll-padding-block: 24px 112px; }
     min-height: calc(100dvh - 52px - env(safe-area-inset-top));
   }
 }
+
+/* Carregamento: indicador com as cores do tema, esqueleto com brilho e entrada suave das páginas. */
+.estado-carregando {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  color: var(--app-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  /* O atraso evita um piscar do indicador quando a resposta chega rápido. */
+  animation: estado-carregando-entrada 200ms ease-out 150ms backwards;
+}
+
+.estado-carregando__giro {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border: 2px solid var(--app-primary);
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: estado-carregando-giro 700ms linear infinite;
+}
+
+@keyframes estado-carregando-entrada {
+  from { opacity: 0; }
+}
+
+@keyframes estado-carregando-giro {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--app-text) 9%, transparent), transparent);
+  animation: skeleton-brilho 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-brilho {
+  to { transform: translateX(100%); }
+}
+
+.esqueleto-sessao {
+  display: grid;
+  max-width: 960px;
+  min-height: 100dvh;
+  align-content: start;
+  gap: 24px;
+  margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+  background: var(--app-bg);
+  animation: estado-carregando-entrada 200ms ease-out 100ms backwards;
+}
+
+.esqueleto-sessao__topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.esqueleto-sessao__logo {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 8px;
+}
+
+.esqueleto-sessao__busca {
+  height: 40px;
+  flex: 1 1 auto;
+  border-radius: 10px;
+}
+
+.esqueleto-sessao__titulo {
+  display: grid;
+  gap: 10px;
+}
+
+.esqueleto-sessao__linha {
+  height: 16px;
+}
+
+.esqueleto-sessao__linha--curta {
+  width: min(40%, 160px);
+}
+
+.esqueleto-sessao__linha--longa {
+  width: min(100%, 360px);
+  height: 28px;
+}
+
+.esqueleto-sessao__cartoes {
+  display: grid;
+  gap: 12px;
+}
+
+.esqueleto-sessao__cartao {
+  height: 112px;
+  border-radius: 10px;
+}
+
+/* A página nova entra com um fade curto; sem preenchimento final para não criar contexto de empilhamento. */
+.app-main > * {
+  animation: pagina-entrada 180ms ease-out backwards;
+}
+
+@keyframes pagina-entrada {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+/* Toque nos botões responde na hora. */
+.app-main button:not(:disabled):active {
+  transform: scale(0.98);
+}

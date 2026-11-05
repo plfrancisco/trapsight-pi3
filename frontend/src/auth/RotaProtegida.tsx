@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import Botao from '../components/Botao'
-import EstadoCarregando from '../components/EstadoCarregando'
+import EsqueletoSessao from '../components/EsqueletoSessao'
 import MensagemErro from '../components/MensagemErro'
 import { useAuth } from './useAuth'
 
@@ -22,11 +22,7 @@ export default function RotaProtegida() {
 
   // Não exibe nada protegido nem redireciona enquanto não se sabe se há sessão.
   if (estado === 'carregando') {
-    return (
-      <div className="mx-auto max-w-md px-4 py-16">
-        <EstadoCarregando />
-      </div>
-    )
+    return <EsqueletoSessao />
   }
 
   if (estado === 'erro') {
