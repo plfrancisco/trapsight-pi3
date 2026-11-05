@@ -272,6 +272,28 @@ sempre pela rede, sem leitura nem gravação em cache pelo service worker.
 Nenhum dado autenticado, resposta da API, foto, informação de conta ou sessão
 pode entrar no Cache Storage, inclusive após o logout.
 
+## 11.2 Cache local e inatividade no aplicativo
+
+Para o aplicativo abrir já preenchido, o código da página (não o service worker)
+guarda no `localStorage` apenas o mínimo para desenhar a tela: identificador, nome
+e papel do usuário e a última lista de armadilhas. Não entram token de sessão,
+token CSRF, e-mail, fotos nem resultados de análise; a sessão continua só no
+cookie `HttpOnly`. Cada item vale 24 h, tem versão de formato e é conferido ao ser
+lido.
+
+O cache é apagado no logout, em qualquer resposta 401, na troca de conta (login) e
+na inatividade. Depois de **20 minutos sem toque, tecla ou rolagem**, o aplicativo
+revoga a sessão no servidor, apaga o cache e volta ao login. A conferência vale
+também ao reabrir o aplicativo e ao voltar do segundo plano, porque os
+temporizadores são suspensos nesses casos. Enquanto há uso, a sessão é renovada no
+servidor a cada 5 minutos.
+
+O prazo de inatividade do servidor (`SESSAO_INATIVIDADE_SEGUNDOS`, padrão 1200)
+continua sendo a regra que vale: o temporizador do aplicativo só protege o aparelho
+e não substitui a validação no servidor. Se o aparelho estiver sem rede ao encerrar
+por inatividade, o cache local é apagado na hora e a sessão do servidor expira sozinha
+pelo mesmo prazo.
+
 ---
 
 # 12. Pendências

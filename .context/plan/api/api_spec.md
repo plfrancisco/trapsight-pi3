@@ -152,7 +152,7 @@ dispensa CORS no uso normal (`login.md`, 4.2).
 | `FUSO_PRODUTO` | `America/Sao_Paulo` | Não — zona IANA da data civil que conta os dias em uso |
 | `AMBIENTE` | `producao` | Sim — `desenvolvimento`, `homologacao` ou `producao`; em `producao` a documentação interativa (`/docs`, `/redoc`, `/openapi.json`) é desativada |
 | `COOKIE_SECURE` | `true` | Não — padrão `true`; `false` só com `AMBIENTE=desenvolvimento` |
-| `SESSAO_INATIVIDADE_SEGUNDOS` | `1800` | Não — padrão 1800 (30 min) |
+| `SESSAO_INATIVIDADE_SEGUNDOS` | `1200` | Não — padrão 1200 (20 min) |
 | `SESSAO_DURACAO_MAXIMA_SEGUNDOS` | `28800` | Não — padrão 28800 (8 h) |
 | `SESSAO_MAXIMA_POR_USUARIO` | `5` | Não — padrão 5 |
 | `LOGIN_FALHAS_POR_CONTA` | `5` | Não — padrão 5 em `LOGIN_JANELA_SEGUNDOS` |

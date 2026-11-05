@@ -9,6 +9,8 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 ### Adicionado
 
 - **Manifesto e ícones da PWA**, com `vite-plugin-pwa` 2.0.0: instalação standalone, ícones de 192 e 512 px, *maskable*, ícone da Apple e cores por tema nos metadados da página.
+- **Abertura rápida com cache local:** o aplicativo abre já logado e com a última lista de armadilhas, atualizando por baixo ("Atualizando…"). Guarda só id, nome e papel e a lista (24 h), no `localStorage`; nunca token, CSRF, e-mail nem fotos.
+- **Logout por inatividade:** após 20 minutos sem toque, tecla ou rolagem (conferido também ao reabrir ou voltar do segundo plano), a sessão é revogada no servidor, o cache é apagado e o login avisa o motivo. O cache também é apagado no logout, em qualquer 401 e na troca de conta.
 - **Convite de instalação** em Configurações e faixa dispensável no login, com instruções para iPhone e QR code no README.
 - **Tela cheia de instalação no celular:** quem abre o site em iPhone ou Android, sem o app instalado, vê "Instale o TrapSight" (botão no Android, passos no iPhone). "Continuar no navegador" ou Escape dispensam, e a tela volta depois de 7 dias. Nunca bloqueia o uso.
 - **Service worker do casco** com Workbox: somente estáticos públicos em cache, API sempre pela rede, registro só em produção e atualização na próxima navegação; aviso **"Sem conexão. A análise precisa de internet."** ao abrir offline. Integração e verificação final pendentes.
@@ -22,6 +24,7 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 ### Alterado
 
+- **Inatividade da sessão no servidor:** o padrão de `SESSAO_INATIVIDADE_SEGUNDOS` passou de 1800 (30 min) para 1200 (20 min). Quem definiu o valor no ambiente de produção precisa atualizá-lo.
 - **Redesenho visual** com a identidade petróleo e menta: login, paleta e tipografia, navegação e menu da conta, painel com fila de ação e cartões de operação, favicon, títulos por tela, aviso de alterações não salvas no cadastro e contraste dos alertas nos dois temas.
 - **Página Configurações** (`/configuracoes`), com a escolha do tema claro ou escuro e o acesso à troca de senha; o menu da conta agora reúne Configurações e Sair.
 - **Imagens das análises:** o resultado da análise e o quadro do registro selecionado voltam a mostrar a foto com a máscara do modelo (área coberta em magenta, com legenda), sem o botão de alternância; se a máscara não carregar, a tela cai para a foto original. Miniaturas e listas seguem com a foto original. O quadro do resultado ficou centralizado e ocupa a largura da coluna.

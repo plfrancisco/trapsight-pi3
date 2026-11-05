@@ -6,10 +6,17 @@ import LinkBotao from '../components/LinkBotao'
 import MensagemErro from '../components/MensagemErro'
 import PainelAlertas from '../components/PainelAlertas'
 import { useCarregamento } from '../hooks/useCarregamento'
+import { CHAVE_ARMADILHAS } from '../lib/cacheLocal'
 import { indiceSaturacao } from '../lib/saturacao'
 import { ApiError } from '../services/erros'
 import { listArmadilhas } from '../services/armadilhas'
 import type { ArmadilhaLista } from '../services/tipos'
+
+/** A última lista abre na hora e é atualizada por baixo; o cache é apagado ao sair. */
+const CACHE_ARMADILHAS = {
+  chave: CHAVE_ARMADILHAS,
+  validar: (valor: unknown): valor is ArmadilhaLista[] => Array.isArray(valor),
+}
 
 interface ContextoBuscaDashboard {
   termoBusca?: string
@@ -57,7 +64,15 @@ export default function DashboardPage() {
     (signal: AbortSignal) => listArmadilhas(signal),
     [],
   )
-  const { dados, erro, carregando, recarregar: reload } = useCarregamento(loadArmadilhas)
+  const { dados, erro, carregando, recarregar: reload } = useCarregamento(
+    loadArmadilhas,
+    CACHE_ARMADILHAS,
+  )
+  // Com dados guardados a tela já aparece; só sem eles vale o esqueleto ou o erro bloqueante.
+  const carregandoSemDados = carregando && dados === null
+  const atualizando = carregando && dados !== null
+  const erroBloqueante = erro !== null && dados === null
+  const falhaAoAtualizar = erro !== null && dados !== null
   const contextoBusca = useOutletContext<ContextoBuscaDashboard | null>()
   const termoBusca = contextoBusca?.termoBusca ?? ''
   const armadilhasVisiveis = dados === null ? [] : filtrarArmadilhas(dados, termoBusca)
@@ -74,7 +89,7 @@ export default function DashboardPage() {
         ) / leituras.length,
       )
     : '—'
-  const valorIndisponivel = dados === null || carregando || erro !== null
+  const valorIndisponivel = dados === null
 
   return (
     <div className="dashboard-page page-stack">
@@ -118,8 +133,8 @@ export default function DashboardPage() {
 
       <PainelAlertas
         armadilhas={dados === null ? null : armadilhasVisiveis}
-        carregando={carregando}
-        erro={Boolean(erro)}
+        carregando={carregandoSemDados}
+        erro={erroBloqueante}
         instanteReferencia={new Date()}
       />
 
@@ -135,7 +150,9 @@ export default function DashboardPage() {
                 : 'Cada cartão mostra a leitura mais recente e o prazo até a saturação.'}
             </p>
           </div>
-          {dados !== null && !erro && !carregando ? (
+          {atualizando ? (
+            <span className="section-count" role="status">Atualizando…</span>
+          ) : dados !== null ? (
             <span className="section-count">
               {armadilhasVisiveis.length === 1
                 ? '1 armadilha'
@@ -144,7 +161,7 @@ export default function DashboardPage() {
           ) : null}
         </div>
 
-        {carregando ? (
+        {carregandoSemDados ? (
           <ul aria-label="Carregando armadilhas" aria-busy="true" className="trap-grid trap-grid--loading">
             {Array.from({ length: 4 }, (_, indice) => (
               <li aria-hidden="true" className="trap-card-skeleton" key={indice}>
@@ -156,7 +173,13 @@ export default function DashboardPage() {
           </ul>
         ) : null}
 
-        {erro ? (
+        {falhaAoAtualizar ? (
+          <p className="empty-state-panel" role="status">
+            Não foi possível atualizar. Mostrando os dados da última visita.
+          </p>
+        ) : null}
+
+        {erroBloqueante ? (
           <div className="state-panel state-panel--error">
             <MensagemErro
               erro={
@@ -171,7 +194,7 @@ export default function DashboardPage() {
           </div>
         ) : null}
 
-        {!carregando && !erro && dados?.length === 0 ? (
+        {dados?.length === 0 ? (
           <section aria-labelledby="titulo-vazio" className="empty-state-panel">
             <h3 className="section-title" id="titulo-vazio">Nenhuma armadilha cadastrada</h3>
             <p className="section-description">
@@ -183,13 +206,13 @@ export default function DashboardPage() {
           </section>
         ) : null}
 
-        {!carregando && !erro && dados && dados.length > 0 && armadilhasVisiveis.length === 0 ? (
+        {dados && dados.length > 0 && armadilhasVisiveis.length === 0 ? (
           <p className="empty-state-panel" role="status">
             Nenhuma armadilha encontrada para “{termoBusca.trim()}”.
           </p>
         ) : null}
 
-        {!carregando && !erro && armadilhasVisiveis.length > 0 ? (
+        {armadilhasVisiveis.length > 0 ? (
           <ul className="trap-grid">
             {armadilhasVisiveis.map((armadilha) => (
               <li key={armadilha.id}>

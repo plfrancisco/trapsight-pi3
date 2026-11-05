@@ -354,10 +354,10 @@ servidor, que não depende do cookie para expirar a sessão.
 
 | Regra | Valor |
 |---|---|
-| **Inatividade** | **30 min** (OWASP: 15 a 30 min para risco baixo) |
+| **Inatividade** | **20 min** (OWASP: 15 a 30 min para risco baixo) |
 | **Duração absoluta** | **8 h** (OWASP: 4 a 8 h para um dia de trabalho) |
 | Renovação do `ultimo_uso_em` | No máximo **1 vez por minuto** (ou a cada 1/5 do prazo de inatividade, o que for menor, para os prazos curtos da homologação), para não gravar a cada requisição |
-| Aplicação dos prazos | **No servidor**, nunca por temporizador do cliente |
+| Aplicação dos prazos | **No servidor**; o aplicativo também encerra a sessão aos 20 min sem uso, só para proteger o aparelho (ver `security_spec.md`, 11.2) |
 | Sessão nova | A cada login (token inédito, o antigo nunca é reaproveitado), o que elimina a fixação |
 | Sessões simultâneas | Até **5** por usuário; a mais antiga é revogada ao exceder |
 | Troca de senha | Revoga **todas** as outras sessões e emite uma nova para a atual |

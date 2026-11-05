@@ -33,4 +33,13 @@ globalThis.ResizeObserver = class implements ResizeObserver {
   }
 }
 
-afterEach(() => cleanup())
+afterEach(() => {
+  cleanup()
+  // O cache local e a marca de atividade não podem vazar de um teste para o seguinte.
+  try {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  } catch {
+    // Testes que trocam o armazenamento por um que falha restauram o original sozinhos.
+  }
+})

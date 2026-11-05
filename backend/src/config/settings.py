@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     ambiente: Ambiente = "desenvolvimento"
     # None significa "decidir pelo ambiente": só desenvolvimento aceita cookie sem Secure.
     cookie_secure: bool | None = None
-    sessao_inatividade_segundos: int = Field(default=1800, ge=1)
+    sessao_inatividade_segundos: int = Field(default=1200, ge=1)
     sessao_duracao_maxima_segundos: int = Field(default=28800, ge=1)
     sessao_maxima_por_usuario: int = Field(default=5, ge=1)
     login_falhas_por_conta: int = Field(default=5, ge=1)

@@ -7,6 +7,14 @@ import {
   type ReactNode,
 } from 'react'
 import { AUTENTICACAO_ATIVA } from '../config'
+import { useInatividade } from '../hooks/useInatividade'
+import {
+  CHAVE_SESSAO,
+  gravarCache,
+  lerCache,
+  limparCacheUsuario,
+} from '../lib/cacheLocal'
+import { estaInativo, lerUltimaAtividade, registrarAtividade } from '../lib/inatividade'
 import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import {
@@ -27,6 +35,60 @@ interface SituacaoAuth {
   estado: EstadoAuth
   usuario: Usuario | null
   motivoSaida: MotivoSaida
+  /** Verdadeiro enquanto o usuário vem do cache local e o servidor ainda não confirmou a sessão. */
+  provisoria: boolean
+}
+
+/** O mínimo guardado para desenhar a tela antes de o servidor responder. */
+interface DicaDeSessao {
+  id: string
+  nome: string
+  papel: Usuario['papel']
+}
+
+function ehDicaDeSessao(valor: unknown): valor is DicaDeSessao {
+  if (typeof valor !== 'object' || valor === null) return false
+  const dica = valor as Record<string, unknown>
+  return (
+    typeof dica.id === 'string'
+    && typeof dica.nome === 'string'
+    && (dica.papel === 'gerente' || dica.papel === 'operador')
+  )
+}
+
+/** Define como o aplicativo começa: sem sessão conhecida, já logado pelo cache ou deslogado por inatividade. */
+function situacaoInicial(ativa: boolean): { situacao: SituacaoAuth; inativoAoAbrir: boolean } {
+  if (!ativa) {
+    return {
+      situacao: { estado: 'autenticado', usuario: null, motivoSaida: null, provisoria: false },
+      inativoAoAbrir: false,
+    }
+  }
+
+  if (estaInativo(lerUltimaAtividade())) {
+    return {
+      situacao: { estado: 'anonimo', usuario: null, motivoSaida: 'inativo', provisoria: false },
+      inativoAoAbrir: true,
+    }
+  }
+
+  const dica = lerCache(CHAVE_SESSAO, ehDicaDeSessao)
+  if (dica) {
+    return {
+      situacao: {
+        estado: 'autenticado',
+        usuario: { ...dica, email: '', troca_senha_pendente: false },
+        motivoSaida: null,
+        provisoria: true,
+      },
+      inativoAoAbrir: false,
+    }
+  }
+
+  return {
+    situacao: { estado: 'carregando', usuario: null, motivoSaida: null, provisoria: false },
+    inativoAoAbrir: false,
+  }
 }
 
 type Acao =
@@ -36,28 +98,35 @@ type Acao =
   | { tipo: 'erro' }
   | { tipo: 'saiu' }
   | { tipo: 'expirou' }
+  | { tipo: 'inativo' }
   | { tipo: 'troca_pendente' }
 
 function reduzir(situacao: SituacaoAuth, acao: Acao): SituacaoAuth {
   switch (acao.tipo) {
     case 'carregando':
-      return { ...situacao, estado: 'carregando' }
+      return { ...situacao, estado: 'carregando', provisoria: false }
     case 'sessao':
-      return { estado: 'autenticado', usuario: acao.usuario, motivoSaida: null }
+      return { estado: 'autenticado', usuario: acao.usuario, motivoSaida: null, provisoria: false }
     case 'anonimo':
-      return { ...situacao, estado: 'anonimo', usuario: null }
+      // Um usuário vindo do cache que o servidor não reconhece é uma sessão que expirou.
+      return situacao.provisoria
+        ? { estado: 'anonimo', usuario: null, motivoSaida: 'expirou', provisoria: false }
+        : { ...situacao, estado: 'anonimo', usuario: null }
     case 'erro':
-      return { ...situacao, estado: 'erro' }
+      // Sem rede, quem abriu pelo cache continua vendo o que já tinha.
+      return situacao.provisoria ? situacao : { ...situacao, estado: 'erro' }
     case 'troca_pendente':
       return situacao.usuario
         ? { ...situacao, usuario: { ...situacao.usuario, troca_senha_pendente: true } }
         : situacao
     case 'saiu':
-      return { estado: 'anonimo', usuario: null, motivoSaida: 'saiu' }
+      return { estado: 'anonimo', usuario: null, motivoSaida: 'saiu', provisoria: false }
+    case 'inativo':
+      return { estado: 'anonimo', usuario: null, motivoSaida: 'inativo', provisoria: false }
     case 'expirou':
       // Só importa se havia sessão: no início, um 401 é apenas "ainda não entrou".
       return situacao.estado === 'autenticado'
-        ? { estado: 'anonimo', usuario: null, motivoSaida: 'expirou' }
+        ? { estado: 'anonimo', usuario: null, motivoSaida: 'expirou', provisoria: false }
         : situacao
   }
 }
@@ -76,17 +145,27 @@ export default function AuthProvider({
   children,
   ativa = AUTENTICACAO_ATIVA,
 }: AuthProviderProps) {
-  const [situacao, dispatch] = useReducer(
-    reduzir,
-    ativa
-      ? { estado: 'carregando', usuario: null, motivoSaida: null }
-      : { estado: 'autenticado', usuario: null, motivoSaida: null },
-  )
+  const [inicio] = useState(() => situacaoInicial(ativa))
+  const [situacao, dispatch] = useReducer(reduzir, inicio.situacao)
   const [tentativa, setTentativa] = useState(0)
+
+  // Aberto depois de 20 min parado: revoga a sessão no servidor (best effort) e apaga o cache.
+  useEffect(() => {
+    if (!inicio.inativoAoAbrir) return
+    limparCacheUsuario()
+    api
+      .getSessao()
+      .then((sessao) => {
+        definirCsrf(sessao.csrf_token)
+        return api.logout()
+      })
+      .catch(() => undefined)
+      .finally(limparCsrf)
+  }, [inicio.inativoAoAbrir])
 
   // Recupera a sessão ao abrir o aplicativo (e a cada nova tentativa).
   useEffect(() => {
-    if (!ativa) return
+    if (!ativa || inicio.inativoAoAbrir) return
     const controlador = new AbortController()
 
     api
@@ -106,7 +185,39 @@ export default function AuthProvider({
       })
 
     return () => controlador.abort()
-  }, [ativa, tentativa])
+  }, [ativa, inicio.inativoAoAbrir, tentativa])
+
+  // O cache de dados acompanha a sessão: guarda a dica quando confirmada, apaga ao deslogar.
+  useEffect(() => {
+    if (!ativa) return
+    if (situacao.estado === 'anonimo') {
+      limparCacheUsuario()
+    } else if (situacao.estado === 'autenticado' && situacao.usuario && !situacao.provisoria) {
+      const { id, nome, papel } = situacao.usuario
+      gravarCache<DicaDeSessao>(CHAVE_SESSAO, { id, nome, papel })
+    }
+  }, [ativa, situacao])
+
+  const expirarPorInatividade = useCallback(() => {
+    // O CSRF é lido no início da chamada, antes de ser esquecido logo abaixo.
+    void api.logout().catch(() => undefined)
+    limparCsrf()
+    dispatch({ tipo: 'inativo' })
+  }, [])
+
+  const renovarSessao = useCallback(() => {
+    // Falhas de rede são ignoradas; um 401 já é tratado pela camada HTTP.
+    void api
+      .getSessao()
+      .then((sessao) => definirCsrf(sessao.csrf_token))
+      .catch(() => undefined)
+  }, [])
+
+  useInatividade(
+    ativa && situacao.estado === 'autenticado',
+    expirarPorInatividade,
+    renovarSessao,
+  )
 
   // Qualquer resposta "NAO_AUTENTICADO" da API encerra a sessão local.
   useEffect(
@@ -120,6 +231,9 @@ export default function AuthProvider({
 
   const login = useCallback(async (email: string, senha: string) => {
     const sessao = await api.login(email, senha)
+    // Dados de outra conta que tenham ficado no aparelho não podem aparecer para esta.
+    limparCacheUsuario()
+    registrarAtividade()
     definirCsrf(sessao.csrf_token)
     dispatch({ tipo: 'sessao', usuario: sessao.usuario })
   }, [])

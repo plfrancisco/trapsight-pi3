@@ -32,7 +32,7 @@ A máscara é gerada e gravada pela inferência e agora aparece na interface (de
 
 ### Segurança
 - **RNF04:** Argon2id para as senhas. Política de senha: de 8 a 128 caracteres, com ao menos uma letra e um número (alterada em 03/11/2026; antes eram 15 caracteres sem regra de composição), normalização NFC. Recusa senhas comuns, triviais (sequências e repetições) e derivadas do e-mail ou do nome.
-- **RNF05:** sessão com token guardado como hash no banco e `csrf_token`. Expira após 30 min de inatividade ou 8 h no total, com no máximo 5 sessões por usuário.
+- **RNF05:** sessão com token guardado como hash no banco e `csrf_token`. Expira após 20 min de inatividade ou 8 h no total, com no máximo 5 sessões por usuário.
 - **RNF06:** o middleware exige sessão, CSRF e `Origin` antes de ler o corpo de qualquer rota `/api`. Um anônimo não consegue enviar um upload inteiro antes de receber 401.
 - **RNF07:** o login sempre executa o Argon2, mesmo para conta inexistente, para não revelar quais contas existem. A resposta de falha é única.
 - **RNF08:** 5 falhas por conta em 15 min bloqueiam a conta por 15 min. Falhar durante o bloqueio não o estende. Há também um limite de 30 falhas por IP em 15 min. Esses contadores ficam no banco (`tentativa_login`).

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardPage from './DashboardPage'
+import { CHAVE_ARMADILHAS, gravarCache, lerCache } from '../lib/cacheLocal'
 import type { ArmadilhaLista } from '../services/tipos'
 
 vi.mock('../services/armadilhas', () => ({ listArmadilhas: vi.fn() }))
@@ -76,6 +77,34 @@ describe('DashboardPage', () => {
       'ARM-SEM-ANALISE',
       'ARM-ATENCAO',
     ])
+  })
+
+  it('abre com a última lista guardada, atualiza por baixo e grava a nova', async () => {
+    gravarCache(CHAVE_ARMADILHAS, [buildArmadilha({ id: 'arm-velha', identificador: 'ARM-GUARDADA' })])
+    let responder: (lista: ArmadilhaLista[]) => void = () => undefined
+    vi.mocked(listArmadilhas).mockReturnValue(new Promise((resolver) => { responder = resolver }))
+
+    renderDashboard()
+
+    expect(screen.getByRole('heading', { name: 'ARM-GUARDADA', level: 3 })).toBeVisible()
+    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Atualizando…')
+    expect(screen.queryByLabelText('Carregando armadilhas')).not.toBeInTheDocument()
+
+    responder([buildArmadilha({ id: 'arm-nova', identificador: 'ARM-ATUAL' })])
+
+    expect(await screen.findByRole('heading', { name: 'ARM-ATUAL', level: 3 })).toBeVisible()
+    expect(screen.queryByRole('heading', { name: 'ARM-GUARDADA' })).not.toBeInTheDocument()
+    expect(lerCache(CHAVE_ARMADILHAS, Array.isArray)).toHaveLength(1)
+  })
+
+  it('mantém a lista guardada e avisa quando não consegue atualizar', async () => {
+    gravarCache(CHAVE_ARMADILHAS, [buildArmadilha({ id: 'arm-velha', identificador: 'ARM-GUARDADA' })])
+    vi.mocked(listArmadilhas).mockRejectedValue(new Error('sem rede'))
+
+    renderDashboard()
+
+    expect(await screen.findByText(/Não foi possível atualizar/)).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'ARM-GUARDADA', level: 3 })).toBeVisible()
   })
 
   it('mantém a fila de ação visível durante o carregamento', () => {

@@ -4,8 +4,8 @@ import type { Usuario } from '../services/tipos'
 /** Situação da autenticação do aplicativo. */
 export type EstadoAuth = 'carregando' | 'autenticado' | 'anonimo' | 'erro'
 
-/** Como a sessão terminou: expirou no servidor ou o usuário saiu. */
-export type MotivoSaida = 'expirou' | 'saiu' | null
+/** Como a sessão terminou: expirou no servidor, o usuário saiu ou ficou 20 min inativo. */
+export type MotivoSaida = 'expirou' | 'saiu' | 'inativo' | null
 
 /** Valor compartilhado pelo provedor de autenticação. */
 export interface AuthContextoValor {

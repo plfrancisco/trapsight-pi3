@@ -9,6 +9,8 @@ vi.mock('../services/auth', () => ({
   changeSenha: vi.fn(),
 }))
 
+import { CHAVE_ATIVIDADE, CHAVE_SESSAO, gravarCache, lerCache } from '../lib/cacheLocal'
+import { registrarAtividade } from '../lib/inatividade'
 import * as api from '../services/auth'
 import { ApiError } from '../services/erros'
 import { limparCsrf, notificarSessaoExpirada, obterCsrf } from '../services/sessao'
@@ -225,13 +227,122 @@ describe('AuthProvider', () => {
     expect(api.getSessao).not.toHaveBeenCalled()
   })
 
-  it('não grava nada em localStorage nem sessionStorage', async () => {
+  it('só guarda no aparelho id, nome e papel: nunca CSRF, e-mail nem sessionStorage', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'csrf-secreto' })
 
     montar()
     await waitFor(() => expect(estado()).toBe('autenticado'))
 
-    expect(localStorage.length).toBe(0)
+    const guardado = Object.keys(localStorage).map((chave) => `${chave}=${localStorage.getItem(chave)}`).join('\n')
+    expect(guardado).toContain('"nome":"Ana"')
+    expect(guardado).not.toContain('csrf-secreto')
+    expect(guardado).not.toContain('ana@exemplo.com')
     expect(sessionStorage.length).toBe(0)
+  })
+})
+
+describe('AuthProvider: cache local e inatividade', () => {
+  const dica = { id: 'u1', nome: 'Ana', papel: 'operador' as const }
+
+  it('abre já autenticado pela dica guardada e confirma a sessão em seguida', async () => {
+    gravarCache(CHAVE_SESSAO, dica)
+    registrarAtividade()
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'csrf-3' })
+
+    montar()
+    expect(estado()).toBe('autenticado')
+    expect(screen.getByTestId('usuario')).toHaveTextContent('')
+
+    await waitFor(() => expect(screen.getByTestId('usuario')).toHaveTextContent('ana@exemplo.com'))
+    expect(obterCsrf()).toBe('csrf-3')
+  })
+
+  it('volta ao login, avisando a expiração, se o servidor não reconhece a sessão guardada', async () => {
+    gravarCache(CHAVE_SESSAO, dica)
+    registrarAtividade()
+    vi.mocked(api.getSessao).mockRejectedValue(new ApiError('NAO_AUTENTICADO', 'x', 401))
+
+    montar()
+    expect(estado()).toBe('autenticado')
+
+    await waitFor(() => expect(estado()).toBe('anonimo'))
+    expect(screen.getByTestId('motivo')).toHaveTextContent('expirou')
+    expect(lerCache(CHAVE_SESSAO)).toBeNull()
+  })
+
+  it('continua vendo o que já tinha quando está sem rede ao abrir', async () => {
+    gravarCache(CHAVE_SESSAO, dica)
+    registrarAtividade()
+    vi.mocked(api.getSessao).mockRejectedValue(new ApiError('FALHA_DE_REDE', 'x', 0))
+
+    montar()
+    await waitFor(() => expect(api.getSessao).toHaveBeenCalled())
+    await new Promise((resolver) => setTimeout(resolver, 20))
+
+    expect(estado()).toBe('autenticado')
+  })
+
+  it('reaberto depois de 20 minutos parado, sai sozinho, revoga a sessão e apaga o cache', async () => {
+    gravarCache(CHAVE_SESSAO, dica)
+    gravarCache('armadilhas', [{ id: 'a1' }])
+    registrarAtividade(Date.now() - 21 * 60_000)
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'csrf-4' })
+    vi.mocked(api.logout).mockResolvedValue(undefined)
+
+    montar()
+
+    expect(estado()).toBe('anonimo')
+    expect(screen.getByTestId('motivo')).toHaveTextContent('inativo')
+    await waitFor(() => expect(api.logout).toHaveBeenCalledTimes(1))
+    expect(lerCache(CHAVE_SESSAO)).toBeNull()
+    expect(lerCache('armadilhas')).toBeNull()
+    expect(estado()).toBe('anonimo')
+  })
+
+  it('com o app aberto, sai sozinho aos 20 minutos sem uso e apaga o cache', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'csrf-5' })
+    vi.mocked(api.logout).mockResolvedValue(undefined)
+    montar()
+    await waitFor(() => expect(estado()).toBe('autenticado'))
+    await waitFor(() => expect(lerCache(CHAVE_SESSAO)).not.toBeNull())
+
+    localStorage.setItem(CHAVE_ATIVIDADE, String(Date.now() - 21 * 60_000))
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+
+    await waitFor(() => expect(estado()).toBe('anonimo'))
+    expect(screen.getByTestId('motivo')).toHaveTextContent('inativo')
+    expect(api.logout).toHaveBeenCalledTimes(1)
+    expect(lerCache(CHAVE_SESSAO)).toBeNull()
+    expect(obterCsrf()).toBeNull()
+  })
+
+  it('apaga o cache ao sair e quando o servidor responde que a sessão acabou', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'csrf-6' })
+    vi.mocked(api.logout).mockResolvedValue(undefined)
+    const usuarioEvento = userEvent.setup()
+    montar()
+    await waitFor(() => expect(lerCache(CHAVE_SESSAO)).not.toBeNull())
+    gravarCache('armadilhas', [{ id: 'a1' }])
+
+    await usuarioEvento.click(screen.getByRole('button', { name: 'sair' }))
+
+    await waitFor(() => expect(estado()).toBe('anonimo'))
+    expect(lerCache(CHAVE_SESSAO)).toBeNull()
+    expect(lerCache('armadilhas')).toBeNull()
+  })
+
+  it('apaga o cache de outra conta ao entrar', async () => {
+    gravarCache('armadilhas', [{ id: 'da-outra-conta' }])
+    vi.mocked(api.getSessao).mockRejectedValue(new ApiError('NAO_AUTENTICADO', 'x', 401))
+    vi.mocked(api.login).mockResolvedValue({ usuario, csrf_token: 'csrf-7' })
+    const usuarioEvento = userEvent.setup()
+    montar()
+    await waitFor(() => expect(estado()).toBe('anonimo'))
+    gravarCache('armadilhas', [{ id: 'da-outra-conta' }])
+
+    await usuarioEvento.click(screen.getByRole('button', { name: 'entrar' }))
+
+    await waitFor(() => expect(estado()).toBe('autenticado'))
+    expect(lerCache('armadilhas')).toBeNull()
   })
 })

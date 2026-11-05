@@ -107,6 +107,11 @@ export default function LoginPage() {
               Sua sessão expirou. Entre novamente.
             </p>
           ) : null}
+          {motivoSaida === 'inativo' ? (
+            <p className="login-expired-message" role="status">
+              Sua sessão foi encerrada após 20 minutos sem uso. Entre novamente.
+            </p>
+          ) : null}
 
           {estado === 'carregando' ? (
             <EstadoCarregando />
