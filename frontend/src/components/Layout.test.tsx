@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../services/auth', () => ({
   login: vi.fn(),
@@ -18,6 +18,39 @@ import Layout from './Layout'
 const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
 
 const ABRIR_CONTA = 'Abrir opções da conta de Ana Souza'
+const ouvintesDoModo = new Set<EventListenerOrEventListenerObject>()
+let modoStandalone = false
+let alterarModoStandalone: (instalado: boolean) => void = () => undefined
+
+function configurarMatchMedia() {
+  const consulta = {
+    get matches() {
+      return modoStandalone
+    },
+    media: '(display-mode: standalone)',
+    onchange: null,
+    addEventListener: (_tipo: string, ouvinte: EventListenerOrEventListenerObject) => {
+      ouvintesDoModo.add(ouvinte)
+    },
+    removeEventListener: (_tipo: string, ouvinte: EventListenerOrEventListenerObject) => {
+      ouvintesDoModo.delete(ouvinte)
+    },
+    addListener: (ouvinte: EventListener) => ouvintesDoModo.add(ouvinte),
+    removeListener: (ouvinte: EventListener) => ouvintesDoModo.delete(ouvinte),
+    dispatchEvent: () => true,
+  } as unknown as MediaQueryList
+
+  vi.stubGlobal('matchMedia', vi.fn(() => consulta))
+
+  return (instalado: boolean) => {
+    modoStandalone = instalado
+    const evento = Object.assign(new Event('change'), { matches: instalado }) as MediaQueryListEvent
+    ouvintesDoModo.forEach((ouvinte) => {
+      if (typeof ouvinte === 'function') ouvinte(evento)
+      else ouvinte.handleEvent(evento)
+    })
+  }
+}
 
 const montar = (ativa: boolean) =>
   render(
@@ -35,6 +68,15 @@ const montar = (ativa: boolean) =>
 beforeEach(() => {
   vi.mocked(api.getSessao).mockReset()
   vi.mocked(api.logout).mockReset()
+  modoStandalone = false
+  ouvintesDoModo.clear()
+  document.documentElement.removeAttribute('data-modo-instalado')
+  alterarModoStandalone = configurarMatchMedia()
+})
+
+afterEach(() => {
+  document.documentElement.removeAttribute('data-modo-instalado')
+  vi.unstubAllGlobals()
 })
 
 describe('Layout e a conta do usuário', () => {
@@ -52,6 +94,36 @@ describe('Layout e a conta do usuário', () => {
     montar(true)
     await screen.findAllByRole('button', { name: ABRIR_CONTA })
     expect(screen.queryByRole('link', { name: 'Contas' })).not.toBeInTheDocument()
+  })
+
+  it('aplica e remove o modo visual instalado quando muda display-mode', async () => {
+    montar(false)
+
+    act(() => alterarModoStandalone(true))
+    await waitFor(() =>
+      expect(document.documentElement).toHaveAttribute('data-modo-instalado', 'true'),
+    )
+
+    act(() => alterarModoStandalone(false))
+    await waitFor(() =>
+      expect(document.documentElement).not.toHaveAttribute('data-modo-instalado'),
+    )
+  })
+
+  it('mantém na barra móvel os mesmos destinos disponíveis ao gerente', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { ...usuario, papel: 'gerente' }, csrf_token: 'c',
+    })
+    montar(true)
+    await screen.findAllByRole('button', { name: ABRIR_CONTA })
+
+    const menuPrincipal = within(screen.getByRole('navigation', { name: 'Navegação principal' }))
+    const menuMovel = within(screen.getByRole('navigation', { name: 'Navegação móvel' }))
+    const destinosDesktop = menuPrincipal.getAllByRole('link').map((link) => link.getAttribute('href'))
+    const destinosMoveis = menuMovel.getAllByRole('link').map((link) => link.getAttribute('href'))
+
+    expect(destinosMoveis).toEqual(destinosDesktop)
+    expect(destinosMoveis).toEqual(['/', '/analises/nova', '/armadilhas/nova', '/contas'])
   })
 
   it('mostra o menu da conta com Configurações e Sair quando há sessão', async () => {

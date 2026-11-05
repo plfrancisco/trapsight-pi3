@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth'
+import { useModoInstalado } from '../hooks/useInstalacao'
 import { useTema } from '../hooks/useTema'
 import MarcaTrapSight from './MarcaTrapSight'
 import MensagemErro from './MensagemErro'
@@ -145,11 +146,23 @@ function lerSidebarRecolhida(): boolean {
 export default function Layout() {
   const { ativa, usuario, logout } = useAuth()
   const { pathname } = useLocation()
+  const modoInstalado = useModoInstalado()
   const { tema, alternarTema } = useTema()
   const [erroSaida, setErroSaida] = useState<string | null>(null)
   const [sidebarRecolhida, setSidebarRecolhida] = useState(lerSidebarRecolhida)
   const [termoBusca, setTermoBusca] = useState('')
   const campoBuscaRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const raiz = document.documentElement
+    if (modoInstalado) {
+      raiz.setAttribute('data-modo-instalado', 'true')
+    } else {
+      raiz.removeAttribute('data-modo-instalado')
+    }
+
+    return () => raiz.removeAttribute('data-modo-instalado')
+  }, [modoInstalado])
 
   useEffect(() => {
     function tratarAtalho(evento: KeyboardEvent) {
