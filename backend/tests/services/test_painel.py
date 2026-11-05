@@ -90,6 +90,8 @@ def test_dias_em_uso_contam_a_data_civil_do_fuso_do_instante() -> None:
 
     assert calcular_dias_em_uso(date(2026, 10, 29), instante) == 1
     assert (
-        calcular_dias_em_uso(date(2026, 10, 29), instante.astimezone(ZoneInfo("America/Sao_Paulo")))
+        calcular_dias_em_uso(
+            date(2026, 10, 29), instante.astimezone(ZoneInfo("America/Sao_Paulo"))
+        )
         == 0
     )
