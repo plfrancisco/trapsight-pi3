@@ -126,6 +126,26 @@ describe('Layout e a conta do usuário', () => {
     expect(destinosMoveis).toEqual(['/', '/analises/nova', '/armadilhas/nova', '/contas'])
   })
 
+  it('põe o avatar da conta na barra móvel, com a logo ao lado da busca no topo', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    const pessoa = userEvent.setup()
+    montar(true)
+    await screen.findAllByRole('button', { name: ABRIR_CONTA })
+
+    const barraSuperior = within(screen.getByRole('banner', { name: 'Barra superior' }))
+    expect(barraSuperior.queryByRole('button', { name: ABRIR_CONTA })).not.toBeInTheDocument()
+    expect(barraSuperior.getByRole('link', { name: 'Ir para o início' })).toHaveAttribute('href', '/')
+
+    const menuMovel = within(screen.getByRole('navigation', { name: 'Navegação móvel' }))
+    const avatar = menuMovel.getByRole('button', { name: ABRIR_CONTA })
+    expect(avatar).toHaveTextContent('Perfil')
+
+    await pessoa.click(avatar)
+    const menu = within(screen.getByLabelText('Opções da conta'))
+    expect(menu.getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/configuracoes')
+    expect(menu.getByRole('button', { name: 'Sair' })).toBeVisible()
+  })
+
   it('mostra o menu da conta com Configurações e Sair quando há sessão', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
     const pessoa = userEvent.setup()

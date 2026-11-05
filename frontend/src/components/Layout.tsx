@@ -54,10 +54,12 @@ function IconeNavegacao({ tipo }: IconeNavegacaoProps) {
 interface MenuContaProps {
   nome: string
   aoSair: () => void
-  variante: 'sidebar' | 'topbar'
+  variante: 'sidebar' | 'bottom'
 }
 
-/** Agrupa as ações da conta atrás do avatar para liberar espaço na navegação. */
+/** Agrupa as ações da conta atrás do avatar para liberar espaço na navegação.
+ * No celular o avatar fica na barra inferior; na lateral, junto ao nome.
+ */
 function MenuConta({ nome, aoSair, variante }: MenuContaProps) {
   const [aberto, setAberto] = useState(false)
   const ancoraRef = useRef<HTMLDivElement>(null)
@@ -90,7 +92,7 @@ function MenuConta({ nome, aoSair, variante }: MenuContaProps) {
         aria-controls={idMenu}
         aria-expanded={aberto}
         aria-label={`Abrir opções da conta de ${nome}`}
-        className="account-menu-trigger"
+        className={`account-menu-trigger${variante === 'bottom' ? ' account-menu-trigger--bottom mobile-nav-link' : ''}`}
         onClick={() => setAberto((atual) => !atual)}
         title={nome}
         type="button"
@@ -100,7 +102,9 @@ function MenuConta({ nome, aoSair, variante }: MenuContaProps) {
         </span>
         {variante === 'sidebar' ? (
           <span className="account-menu-trigger__name">{nome}</span>
-        ) : null}
+        ) : (
+          <span aria-hidden="true">Perfil</span>
+        )}
       </button>
       {aberto ? (
         <div aria-label="Opções da conta" className="account-menu" id={idMenu}>
@@ -295,9 +299,12 @@ export default function Layout() {
         </header>
 
         <header aria-label="Barra superior" className="workspace-topbar">
+          <Link aria-label="Ir para o início" className="topbar-logo" to="/">
+            <MarcaTrapSight />
+          </Link>
           <div className="topbar-context">
             <span aria-hidden="true" className="topbar-context-mark" />
-            <span>TrapSight</span>
+            <span className="topbar-context-name">TrapSight</span>
             <span aria-hidden="true" className="topbar-separator">/</span>
             <span className="topbar-current-page">{tituloDaRota}</span>
           </div>
@@ -330,11 +337,6 @@ export default function Layout() {
                 <span>Nova análise</span>
               </Link>
             ) : null}
-            <div className="topbar-mobile-utilities">
-              {ativa && usuario ? (
-                <MenuConta aoSair={() => void sair()} nome={usuario.nome} variante="topbar" />
-              ) : null}
-            </div>
           </div>
         </header>
 
@@ -363,6 +365,9 @@ export default function Layout() {
               <IconeNavegacao tipo="contas" />
               <span>Contas</span>
             </NavLink>
+          ) : null}
+          {usuario ? (
+            <MenuConta aoSair={() => void sair()} nome={usuario.nome} variante="bottom" />
           ) : null}
         </nav>
       ) : null}
