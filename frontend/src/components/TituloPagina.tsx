@@ -9,6 +9,7 @@ const titulos: [string, string][] = [
   ['/armadilhas/:id', 'Detalhe da armadilha'],
   ['/analises/nova', 'Nova análise'],
   ['/contas', 'Contas'],
+  ['/configuracoes', 'Configurações'],
   ['/conta/senha', 'Alterar senha'],
 ]
 

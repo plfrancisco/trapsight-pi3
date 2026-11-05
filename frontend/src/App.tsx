@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage'
 import NaoEncontradaPage from './pages/NaoEncontradaPage'
 import NovaAnalisePage from './pages/NovaAnalisePage'
 import ContasPage from './pages/ContasPage'
+import ConfiguracoesPage from './pages/ConfiguracoesPage'
 
 /**
  * Declara as rotas para permitir testes com qualquer router. Só `/login` é pública;
@@ -31,6 +32,7 @@ export function Rotas() {
             <Route path="/armadilhas/:id" element={<DetalheArmadilhaPage />} />
             <Route path="/armadilhas/:id/editar" element={<CadastroArmadilhaPage />} />
             <Route path="/analises/nova" element={<NovaAnalisePage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             <Route path="/conta/senha" element={<AlterarSenhaPage />} />
             <Route element={<RotaGerente />}>
               <Route path="/contas" element={<ContasPage />} />

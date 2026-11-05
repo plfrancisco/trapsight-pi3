@@ -65,6 +65,13 @@ beforeEach(() => {
 
 afterEach(() => limparCsrf())
 
+/** Abre o menu da conta e escolhe Sair, como faz uma pessoa na interface. */
+async function sairPelaConta(pessoa: ReturnType<typeof userEvent.setup>) {
+  const gatilhos = await screen.findAllByRole('button', { name: /Abrir opções da conta/ })
+  await pessoa.click(gatilhos[0])
+  await pessoa.click(await screen.findByRole('button', { name: 'Sair' }))
+}
+
 describe('fluxo de acesso', () => {
   it('reage à exigência de troca recebida durante a navegação', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
@@ -113,7 +120,7 @@ describe('fluxo de acesso', () => {
     vi.mocked(api.logout).mockResolvedValue(undefined)
     montar('/')
     await screen.findByRole('heading', { name: 'Alterar senha', level: 1 })
-    await userEvent.click(screen.getAllByRole('button', { name: 'Sair' })[0])
+    await sairPelaConta(userEvent.setup())
     expect(await screen.findByRole('heading', { name: 'Entre no TrapSight', level: 1 })).toBeVisible()
   })
 
@@ -211,7 +218,7 @@ describe('fluxo de acesso', () => {
 
     montar('/')
     await screen.findByRole('heading', { name: 'Visão geral', level: 1 })
-    await pessoa.click(screen.getAllByRole('button', { name: 'Sair' })[0])
+    await sairPelaConta(pessoa)
 
     expect(await screen.findByRole('heading', { name: 'Entre no TrapSight' })).toBeVisible()
     expect(screen.queryByText(/expirou/)).not.toBeInTheDocument()
@@ -225,7 +232,7 @@ describe('fluxo de acesso', () => {
 
     montar('/analises/nova')
     await screen.findByRole('heading', { name: 'Nova análise', level: 1 })
-    await pessoa.click(screen.getAllByRole('button', { name: 'Sair' })[0])
+    await sairPelaConta(pessoa)
     await screen.findByRole('heading', { name: 'Entre no TrapSight' })
     await pessoa.type(screen.getByLabelText(/E-mail/), 'ana@exemplo.com')
     await pessoa.type(screen.getByLabelText(/Senha/), 'uma senha bem longa')

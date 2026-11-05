@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth'
 import { useTema } from '../hooks/useTema'
-import ControleTema from './ControleTema'
 import MarcaTrapSight from './MarcaTrapSight'
 import MensagemErro from './MensagemErro'
 
 const CHAVE_SIDEBAR = 'trapsight:sidebar-recolhida'
 
 interface IconeNavegacaoProps {
-  tipo: 'painel' | 'analise' | 'armadilha' | 'contas'
+  tipo: 'painel' | 'analise' | 'armadilha' | 'contas' | 'configuracoes'
 }
 
 /** Desenha os ícones vetoriais usados na navegação principal.
@@ -36,13 +35,98 @@ function IconeNavegacao({ tipo }: IconeNavegacaoProps) {
           <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.7" />
           <path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
         </>
-      ) : (
+      ) : tipo === 'armadilha' ? (
         <>
           <rect height="16" rx="3" stroke="currentColor" strokeWidth="1.7" width="16" x="3" y="3" />
           <path d="M7 7h8M7 10h8M7 13h4m5 2v5m-2.5-2.5h5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
         </>
+      ) : (
+        <>
+          <path d="M12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z" stroke="currentColor" strokeWidth="1.7" />
+          <path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 1 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 1 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 1 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" transform="translate(1 1) scale(.91)" />
+        </>
       )}
     </svg>
+  )
+}
+
+interface MenuContaProps {
+  nome: string
+  aoSair: () => void
+  variante: 'sidebar' | 'topbar'
+}
+
+/** Agrupa as ações da conta atrás do avatar para liberar espaço na navegação. */
+function MenuConta({ nome, aoSair, variante }: MenuContaProps) {
+  const [aberto, setAberto] = useState(false)
+  const ancoraRef = useRef<HTMLDivElement>(null)
+  const idMenu = `menu-conta-${variante}`
+
+  useEffect(() => {
+    if (!aberto) return
+
+    function fecharAoClicarFora(evento: PointerEvent) {
+      if (!ancoraRef.current?.contains(evento.target as Node)) setAberto(false)
+    }
+
+    function fecharComEscape(evento: KeyboardEvent) {
+      if (evento.key !== 'Escape') return
+      setAberto(false)
+      ancoraRef.current?.querySelector<HTMLButtonElement>('.account-menu-trigger')?.focus()
+    }
+
+    document.addEventListener('pointerdown', fecharAoClicarFora)
+    window.addEventListener('keydown', fecharComEscape)
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora)
+      window.removeEventListener('keydown', fecharComEscape)
+    }
+  }, [aberto])
+
+  return (
+    <div className={`account-menu-anchor account-menu-anchor--${variante}`} ref={ancoraRef}>
+      <button
+        aria-controls={idMenu}
+        aria-expanded={aberto}
+        aria-label={`Abrir opções da conta de ${nome}`}
+        className="account-menu-trigger"
+        onClick={() => setAberto((atual) => !atual)}
+        title={nome}
+        type="button"
+      >
+        <span aria-hidden="true" className="account-avatar">
+          {nome.trim().slice(0, 1).toLocaleUpperCase('pt-BR')}
+        </span>
+        {variante === 'sidebar' ? (
+          <span className="account-menu-trigger__name">{nome}</span>
+        ) : null}
+      </button>
+      {aberto ? (
+        <div aria-label="Opções da conta" className="account-menu" id={idMenu}>
+          <div className="account-menu__identity">
+            <span className="account-menu__eyebrow">Conta ativa</span>
+            <span className="account-menu__name">{nome}</span>
+          </div>
+          <Link className="account-menu__item" onClick={() => setAberto(false)} to="/configuracoes">
+            <IconeNavegacao tipo="configuracoes" />
+            <span>Configurações</span>
+          </Link>
+          <button
+            className="account-menu__item account-menu__item--signout"
+            onClick={() => {
+              setAberto(false)
+              aoSair()
+            }}
+            type="button"
+          >
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+              <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+            </svg>
+            <span>Sair</span>
+          </button>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -104,7 +188,9 @@ export default function Layout() {
       ? 'Nova análise'
       : pathname === '/conta/senha'
         ? 'Segurança da conta'
-        : pathname.endsWith('/editar')
+        : pathname === '/configuracoes'
+          ? 'Configurações'
+          : pathname.endsWith('/editar')
           ? 'Editar armadilha'
           : pathname.startsWith('/armadilhas/') && pathname !== '/armadilhas/nova'
             ? 'Detalhe da armadilha'
@@ -182,32 +268,9 @@ export default function Layout() {
         <div className="sidebar-bottom">
           {ativa && usuario ? (
             <div className="sidebar-account">
-              <span aria-hidden="true" className="account-avatar">
-                {usuario.nome.trim().slice(0, 1).toLocaleUpperCase('pt-BR')}
-              </span>
-              <span className="sidebar-account-copy">
-                <span className="sidebar-account-name">{usuario.nome}</span>
-                <span className="sidebar-account-email" title={usuario.email}>{usuario.email}</span>
-              </span>
+              <MenuConta aoSair={() => void sair()} nome={usuario.nome} variante="sidebar" />
             </div>
           ) : null}
-          <div className="sidebar-utilities">
-            <ControleTema compacto onAlternar={alternarTema} tema={tema} />
-            {ativa && usuario ? (
-              <>
-                <Link aria-label="Alterar senha" className="account-action" title="Alterar senha" to="/conta/senha">
-                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                    <path d="M7 10V7a5 5 0 0 1 10 0v3m-12 0h14v10H5V10Zm7 4v2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                  </svg>
-                </Link>
-                <button aria-label="Sair" className="account-action" onClick={() => void sair()} title="Sair" type="button">
-                  <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                    <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                  </svg>
-                </button>
-              </>
-            ) : null}
-          </div>
         </div>
       </aside>
 
@@ -255,20 +318,8 @@ export default function Layout() {
               </Link>
             ) : null}
             <div className="topbar-mobile-utilities">
-              <ControleTema compacto onAlternar={alternarTema} tema={tema} />
               {ativa && usuario ? (
-                <>
-                  <Link aria-label="Alterar senha" className="account-action" title="Alterar senha" to="/conta/senha">
-                    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                      <path d="M7 10V7a5 5 0 0 1 10 0v3m-12 0h14v10H5V10Zm7 4v2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                    </svg>
-                  </Link>
-                  <button aria-label="Sair" className="account-action" onClick={() => void sair()} title="Sair" type="button">
-                    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-                      <path d="M14 8V5H5v14h9v-3m-4-4h9m0 0-3-3m3 3-3 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-                    </svg>
-                  </button>
-                </>
+                <MenuConta aoSair={() => void sair()} nome={usuario.nome} variante="topbar" />
               ) : null}
             </div>
           </div>
@@ -276,7 +327,7 @@ export default function Layout() {
 
         <main className="app-main" id="conteudo-principal" tabIndex={-1}>
           {erroSaida ? <MensagemErro erro={erroSaida} /> : null}
-          <Outlet context={{ termoBusca, setTermoBusca }} />
+          <Outlet context={{ alternarTema, tema, termoBusca, setTermoBusca }} />
         </main>
       </div>
 

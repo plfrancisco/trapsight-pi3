@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -16,6 +16,8 @@ import { ApiError } from '../services/erros'
 import Layout from './Layout'
 
 const usuario = { troca_senha_pendente: false, papel: 'operador' as const, id: 'u1', email: 'ana@exemplo.com', nome: 'Ana Souza' }
+
+const ABRIR_CONTA = 'Abrir opções da conta de Ana Souza'
 
 const montar = (ativa: boolean) =>
   render(
@@ -41,33 +43,55 @@ describe('Layout e a conta do usuário', () => {
       usuario: { ...usuario, papel: 'gerente' }, csrf_token: 'c',
     })
     montar(true)
-    await screen.findByText(usuario.email)
+    await screen.findAllByRole('button', { name: ABRIR_CONTA })
     expect(screen.getAllByRole('link', { name: 'Contas' })).toHaveLength(2)
   })
 
   it('não mostra Contas ao operador', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
     montar(true)
-    await screen.findByText(usuario.email)
+    await screen.findAllByRole('button', { name: ABRIR_CONTA })
     expect(screen.queryByRole('link', { name: 'Contas' })).not.toBeInTheDocument()
   })
 
-  it('mostra e-mail, "Alterar senha" e "Sair" quando há sessão', async () => {
+  it('mostra o menu da conta com Configurações e Sair quando há sessão', async () => {
     vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    const pessoa = userEvent.setup()
 
     montar(true)
+    const gatilhos = await screen.findAllByRole('button', { name: ABRIR_CONTA })
+    expect(gatilhos).toHaveLength(2)
+    expect(screen.queryByLabelText('Opções da conta')).not.toBeInTheDocument()
 
-    expect(await screen.findByText('ana@exemplo.com')).toBeVisible()
-    expect(screen.getAllByRole('link', { name: 'Alterar senha' })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'Alterar senha' })[0]).toHaveAttribute('href', '/conta/senha')
-    expect(screen.getAllByRole('button', { name: 'Sair' })).toHaveLength(2)
+    await pessoa.click(gatilhos[0])
+
+    const menu = screen.getByLabelText('Opções da conta')
+    expect(menu).toHaveTextContent('Ana Souza')
+    expect(within(menu).getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/configuracoes')
+    expect(within(menu).getByRole('button', { name: 'Sair' })).toBeVisible()
+    expect(gatilhos[0]).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('fecha o menu da conta com Escape e devolve o foco ao botão', async () => {
+    vi.mocked(api.getSessao).mockResolvedValue({ usuario, csrf_token: 'c' })
+    const pessoa = userEvent.setup()
+
+    montar(true)
+    const gatilho = (await screen.findAllByRole('button', { name: ABRIR_CONTA }))[0]
+    await pessoa.click(gatilho)
+    expect(screen.getByLabelText('Opções da conta')).toBeVisible()
+
+    await pessoa.keyboard('{Escape}')
+
+    expect(screen.queryByLabelText('Opções da conta')).not.toBeInTheDocument()
+    expect(gatilho).toHaveFocus()
   })
 
   it('não mostra a área da conta com a autenticação desligada', () => {
     montar(false)
 
+    expect(screen.queryByRole('button', { name: ABRIR_CONTA })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Alterar senha' })).not.toBeInTheDocument()
     expect(screen.getByText('Conteúdo')).toBeVisible()
   })
 
@@ -77,10 +101,13 @@ describe('Layout e a conta do usuário', () => {
     const pessoa = userEvent.setup()
 
     montar(true)
-    await pessoa.click((await screen.findAllByRole('button', { name: 'Sair' }))[0])
+    await pessoa.click((await screen.findAllByRole('button', { name: ABRIR_CONTA }))[0])
+    await pessoa.click(screen.getByRole('button', { name: 'Sair' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível encerrar a sessão')
-    await waitFor(() => expect(screen.getByText('ana@exemplo.com')).toBeVisible())
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: ABRIR_CONTA })).toHaveLength(2),
+    )
   })
 
   it('foca a busca do dashboard pelo atalho e limpa ao pressionar Escape', () => {
