@@ -1,7 +1,7 @@
 # CURRENT TASK — AUTENTICAÇÃO E HOSPEDAGEM — Projeto Integrador
 
 **Versão:** 1.0
-**Status:** ATIVA
+**Status:** ARQUIVADA em 05/11/2026 (movida para `completed/` por decisão do mantenedor; os itens ainda abertos seguem como pendências no Trello)
 **Escopo:** login, proteção da API, hospedagem pública e verificação de segurança antes da publicação
 
 ---
@@ -11,7 +11,7 @@
 Colocar o protótipo **online e acessível** com autenticação segura, **nada
 exposto além do necessário** (portas 80 e 443 no Compose local; no ambiente
 publicado, só HTTPS e os controles do Supabase) e a suíte de invasão verde,
-conforme `../plan/foundation/login.md` (aprovado em 2026-10-16).
+conforme `../../plan/foundation/login.md` (aprovado em 2026-10-16).
 
 ---
 
@@ -28,7 +28,7 @@ domínio comprado nem VPS paga.
 
 - **Nada fica aberto** (`login.md`, 1.1 e 10.5): nenhum `ports:` além do proxy,
   banco nunca alcançável de fora, nenhuma rota de dados sem sessão.
-- **Execução cega** (`../validation/seguranca_testes.md`, seção 11): quem
+- **Execução cega** (`../../validation/seguranca_testes.md`, seção 11): quem
   implementa só **executa** a suíte por `security/scans/executar_cego.sh`; o
   relatório sai cifrado e só o revisor o abre. Correções voltam como violações
   da especificação, nunca como saída de teste.
@@ -36,9 +36,9 @@ domínio comprado nem VPS paga.
   propósito; cada task faz os testes correspondentes passarem. É proibido
   alterar teste ou script para melhorar o resultado.
 - Nenhuma credencial, segredo ou `.env` real no repositório
-  (`../rules/security_spec.md`, seção 3). Sem usuário nem senha padrão.
+  (`../../rules/security_spec.md`, seção 3). Sem usuário nem senha padrão.
 - Dependência nova (`pwdlib[argon2]` e as de produção) exige confirmação
-  prévia (`../rules/ai_development_rules.md`, regra 4.2).
+  prévia (`../../rules/ai_development_rules.md`, regra 4.2).
 
 ---
 
@@ -48,7 +48,7 @@ domínio comprado nem VPS paga.
 aberto (backup). A publicação ainda não foi feita. O deploy previsto usa Vercel
 Services (frontend e API no mesmo projeto e domínio) e Supabase (PostgreSQL pelo
 pooler transacional, porta 6543, TLS e papel dedicado), conforme
-`../../deploy/vercel-supabase.md`; o Compose de produção com Caddy serve às
+`../../../deploy/vercel-supabase.md`; o Compose de produção com Caddy serve às
 varreduras locais.
 
 **Decisão (2026-10-26):** no ambiente publicado, a segurança do banco fica a cargo
@@ -73,7 +73,7 @@ projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
 - [x] Referências remanescentes a "sem autenticação": `rules/ai_development_rules.md`
       (9.5), `task/completed/current_task_frontend.md` (escopo) e `plan/README.md` (índice)
 
-**Especificação:** `../plan/foundation/login.md`, seção 13.
+**Especificação:** `../../plan/foundation/login.md`, seção 13.
 **Executor:** revisor (é especificação, não código).
 **Dependências:** nenhuma. **Precede** todas as demais.
 **Concluída em:** 2026-10-16.
@@ -187,7 +187,7 @@ projeto controla a rede; HOST03 e SEG05 e a seção 5 foram ajustados a isso.
 - [x] `VITE_API_URL` relativo (`/api`) em produção; o módulo de mídia aceita
       caminho relativo na mesma origem
 
-**Especificação:** `login.md`, seção 11; `../plan/frontend/telas_spec.md`.
+**Especificação:** `login.md`, seção 11; `../../plan/frontend/telas_spec.md`.
 **Dependências:** AUTH03, AUTH04.
 **Verifica:** testes do frontend e a lista manual de `seguranca_testes.md`, seção 9.
 
@@ -222,7 +222,7 @@ automatizados, mas não foi exercitada num navegador.
       `no-new-privileges`, sem capacidades extras e com limites de memória e CPU
 - [x] Nenhum segredo dentro da imagem nem do repositório
 
-**Especificação:** `login.md`, 10.1 e 10.6; `../rules/security_spec.md`, 10.1.
+**Especificação:** `login.md`, 10.1 e 10.6; `../../rules/security_spec.md`, 10.1.
 **Dependências:** AUTH06.
 
 ## HOST02 — Compose de produção e proxy
@@ -253,7 +253,7 @@ EXT04).
 commitados, com cifra por chave pública própria e teste de restauração real
 (8 tabelas, 9 linhas, 3 imagens conferidas por SHA-256). Item concluído por
 decisão do usuário em 2026-10-28. Ficam para a publicação: o agendamento
-periódico e a restauração testada contra o Supabase real; ver `../../deploy/backup-restauracao.md`.
+periódico e a restauração testada contra o Supabase real; ver `../../../deploy/backup-restauracao.md`.
 
 ## HOST03 — Ambientes e servidor
 
@@ -269,7 +269,7 @@ periódico e a restauração testada contra o Supabase real; ver `../../deploy/b
 - [ ] Contas de teste criadas por `criar-usuario` (AUTH05)
 
 **Especificação:** `login.md`, 10.5 (regra 8) e 10.7;
-`../validation/seguranca_testes.md`, seção 7.
+`../../validation/seguranca_testes.md`, seção 7.
 **Dependências:** HOST02, AUTH05.
 
 ## SEG01 — Rodada 0: linha de base (cega)
@@ -282,7 +282,7 @@ periódico e a restauração testada contra o Supabase real; ver `../../deploy/b
 - [ ] Registrar as flags de ferramenta que precisaram de ajuste e fixar os
       digests das imagens
 
-**Especificação:** `../validation/seguranca_testes.md`, seções 5, 8 e 11.
+**Especificação:** `../../validation/seguranca_testes.md`, seções 5, 8 e 11.
 **Dependências:** nenhuma (pode ser feita **agora**, antes do login).
 **Nota:** o resultado esperado antes do login é a lista de pendências que as
 demais tasks resolvem.

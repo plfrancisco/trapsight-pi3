@@ -115,7 +115,7 @@ controles que não podem ser violados.
 | Nada é publicado sem a suíte de invasão verde e o relatório arquivado | `../validation/seguranca_testes.md` |
 
 Qualquer chave, senha ou segredo de autenticação segue integralmente a seção
-3. Implementação em `../task/current_task_autenticacao_hospedagem.md`.
+3. Implementação em `../task/completed/current_task_autenticacao_hospedagem.md`.
 
 ---
 

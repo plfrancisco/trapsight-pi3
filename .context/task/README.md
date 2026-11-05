@@ -20,10 +20,7 @@ ordem, checkbox e status para seu domínio. Um arquivo nunca detalha task de
 outra especialidade, mesmo quando há dependência entre elas — a dependência
 é referenciada, nunca duplicada.
 
-| Arquivo | Estado | Especialidade |
-|---|---|---|
-| `current_task_modelo.md` | ATIVA | Especificação de treino, dataset sintético, baseline, treino da U-Net, avaliação |
-| `current_task_autenticacao_hospedagem.md` | ATIVA | Login, proteção da API, hospedagem pública e verificação de segurança antes de publicar |
+Não há task ativa no momento. As duas últimas (modelo e autenticação com hospedagem) foram arquivadas em `completed/` em 05/11/2026; os itens que ficaram em aberto estão como pendências no Trello. Uma nova frente de trabalho nasce como `current_task_<especialidade>.md` neste diretório, depois de aprovada.
 
 ---
 
@@ -41,6 +38,8 @@ Não podem ser alterados sem autorização explícita.
 | `completed/current_task_frontend.md` | Interface web — as 4 telas do MVP | 2026-10-22 |
 | `completed/current_task_seed_demo.md` | Script de seed com os seis cenários de demonstração | 2026-10-21 |
 | `completed/current_task_externo.md` | Material da empresa parceira, entrevista, integrantes, prazo, provedor e domínio | 2026-10-28 |
+| `completed/current_task_modelo.md` | Especificação de treino, dataset sintético, baseline, treino da U-Net, avaliação e inferência real (ONNX) | arquivada em 2026-11-05 (itens abertos no Trello) |
+| `completed/current_task_autenticacao_hospedagem.md` | Login, proteção da API, hospedagem pública (Vercel e Supabase) e verificação de segurança | arquivada em 2026-11-05 (itens abertos no Trello) |
 
 ---
 
@@ -49,7 +48,7 @@ Não podem ser alterados sem autorização explícita.
 1. `.context/rules/ai_development_rules.md`
 2. documentos normativos em `.context/plan/`
 3. `completed/current_task_ambiente.md` — pré-requisito de todas as tasks
-4. arquivo de task **ativo** da especialidade em questão
+4. arquivo de task **ativo** da especialidade em questão, quando houver
 5. arquivos históricos, somente para contexto
 
 Conflito entre task e documento normativo deve ser apresentado ao usuário e

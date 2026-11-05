@@ -1,7 +1,7 @@
 # CURRENT TASK — MODELO E ML — Projeto Integrador
 
 **Versão:** 1.0
-**Status:** ATIVA
+**Status:** ARQUIVADA em 05/11/2026 (movida para `completed/` por decisão do mantenedor; os itens ainda abertos seguem como pendências no Trello)
 **Escopo:** especificação de treino, gerador de dataset, baseline, treino
 da U-Net, avaliação e substituição do stub de inferência
 
@@ -31,10 +31,10 @@ obtenção de material da empresa parceira (`completed/current_task_externo.md`)
 - [x] Documento definindo função de perda, tratamento do desbalanceamento
       de classes, otimizador, taxa de aprendizado, tamanho de lote, número
       de épocas, parada antecipada e parâmetros de augmentation
-- [x] Publicado em `../plan/model/` e referenciado no índice de planejamento
+- [x] Publicado em `../../plan/model/` e referenciado no índice de planejamento
 
-**Especificação:** `../plan/model/treino_spec.md`. Contexto de stack em
-`../plan/foundation/tech_stack.md`, seção 4.
+**Especificação:** `../../plan/model/treino_spec.md`. Contexto de stack em
+`../../plan/foundation/tech_stack.md`, seção 4.
 
 **Dependências:** nenhuma.
 
@@ -52,7 +52,7 @@ ponderada, Dice loss, ou combinação).
 - [x] Verificar os critérios de aceite da seção 9 do documento (correlação
       idade × cobertura próxima de zero, reprodutibilidade por semente)
 
-**Especificação:** `../plan/data/dataset_sintetico.md`.
+**Especificação:** `../../plan/data/dataset_sintetico.md`.
 **Dependências:** nenhuma.
 **Concluída em:** 2026-10-21.
 
@@ -85,7 +85,7 @@ ponderada, Dice loss, ou combinação).
       (máscara de três classes, distratores fora da máscara) e relatório com
       as imagens da amostra
 
-**Especificação:** `../plan/data/dataset_sintetico.md`, seções 3 e 9.
+**Especificação:** `../../plan/data/dataset_sintetico.md`, seções 3 e 9.
 **Dependências:** ML02.
 **Concluída em:** 2026-10-21.
 
@@ -122,14 +122,14 @@ tokens de IA.
 - [x] Gerar o dataset definitivo e conferir os critérios da seção 9 da
       especificação
 
-**Especificação:** `../plan/data/dataset_sintetico.md`, seções 5.4, 7 e 9.
+**Especificação:** `../../plan/data/dataset_sintetico.md`, seções 5.4, 7 e 9.
 **Dependências:** ML02, ML02A e as máscaras das placas reais geradas por
 `backend/training/teste_real_ums.py`.
 
 **Estado (2026-10-28):** concluída. Dataset v5 de 3.000 imagens em
 `dataset/recomposicao-real-v5-3000-20261027` (2.100/450/450), com os critérios
 P, L, D, C, T, K, R e I aceitos em `relatorio-validacao.json`. Limitações
-registradas em `../plan/data/dataset_sintetico.md`: 3/1/1 bases reais por
+registradas em `../../plan/data/dataset_sintetico.md`: 3/1/1 bases reais por
 conjunto, referência de espalhamento da faixa 4–8% com só 4 placas e rótulo
 incompleto nas 14 placas de avaliação.
 
@@ -142,7 +142,7 @@ incompleto nas 14 placas de avaliação.
 - [x] Preservar a idempotência, as projeções de saturação e as 24 primeiras
       amostras v5; os 84 testes de `tests/training/dataset_sintetico/` passam
 
-**Especificação:** `../plan/data/dataset_sintetico.md`, seção 5.3.
+**Especificação:** `../../plan/data/dataset_sintetico.md`, seção 5.3.
 **Dependências:** ML02.
 
 **Estado (2026-10-29):** convergência verificada nas duas plataformas. A
@@ -186,10 +186,10 @@ seed, seus testes e o gerador. Não houve execução remota do GitHub Actions.
 - [x] Recalibrar o limiar sobre o dataset por recomposição (ML02B), com a classe
       255 ignorada (fora da placa, do percentual e das métricas)
 
-**Especificação:** `../plan/model/modelo_spec.md`, seção 9.
+**Especificação:** `../../plan/model/modelo_spec.md`, seção 9.
 **Dependências:** ML02 e ML02A (precisa de imagens para calibrar).
 
-**Calibração (2026-10-28, dataset v5):** `../../backend/training/baseline_calibracao.json`,
+**Calibração (2026-10-28, dataset v5):** `../../../backend/training/baseline_calibracao.json`,
 versão 2, limiar V = 217, Dice de treino 0,81733856, 2.100 amostras de treino.
 
 | Conjunto | Amostras | Dice | IoU | Erro médio (pp) | Acurácia de status |
@@ -219,13 +219,13 @@ enfraqueceria a comparação — ver seção 9.2 da especificação.
       reuso entre conjuntos
 
 **Especificação:** ML01 (pipeline de treino); divisão dos conjuntos em
-`../plan/model/avaliacao_spec.md`, seção 2.
+`../../plan/model/avaliacao_spec.md`, seção 2.
 **Dependências:** ML01, ML02, ML02A, ML02B.
 
 **Estado (2026-10-22):** o pipeline está implementado em `backend/training/treino/`
 com testes em CPU. Falta o teste de fumaça E0 na GPU, que falhou por falta de
 memória de vídeo na escolha do lote por passo; a ML04 só é marcada quando o E0
-passar (`../plan/model/treino_spec.md`, seção 8).
+passar (`../../plan/model/treino_spec.md`, seção 8).
 
 **Estado (2026-10-26):** a execução dos treinos ficou para o fim, depois de a
 aplicação estar completa; o E0 segue pendente e nenhum checkpoint existe. Pontos
@@ -253,7 +253,7 @@ a resolver antes dele:
 - [ ] Conferir os critérios de aprovação da seção 4.1, com tolerância zero
       para `trocar` classificado como `ok`
 
-**Especificação:** `../plan/model/avaliacao_spec.md`.
+**Especificação:** `../../plan/model/avaliacao_spec.md`.
 **Dependências:** ML03, ML04.
 
 ## ML06 — Baseline OpenCV — comparação obrigatória sob sujeira e idade
@@ -262,7 +262,7 @@ a resolver antes dele:
 - [ ] Subconjunto de teste com refis de diferentes idades simuladas
 - [ ] Gráfico erro × idade, duas curvas (modelo e baseline)
 
-**Especificação:** `../plan/model/avaliacao_spec.md`, seção 5.
+**Especificação:** `../../plan/model/avaliacao_spec.md`, seção 5.
 **Dependências:** ML05.
 
 ## ML07 — Substituir stub pela inferência real
@@ -274,7 +274,7 @@ a resolver antes dele:
 - [x] Falha de inicialização (pesos ausentes/inválidos) impede a aplicação
       de subir
 
-**Especificação:** `../plan/model/modelo_spec.md`, seções 6 a 10.
+**Especificação:** `../../plan/model/modelo_spec.md`, seções 6 a 10.
 **Dependências:** ML04, `completed/current_task_api.md` (API04).
 **Concluída em:** 2026-10-22.
 

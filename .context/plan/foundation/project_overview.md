@@ -99,7 +99,7 @@ O protótipo será **hospedado e acessível pela internet** (decisão de
   testes de invasão.
 
 Desenho em `login.md`; testes em `../../validation/seguranca_testes.md`;
-tasks em `../../task/current_task_autenticacao_hospedagem.md`.
+tasks em `../../task/completed/current_task_autenticacao_hospedagem.md`.
 
 ---
 

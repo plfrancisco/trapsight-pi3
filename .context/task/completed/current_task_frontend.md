@@ -17,7 +17,7 @@ detalhe da armadilha com gráfico e timelapse, nova análise, e cadastro.
 
 Cobre as 4 telas do MVP. Não cobre a tela de comparação com o baseline
 (explicitamente fora de escopo, `telas_spec.md`, seção 6). A tela de login e a
-sessão são cobertas por `../current_task_autenticacao_hospedagem.md` (AUTH06).
+sessão são cobertas por `current_task_autenticacao_hospedagem.md` (AUTH06).
 
 ---
 
