@@ -10,6 +10,13 @@ Cada versão tem uma tag Git (`vX.Y.Z`). Para ver o código de uma versão: `git
 
 - **Exclusão de operadores** na tela Contas, com confirmação (`DELETE /api/usuarios/{id}`): só o gerente pode excluir, a conta gerente não pode ser excluída, as sessões do operador são removidas junto com a conta e o evento `conta_excluida` é registrado.
 
+- **Licença MIT** (`LICENSE`), política de segurança (`SECURITY.md`, com relato privado de vulnerabilidades) e guia de contribuição (`CONTRIBUTING.md`).
+- **`docs/ARQUITETURA.md`**, com a arquitetura, as decisões técnicas, as tecnologias, a estrutura do repositório e a situação das etapas.
+
+### Alterado
+
+- **README reescrito** como porta de entrada (cerca de metade do tamanho): problema e solução, resultados e limites do modelo, demonstração com login de teste e pasta de fotos, execução local, testes e links para a documentação.
+
 ### Removido
 
 - **CI do GitHub Actions** (`.github/workflows/ci.yml`): o projeto tem um só mantenedor e os testes passam a rodar localmente. O arquivo continua no histórico do Git.

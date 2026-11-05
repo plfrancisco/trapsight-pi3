@@ -2,131 +2,73 @@
 
 **Visão computacional para medir a saturação de armadilhas adesivas e prever a hora de trocar o refil.**
 
-![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)
-![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-005CED?logo=onnx&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+[![Versão](https://img.shields.io/github/v/tag/plfrancisco/trapsight-pi3?label=vers%C3%A3o&color=0F766E)](CHANGELOG.md)
+[![Licença MIT](https://img.shields.io/github/license/plfrancisco/trapsight-pi3?label=licen%C3%A7a&color=0F766E)](LICENSE)
+![Status: protótipo](https://img.shields.io/badge/status-prot%C3%B3tipo-F59E0B)
 
-O TrapSight analisa a foto de uma armadilha adesiva de mosquito, calcula **quanto da superfície já está coberta por insetos** e **estima em quantos dias ela vai saturar**, trocando a inspeção visual por um critério objetivo.
+> [!NOTE]
+> Protótipo funcional em validação, desenvolvido como Projeto Integrador de Sistemas Inteligentes III na Fatec "Shunji Nishimura", Pompeia. O modelo foi avaliado apenas em imagens sintéticas; a validação com fotos de campo ainda não foi feita.
 
-> Projeto Integrador de Sistemas Inteligentes III, Fatec "Shunji Nishimura", Pompeia. **Protótipo funcional em validação.**
+## O problema e a solução
 
-**Versão atual:** [v0.1.0](CHANGELOG.md) (03/11/2026). O histórico de mudanças está no [`CHANGELOG.md`](CHANGELOG.md).
+Empresas de controle de pragas mantêm armadilhas adesivas em mercados e açougues e decidem a troca do refil **olhando a placa**, sem critério objetivo. Trocar cedo gera deslocamento e refil desperdiçado; trocar tarde deixa a armadilha saturada e sem eficácia. O problema foi levantado com uma empresa real do setor, parceira do projeto.
 
-**Demonstração online:** <https://trapsight-pi3.vercel.app>. O acesso exige login e não há cadastro aberto. As contas de teste, com dados fictícios, são fornecidas pela equipe. O banco usa um plano gratuito que pode estar pausado por inatividade.
-
-## Sumário
-
-- [O problema](#o-problema)
-- [A solução](#a-solução)
-- [Funcionalidades](#funcionalidades)
-- [Resultados do modelo](#resultados-do-modelo)
-- [Arquitetura](#arquitetura)
-- [Decisões técnicas](#decisões-técnicas)
-- [Stack](#stack)
-- [Início rápido](#início-rápido)
-- [Estrutura do repositório](#estrutura-do-repositório)
-- [Documentação](#documentação)
-- [Qualidade e segurança](#qualidade-e-segurança)
-- [Status e próximos passos](#status-e-próximos-passos)
-- [Créditos e dados](#créditos-e-dados)
-- [Autor](#autor)
-
-## O problema
-
-Empresas de controle de pragas mantêm armadilhas adesivas em mercados e açougues e decidem a troca do refil por **inspeção visual**, sem critério objetivo. O resultado é um custo duplo:
-
-- **Troca antecipada:** deslocamento da equipe e refil descartado com vida útil sobrando;
-- **Troca tardia:** armadilha saturada, sem eficácia no controle de pragas.
-
-O problema foi levantado com uma empresa real do setor, parceira do projeto. O impacto financeiro ainda não foi quantificado.
-
-## A solução
+O TrapSight recebe a **foto da armadilha**, mede **quanto da placa já está coberta por insetos**, classifica a situação e **estima em quantos dias ela vai saturar**.
 
 ```mermaid
 flowchart LR
-    A[Foto da armadilha] --> B[Pré-processamento<br/>768 x 576]
-    B --> C[Segmentação<br/>U-Net ResNet34]
-    C --> D[Máscara de 3 classes<br/>fundo · placa limpa · placa coberta]
-    D --> E[% da placa coberta]
-    E --> F{Status}
-    F -->|abaixo de 10%| G[ok]
-    F -->|10% a 20%| H[atenção]
-    F -->|acima de 20%| I[trocar]
+    A[Foto da armadilha] --> B[U-Net<br/>segmenta a placa]
+    B --> C[% da placa coberta]
+    C --> D{Status}
+    D -->|abaixo de 10%| E[ok]
+    D -->|10% a 20%| F[atenção]
+    D -->|acima de 20%| G[trocar]
 ```
 
-O percentual é calculado **sobre a placa detectada**, e não sobre a foto inteira, então não depende do enquadramento. Além da leitura pontual, o sistema guarda o histórico de cada armadilha e **projeta quantos dias faltam para a saturação**, permitindo planejar a visita em vez de reagir a ela.
+A cobertura é calculada **sobre a placa detectada**, não sobre a foto inteira, então não depende do enquadramento. Na tela, o resultado aparece como **saturação do refil**: o limiar de troca (20% de cobertura) vale 80%. A cobertura real continua visível no resultado.
 
-Na tela, o resultado aparece como **saturação do refil**, um índice em que o limiar de troca vale 80% (cobertura de 5%, 10%, 20% e 25% aparece como 20%, 40%, 80% e 100%). A cobertura real da placa continua disponível no resultado da análise.
+## O que entrega
 
-## Funcionalidades
+- **Análise por imagem** (JPEG ou PNG, até 4 MB) com saturação, cobertura real, status e barra de progresso.
+- **Painel** que mostra primeiro as armadilhas que pedem ação, com a foto da última análise.
+- **Histórico, gráfico e previsão** de dias até a saturação, por regressão linear sobre todas as medições.
+- **Ciclo do refil:** registro de trocas e da duração de cada ciclo.
+- **Contas por papel:** o gerente cria e exclui operadores; senhas com Argon2id, sessão protegida e limites de uso.
 
-- **Análise por imagem:** envio da foto (JPEG ou PNG) com barra de progresso, percentual de saturação, cobertura real da placa, status e a imagem com a máscara do modelo (a área coberta por insetos em magenta), com opção de ver a foto original;
-- **Painel operacional:** armadilhas ordenadas por urgência, miniatura da última foto e painel de alertas, com navegação adaptada para celular;
-- **Histórico e projeção:** evolução por refil e previsão de dias até a saturação por regressão linear sobre todas as medições;
-- **Ciclo de vida do refil:** registro de trocas, com a duração de cada ciclo;
-- **Catálogo de modelos de armadilha:** o cadastro oferece o catálogo do fabricante (o primeiro é o StickFly K-45, com as dimensões do refil) e uma foto de identificação, real ou padrão do modelo;
-- **Acesso por login:** contas criadas por um gerente, com papéis (gerente e operador), troca obrigatória da senha inicial, sessão em cookie `HttpOnly`, proteção contra CSRF e senhas com Argon2id.
+## Resultados e limites do modelo
 
-## Resultados do modelo
-
-Conjunto de teste de 450 imagens, **sintéticas** (recomposição de insetos reais sobre placas), nunca vistas no treino. Execução `e1` (U-Net com encoder ResNet34 pré-treinado).
+Medidos em 450 imagens **sintéticas** de teste (insetos reais recompostos sobre placas), nunca vistas no treino. U-Net com encoder ResNet34 pré-treinado, exportada em ONNX (93 MB, em [`backend/models/`](backend/models/)).
 
 | Métrica | U-Net | Baseline clássico (OpenCV) |
 | --- | --- | --- |
 | Dice da classe "placa coberta" | **0,966** | 0,835 |
 | Erro médio da cobertura | **0,24 p.p.** | 3,34 p.p. |
-| Erro máximo da cobertura | 1,27 p.p. | 7,34 p.p. |
 | Acurácia do status (ok, atenção, trocar) | **99,3%** | 72,7% |
-| "Trocar" classificado como "ok" | **0** | 0 |
+| "Trocar" lido como "ok" | **0** | 0 |
 
-O modelo atingiu o alvo dos critérios definidos antes do treino (Dice ≥ 0,90, erro médio ≤ 1,0 p.p. e nenhum "trocar" lido como "ok"). **Esses números foram medidos em imagens sintéticas.** O modelo exportado (ONNX, 93 MB) está em [`backend/models/`](backend/models/), junto com seus metadados.
+**Uso pretendido:** apoiar a decisão de troca do refil da armadilha StickFly K-45, com fotos em que a placa aparece inteira e de frente, como nas imagens de treino.
 
-## Arquitetura
+**Fora do escopo e limites:** outros modelos de armadilha, identificação de espécies, fotos em que a placa ocupa menos de 5% da imagem e qualquer decisão sem inspeção humana. O desempenho em fotos reais, com outra luz, ângulo ou reflexo, é desconhecido.
 
-```mermaid
-flowchart LR
-    U[Navegador] --> F[Frontend<br/>React + TypeScript]
-    F -->|REST + JSON, cookie de sessão| A[API<br/>FastAPI]
-    A --> I[Inferência<br/>U-Net em ONNX Runtime]
-    A --> D[(PostgreSQL)]
-```
+## Demonstração
 
-Em **desenvolvimento**, o Docker Compose sobe o banco, a API e o frontend. Em **produção**, o frontend e a API vão juntos para a Vercel (a API como função Python, com o modelo ONNX empacotado) e o banco fica no Supabase (PostgreSQL), acessado pelo pooler de transações. O treino do modelo roda fora do contêiner, numa máquina com GPU.
+**Site:** <https://trapsight-pi3.vercel.app>
 
-## Decisões técnicas
-
-| Decisão | Por quê |
+| Campo | Valor |
 | --- | --- |
-| **Medir área coberta em vez de contar insetos** | Insetos colados se sobrepõem; a área é um indicador mais robusto de saturação |
-| **Segmentação em 3 classes** (fundo, placa limpa, placa coberta) | O percentual é calculado sobre a placa, então o resultado não depende do enquadramento |
-| **Dataset sintético primeiro, dados reais depois** | Não há base pública deste cenário com máscaras por pixel. As máscaras nascem junto com a imagem, a cobertura real é conhecida com exatidão e o sistema inteiro pode ser validado antes de haver fotos de campo |
-| **Sprites de insetos brasileiros de fotos com licença aberta** | Observações do iNaturalist no Brasil e conjuntos públicos CC BY 4.0, com autor e licença de cada foto registrados |
-| **Avaliação separada em sintético e real** | A distância entre as duas métricas mede o *domain gap* |
-| **Baseline clássico (OpenCV) como comparação** | Mostra com evidência onde o modelo treinado supera um limiar de brilho |
-| **Transfer learning** (ResNet34 pré-treinado) | Viabiliza o treino com um dataset pequeno |
-| **Inferência em ONNX Runtime** | Reduz o pacote e dispensa o PyTorch em produção; um teste confere a paridade com o checkpoint |
-| **Projeção por regressão sobre todas as medições** | Usar só a primeira e a última leitura amplifica o ruído |
-| **Regras no banco, não só na aplicação** | Restrições, chaves e um índice único parcial garantem no máximo um refil ativo por armadilha, mesmo com acessos concorrentes |
-| **Erros padronizados com códigos estáveis** | O frontend decide o comportamento pelo código do erro, nunca pelo texto |
+| E-mail | `teste-operador@example.test` |
+| Senha | `To-ekOLLoc9KATubjmoCXuyeHQIY669cpcJmAAm` |
 
-## Stack
+**Fotos para testar** (com gabarito do resultado esperado): [pasta no Google Drive](https://drive.google.com/drive/folders/1LM5Ic8GyqEot9uloRpY9bP8apuJfk5iB?usp=drive_link). São 10 imagens sintéticas, de 2% a 45% de cobertura.
 
-| Camada | Tecnologia |
-| --- | --- |
-| Modelo | Python, PyTorch, `segmentation_models_pytorch`, OpenCV, Albumentations, ONNX Runtime |
-| Backend | FastAPI, SQLAlchemy, Alembic, Pydantic |
-| Banco de dados | PostgreSQL (Supabase em produção) |
-| Frontend | React, TypeScript, Vite, Tailwind CSS, Recharts |
-| Infraestrutura | Docker, Docker Compose, Caddy (HTTPS no ambiente de testes de segurança), Vercel, Supabase |
-| Qualidade | Ruff, pytest, ESLint, Vitest |
-| Segurança | OWASP ZAP, Nuclei e uma suíte própria de testes de invasão |
+1. Entre com a conta acima.
+2. Em **Cadastrar armadilha**, escolha o modelo StickFly K-45 e marque o refil inicial.
+3. Em **Nova análise**, envie uma das fotos e compare o resultado com o `gabarito.csv`.
 
-## Início rápido
+> [!WARNING]
+> É um ambiente de demonstração com **dados fictícios** em planos gratuitos. Não envie fotos pessoais ou sensíveis: as imagens ficam guardadas no banco. Qualquer visitante pode trocar a senha da conta de teste ou bloqueá-la por tentativas erradas; se isso acontecer, avise o mantenedor. O primeiro acesso depois de um tempo parado pode demorar, porque o banco gratuito pausa por inatividade.
+
+## Executar localmente
 
 Pré-requisito: [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
@@ -145,28 +87,17 @@ docker compose exec backend python -m src.cli criar-usuario \
   --email gerente@exemplo.com --nome "Gerente" --papel gerente
 ```
 
-| Serviço | Endereço |
-| --- | --- |
-| Frontend | <http://localhost:5173> |
-| API (documentação interativa) | <http://localhost:8000/docs> |
+Abra <http://localhost:5173> (a documentação interativa da API fica em <http://localhost:8000/docs>). Por padrão a API devolve um resultado simulado; para usar o **modelo real**, defina `INFERENCE_MODE=onnx`, `MODEL_VERSION=v0.1.0-e1` e `MODEL_WEIGHTS_PATH=` (vazio) no `backend/.env`.
 
-Por padrão a API usa um resultado simulado (`INFERENCE_MODE=stub`). Para rodar o **modelo real**, defina `INFERENCE_MODE=onnx`, `MODEL_VERSION=v0.1.0-e1` e `MODEL_WEIGHTS_PATH=` (vazio) no `backend/.env`.
+O [guia de execução](docs/EXECUCAO.md) cobre o resto: desenvolvimento sem Docker, dados de demonstração, treino do modelo, publicação e problemas comuns.
 
-**Guia completo:** [`docs/EXECUCAO.md`](docs/EXECUCAO.md). Ele cobre a configuração detalhada, o desenvolvimento sem Docker, os testes, os dados de demonstração, o treino e a exportação do modelo, a publicação e os problemas comuns.
+## Testes
 
-## Estrutura do repositório
+Não há CI automático (o projeto tem um só mantenedor), então os testes rodam localmente:
 
-```text
-backend/        API FastAPI, migrações Alembic, testes, treino do modelo e modelo ONNX
-frontend/       Interface React + TypeScript
-deploy/         Publicação (Vercel + Supabase), proxy Caddy, backup e restauração
-security/       Suíte de testes de segurança e pentest
-scripts/        Testes do backend em contêiner, backup e verificação de migrações
-docs/           Guia de execução
-.context/       Especificações, tarefas e evidências de QA
-apresentacao/   Material de apoio para o vídeo de apresentação
-app.py          Ponto de entrada da Vercel (API e frontend na mesma origem)
-vercel.json     Cabeçalhos de segurança e configuração dos serviços na Vercel
+```bash
+scripts/testar-backend.sh        # backend: testes em contêiner, com banco descartável
+cd frontend && npm test          # frontend: testes; também npm run lint e npm run build
 ```
 
 ## Documentação
@@ -174,60 +105,31 @@ vercel.json     Cabeçalhos de segurança e configuração dos serviços na Verc
 | Documento | Conteúdo |
 | --- | --- |
 | [`docs/EXECUCAO.md`](docs/EXECUCAO.md) | Como executar, testar, treinar e publicar |
-| [`.context/plan/README.md`](.context/plan/README.md) | Índice das especificações: visão geral, modelo de dados, contrato da API, telas, pipeline do modelo e avaliação |
-| [`.context/validation/qa_evidencias/requisitos_regras_e_fluxos.md`](.context/validation/qa_evidencias/requisitos_regras_e_fluxos.md) | Requisitos, regras de negócio e fluxos conferidos no código |
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Arquitetura, decisões técnicas, tecnologias e situação das etapas |
+| [`.context/plan/README.md`](.context/plan/README.md) | Especificações do projeto: modelo de dados, API, telas, modelo e avaliação |
 | [`deploy/vercel-supabase.md`](deploy/vercel-supabase.md) | Publicação na Vercel e no Supabase |
-| [`deploy/backup-restauracao.md`](deploy/backup-restauracao.md) | Backup e restauração do banco |
 | [`security/README.md`](security/README.md) | Testes de segurança |
-| [`backend/README.md`](backend/README.md) | Dados de demonstração |
-| [`backend/training/README.md`](backend/training/README.md) | Gerador de dataset sintético e importação de sprites |
+| [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
-## Qualidade e segurança
+## Contribuir, suporte e segurança
 
-Não há CI automático: o projeto tem um só mantenedor, então os testes rodam localmente antes de cada publicação (lint, formatação, migrações e testes do backend; tipos, lint e testes do frontend; e `scripts/verificar-migracoes-producao.sh`). Os comandos estão em [`docs/EXECUCAO.md`](docs/EXECUCAO.md#7-rodar-os-testes).
-
-A segurança entrou no projeto desde o começo:
-
-- acesso só com login; contas criadas por um gerente; senha de 8 a 128 caracteres, com letras e números, guardada com Argon2id;
-- bloqueio da conta após tentativas erradas, limite de falhas por IP e limite de análises por usuário;
-- validação do upload pela assinatura e pela decodificação, com limites de tamanho e de pixels;
-- banco com permissões mínimas e RLS; só a aplicação fala com ele;
-- cabeçalhos de segurança, CSRF e CORS por origem configurada;
-- testes de invasão automatizados antes de cada publicação (relatório final ainda em andamento).
-
-## Status e próximos passos
-
-| Etapa | Situação |
-| --- | --- |
-| Especificação técnica (arquitetura, modelo, API, telas, avaliação) | Concluída |
-| Ambiente de desenvolvimento e Docker Compose | Concluída |
-| Banco de dados (esquema, migrações, regras de integridade) | Concluída |
-| API (endpoints, upload, histórico e projeção de saturação) | Concluída |
-| Interface web (painel, cadastro, nova análise, detalhe da armadilha) | Concluída |
-| Login, papéis e proteção da sessão | Concluída |
-| Gerador de dataset sintético e banco de sprites | Concluída |
-| Treino e avaliação do modelo em imagens sintéticas | Concluída |
-| Publicação (Vercel e Supabase) com o modelo real | Concluída |
-| Testes de invasão (relatório final) | Em andamento |
-| Definição dos limiares de status e do índice de saturação | Concluída |
-
-**Limitações conhecidas:**
-
-- o modelo só foi medido em imagens sintéticas; o desempenho em fotos de campo é desconhecido;
-- não há subconjuntos de teste de robustez (iluminação, ângulo, reflexo);
-- a análise roda em CPU e leva cerca de 5 segundos por foto, mais na primeira chamada depois de um período parado;
-- as fotos são enviadas manualmente, sem câmera instalada em campo;
-- os limites de análises por minuto e de contas por hora valem por instância do servidor, não de forma global.
+- **Dúvidas e problemas:** abra uma [*issue*](https://github.com/plfrancisco/trapsight-pi3/issues).
+- **Contribuições:** leia o [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- **Vulnerabilidades:** não abra *issue*; siga o [`SECURITY.md`](SECURITY.md).
 
 ## Créditos e dados
 
-O banco de sprites usa observações do iNaturalist no Brasil e dois conjuntos públicos, ambos sob a licença CC BY 4.0:
+O banco de sprites usa observações do iNaturalist no Brasil e dois conjuntos públicos sob a licença CC BY 4.0:
 
 - Ong & Lim (2025). *An annotated image dataset of urban insects for computer vision and deep learning*. Figshare. [doi:10.6084/m9.figshare.28280792.v1](https://doi.org/10.6084/m9.figshare.28280792.v1)
 - Colares, Peres & Dambros (2025). *5-fold dataset for deep learning training using insect images from sticky traps in Central Amazon*. Figshare. [doi:10.6084/m9.figshare.28688198](https://doi.org/10.6084/m9.figshare.28688198)
 
-O nome da empresa parceira é mantido em sigilo a pedido do grupo. O catálogo de sprites e o dataset de treino não fazem parte do repositório.
+Essas licenças valem para os dados originais, não para o código. O catálogo de sprites e o dataset de treino não fazem parte do repositório. O nome da empresa parceira é mantido em sigilo a pedido do grupo.
 
-## Autor
+## Mantenedor
 
 **Pedro Lucas Francisco**, Tecnologia em Sistemas Inteligentes, Fatec Pompeia.
+
+## Licença
+
+[MIT](LICENSE). Veja também a nota sobre os dados em [Créditos e dados](#créditos-e-dados).
